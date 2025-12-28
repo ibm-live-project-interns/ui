@@ -10,12 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@carbon/charts-react": "^1.27.0",
+    "@carbon/icons": "^11.71.0",
     "@carbon/icons-react": "^11.70.0",
-    "@carbon/react": "^1.96.0",
+    "@carbon/react": "^1.97.0",
+    "@carbon/styles": "^1.96.0",
+    "@ibm/plex": "^6.4.1",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-router-dom": "^7.9.6",
-    "sass": "^1.94.2"
+    "sass": "^1.97.1"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

@@ -1,8 +1,8 @@
-export { AlertCard } from './AlertCard';
-export { AlertCardSkeleton } from './AlertCardSkeleton';
-export { AlertDetailSkeleton } from './AlertDetailSkeleton';
-export { ExplanationPanel } from './ExplanationPanel';
-export { RecommendedActionsList } from './RecommendedActionsList';
-export { AlertSourceInfo } from './AlertSourceInfo';
-export { KnowledgeInsights } from './KnowledgeInsights';
-export { CreateIncidentButton } from './CreateIncidentButton';
+// Alert components barrel export
+export { AlertDetailsPage } from './AlertDetailsPage';
+export { AlertKPIRow } from './AlertKPIRow';
+export { RawTrapData } from './RawTrapData';
+export { AIExplanation } from './AIExplanation';
+export { DeviceInfoCard } from './DeviceInfoCard';
+export { HistoricalAlerts } from './HistoricalAlerts';
+export { AlertActions } from './AlertActions';

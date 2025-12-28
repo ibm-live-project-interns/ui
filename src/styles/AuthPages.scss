@@ -1,0 +1,122 @@
+// Auth Pages Styles
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react' as react;
+
+.auth-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 50%;
+    padding: $spacing-05;
+    background-color: $background;
+}
+
+.auth-card {
+    width: 100%;
+    max-width: 400px;
+    padding: $spacing-07;
+}
+
+.auth-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-03;
+    margin-bottom: $spacing-06;
+    @include react.type-style('heading-compact-02');
+    color: $text-primary;
+
+    svg {
+        color: $link-primary;
+    }
+}
+
+.auth-title {
+    @include react.type-style('heading-04');
+    text-align: center;
+    margin: 0 0 $spacing-05 0;
+    color: $text-primary;
+}
+
+.auth-description {
+    @include react.type-style('body-compact-01');
+    color: $text-secondary;
+    text-align: center;
+    margin-bottom: $spacing-05;
+}
+
+.auth-error {
+    @include react.type-style('body-compact-01');
+    color: $support-error;
+    background: rgba(218, 30, 40, 0.1);
+    padding: $spacing-03;
+    border-radius: 4px;
+    margin-bottom: $spacing-04;
+    text-align: center;
+}
+
+.auth-success {
+    text-align: center;
+
+    p {
+        @include react.type-style('body-compact-01');
+        color: $text-secondary;
+        margin-bottom: $spacing-05;
+    }
+
+    .auth-link {
+        display: inline-flex;
+        align-items: center;
+        gap: $spacing-02;
+    }
+}
+
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-05;
+}
+
+.auth-password-row {
+    display: flex;
+    flex-direction: column;
+
+    .auth-forgot-link {
+        align-self: flex-end;
+        margin-top: $spacing-02;
+        @include react.type-style('label-01');
+    }
+}
+
+.auth-submit-btn {
+    width: 100%;
+    max-width: 100%;
+    justify-content: center;
+    margin-top: $spacing-03;
+}
+
+.auth-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-02;
+    margin-top: $spacing-05;
+    padding-top: $spacing-05;
+    border-top: 1px solid $border-subtle-01;
+    @include react.type-style('body-compact-01');
+    color: $text-secondary;
+}
+
+.auth-link {
+    @include react.type-style('body-compact-01');
+    color: $link-primary;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-02;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}

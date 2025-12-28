@@ -1,6 +1,11 @@
+/**
+ * Services Index
+ * 
+ * Re-exports all services for clean imports:
+ *   import { alertDataService, HttpService } from '@/services';
+ */
+
+export { alertDataService, type IAlertDataService } from './AlertDataService';
 export { HttpService } from './HttpService';
-export { AlertService, alertService } from './AlertService';
-export { WebSocketService, webSocketService } from './WebSocketService';
-export type { WebSocketEventType, WebSocketMessage } from './WebSocketService';
-export { TicketingService, ticketingService } from './TicketingService';
-export type { Incident, CreateIncidentRequest, CreateIncidentResponse } from './TicketingService';
+export { webSocketService } from './WebSocketService';
+export * from './utils';

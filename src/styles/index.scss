@@ -1,1698 +1,563 @@
-// Carbon Design System
-@use '@carbon/react';
+/**
+ * Copyright IBM Corp. 2025
+ *
+ * This source code is licensed under the Apache-2.0 license found in the
+ * LICENSE file in the root directory of this source tree.
+ */
+
+@use '@carbon/react' with ($font-path: '@ibm/plex',
+  $font-display: 'block'
+);
 @use '@carbon/react/scss/spacing' as *;
-@use '@carbon/react/scss/type' as *;
 @use '@carbon/react/scss/theme' as *;
-@use '@carbon/react/scss/motion' as *;
+@use '@carbon/react/scss/themes';
+@use '@carbon/react/scss/colors' as *;
 
-// ==========================================
-// Layout Variables
-// ==========================================
+/* Importing the component styles here will load them
+   before the JavaScript, which will make the page 
+   not "flashing style" - everything will be at the right
+   place from the start. In most case, avoid loading styles
+   from the JavaScript. */
 
-$max-content-width: 1584px; // Carbon's max breakpoint
+@mixin light-brand {
+  --light: 'true';
+  --cs-brand: #{$blue-30};
+  --cs-brand-alt: #{$blue-20};
+  --cs-logo-filter: invert(100%);
 
-// ==========================================
-// Global Overrides
-// Ensures content never overflows containers
-// ==========================================
-
-* {
-  box-sizing: border-box;
+  background-color: $background;
+  color: $text-primary;
 }
 
-// Prevent all content from overflowing
-.cds--grid,
-.cds--row,
-[class*="cds--col"] {
-  max-width: 100%;
-  overflow-wrap: break-word;
+@mixin dark-brand {
+  --light: 'false';
+  --cs-brand: #{$blue-80};
+  --cs-brand-alt: #{$blue-90};
+  --cs-logo-filter: initial;
+
+  background: $background;
+  color: $text-primary;
 }
 
-// Ensure tiles don't overflow
-.cds--tile {
-  max-width: 100%;
-  overflow: hidden;
-  // IBM-consistent padding on all tiles
+/* Theme based on data-theme-setting attribute */
+
+// Base mixin to apply theme and brand styles
+@mixin apply-theme($theme: 'light') {
+  @if $theme =='light' {
+    @include theme(themes.$g10);
+    @include light-brand;
+  }
+
+  @else {
+    @include theme(themes.$g100);
+    @include dark-brand;
+  }
+}
+
+// Helper mixins to apply theme to root or content
+@mixin apply-root-theme($theme: 'light') {
+  @include apply-theme($theme);
+}
+
+@mixin apply-content-theme($theme: 'light') {
+  .cs--content {
+    @include apply-theme($theme);
+  }
+}
+
+// System theme (no explicit setting or explicit 'system' value)
+$system-selector: ':root:is(:not([data-theme-setting]), [data-theme-setting="system"])';
+
+// Default: dark header, light content (when header-inverse=true)
+#{$system-selector}[data-header-inverse='true'] {
+  @include apply-root-theme('dark');
+  @include apply-content-theme('light');
+}
+
+// Default: light everywhere (when header-inverse=false or not set)
+#{$system-selector}:not([data-header-inverse='true']) {
+  @include apply-root-theme('light');
+}
+
+// System theme with dark preference
+@media (prefers-color-scheme: dark) {
+
+  // Light header, dark content (when header-inverse=true)
+  #{$system-selector}[data-header-inverse='true'] {
+    @include apply-root-theme('light');
+    @include apply-content-theme('dark');
+  }
+
+  // Dark everywhere (when header-inverse=false or not set)
+  #{$system-selector}:not([data-header-inverse='true']) {
+    @include apply-root-theme('dark');
+  }
+}
+
+// Explicit light theme
+:root[data-theme-setting='light'] {
+
+  // Dark header, light content (when header-inverse=true)
+  &[data-header-inverse='true'] {
+    @include apply-root-theme('dark');
+    @include apply-content-theme('light');
+  }
+
+  // Light everywhere (when header-inverse=false or not set)
+  &:not([data-header-inverse='true']) {
+    @include apply-root-theme('light');
+  }
+}
+
+// Explicit dark theme
+:root[data-theme-setting='dark'] {
+
+  // Light header, dark content (when header-inverse=true)
+  &[data-header-inverse='true'] {
+    @include apply-root-theme('light');
+    @include apply-content-theme('dark');
+  }
+
+  // Dark everywhere (when header-inverse=false or not set)
+  &:not([data-header-inverse='true']) {
+    @include apply-root-theme('dark');
+  }
+}
+
+body {
+  background-color: $background;
+  block-size: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+// ==========================================
+// SideNav Border
+// ==========================================
+.cds--side-nav {
+  border-right: 1px solid $border-subtle-01;
+}
+
+// ==========================================
+// App Content - Main content area below header
+// Carbon's Content component uses .cds--content class
+// For expanded SideNav (256px width), we need proper margin-left
+// ==========================================
+.cds--content,
+.app-main-content {
+  // Margin-left to offset from expanded SideNav (256px)
+  margin-left: 256px;
+  // Reduced padding for cleaner look
   padding: $spacing-05;
+  min-height: calc(100vh - 48px);
+  background-color: $background;
 
-  @media (min-width: 1056px) {
-    padding: $spacing-06;
+  // Responsive: On smaller screens, no SideNav offset
+  @media (max-width: 1055px) {
+    margin-left: 0;
+    padding: $spacing-04;
   }
 }
 
 // ==========================================
-// Reusable Typography Classes
-// @see https://carbondesignsystem.com/elements/typography/overview/
+// Public Layout Content - No sidebar, full width
+// Used for home/landing page
 // ==========================================
+.public-layout-content {
+  margin-left: 0 !important;
+  padding: $spacing-05;
+  min-height: calc(100vh - 48px);
+  background-color: $background;
+}
 
-.page-title {
-  @include type-style('productive-heading-05');
+// ==========================================
+// Auth Layout Content - No sidebar, centered
+// Used for login, register, forgot password
+// ==========================================
+.auth-layout-content {
+  margin-left: 0 !important;
+  padding: 0;
+  min-height: calc(100vh - 48px);
+  background-color: $background;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// ==========================================
+// Auth Header Account Dropdown
+// ==========================================
+.auth-header-account {
+  position: relative;
+}
+
+.auth-header-chevron {
+  margin-left: $spacing-02;
+}
+
+.auth-header-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 200px;
+  background-color: $layer-01;
+  border: 1px solid $border-subtle-01;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 9000;
+}
+
+.auth-header-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-03;
+  width: 100%;
+  padding: $spacing-04 $spacing-05;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  @include react.type-style('body-compact-01');
   color: $text-primary;
+  text-align: left;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: $layer-hover-01;
+  }
+
+  svg {
+    color: $icon-secondary;
+  }
+}
+
+.auth-header-dropdown-divider {
+  border: none;
+  border-top: 1px solid $border-subtle-01;
   margin: 0;
+}
+
+// ==========================================
+// Page Title and Description - Consistent styling
+// Uses Carbon typography
+// ==========================================
+.page-title {
+  @include react.type-style('productive-heading-05');
+  margin-bottom: $spacing-03;
+  color: $text-primary;
 }
 
 .page-description {
-  @include type-style('body-long-02');
+  @include react.type-style('body-long-01');
   color: $text-secondary;
-  margin-top: $spacing-03;
-  margin-bottom: $spacing-05;
-}
-
-.section-title {
-  @include type-style('productive-heading-03');
-  color: $text-primary;
-  margin: 0;
-  margin-bottom: $spacing-03;
-}
-
-.body-text {
-  @include type-style('body-long-01');
-  color: $text-secondary;
-  margin: 0;
+  margin-bottom: $spacing-07;
+  max-width: 600px;
 }
 
 // ==========================================
-// Reusable Mixins
+// Dashboard and Page Layouts
 // ==========================================
+.dashboard-page,
+.alerts-page,
+.alert-detail-page,
+.noc-dashboard {
+  gap: $spacing-05;
 
-// Flex layouts
-@mixin flex-center {
-  display: flex;
-  align-items: center;
+  .cds--grid {
+    padding: 0;
+  }
 }
 
-@mixin flex-between {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
+// ==========================================
+// Helper Mixins
+// ==========================================
 @mixin flex-column {
   display: flex;
   flex-direction: column;
 }
 
-// Card variants with border accent
-@mixin card-variant($color) {
-  border-left: 3px solid $color;
+// ==========================================
+// SideNav User Profile Footer
+// Appears at the bottom of the sidebar
+// Logout menu slides UP from bottom
+// ==========================================
+.sidenav-user-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
 }
 
-// Icon color by severity
-@mixin severity-icon($color) {
-  color: $color;
-}
-
-// Page section - IBM consistent spacing
-@mixin page-section {
-  padding-top: $spacing-05;
-  padding-bottom: $spacing-07;
-
-  // Ensure all pages have consistent vertical rhythm
-  @media (min-width: 1056px) {
-    padding-top: $spacing-06;
-    padding-bottom: $spacing-09;
-  }
-}
-
-// Section header with icon
-@mixin section-header {
-  @include flex-center;
+.sidenav-user-profile {
+  display: flex;
+  align-items: center;
   gap: $spacing-03;
-  margin-bottom: $spacing-05;
+  padding: $spacing-04 $spacing-05;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-top: 1px solid $border-subtle-01;
 
-  h4 {
-    @include type-style('productive-heading-03');
-    margin: 0;
+  &:hover {
+    background-color: $layer-hover-01;
+  }
+
+  &:focus {
+    outline: 2px solid $focus;
+    outline-offset: -2px;
   }
 }
 
-// Empty state
-@mixin empty-state {
-  @include flex-column;
+.sidenav-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: $blue-60;
+  color: $white-0;
+  display: flex;
   align-items: center;
   justify-content: center;
-  padding: $spacing-09;
-  color: $text-secondary;
-
-  svg {
-    opacity: 0.5;
-    margin-bottom: $spacing-05;
-  }
-}
-
-// ==========================================
-// Skeleton Loading Styles
-// ==========================================
-
-// Base skeleton element styles
-.skeleton-icon {
-  width: 20px;
-  height: 20px;
-  border-radius: 4px;
-  background-color: $layer-accent-01;
+  @include react.type-style('label-01');
+  font-weight: 600;
   flex-shrink: 0;
 }
 
-.skeleton-tag {
-  width: 60px;
-  height: 24px;
-  border-radius: 12px;
-  background-color: $layer-accent-01;
-
-  &--lg {
-    width: 80px;
-    height: 28px;
-  }
-}
-
-.skeleton-button {
-  width: 100px;
-  height: 32px;
-  border-radius: 4px;
-  background-color: $layer-accent-01;
-
-  &--primary {
-    width: 80px;
-  }
-}
-
-// ==========================================
-// Global Styles
-// ==========================================
-
-:root {
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-.app {
-  min-height: 100vh;
-  @include flex-column;
-  background-color: $layer-01;
-
-  &__content {
-    flex: 1;
-    padding: $spacing-05;
-    padding-top: calc(3rem + #{$spacing-05});
-    background-color: $background;
-    min-height: calc(100vh - 3rem);
-  }
-}
-
-// ==========================================
-// Header - Sticky
-// @see https://carbondesignsystem.com/components/UI-shell-header/usage
-// ==========================================
-
-.cds--header {
-  position: fixed !important;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 8000;
-  border-bottom: 1px solid $border-subtle-01;
-}
-
-// Ensure SideNav overlay works correctly
-.cds--side-nav__overlay-active {
-  z-index: 7999;
-}
-
-.cds--side-nav {
-  z-index: 8001;
-}
-
-code {
-  @include type-style('code-01');
-  background-color: $layer-02;
-  padding: 2px $spacing-02;
-  border-radius: 4px;
-}
-
-// ==========================================
-// Reusable Component Patterns
-// ==========================================
-
-// Tags container
-.tags {
+.sidenav-user-info {
   display: flex;
-  gap: $spacing-02;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
 }
 
-// Meta info row (device, source, time)
-.meta-row {
-  @include flex-center;
-  gap: $spacing-02;
-  @include type-style('helper-text-01');
+.sidenav-user-name {
+  @include react.type-style('body-compact-01');
+  color: $text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidenav-user-role {
+  @include react.type-style('helper-text-01');
   color: $text-secondary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
-  &__separator {
-    color: $text-disabled;
+.sidenav-user-chevron {
+  color: $icon-secondary;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+
+  &.open {
+    transform: rotate(180deg);
+  }
+}
+
+// Popup menu - Logout
+.sidenav-user-menu {
+  background-color: $layer-02;
+  border-bottom: 1px solid $border-subtle-01;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease-out;
+
+  &.open {
+    max-height: 200px;
+  }
+}
+
+.sidenav-user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-03;
+  width: 100%;
+  padding: $spacing-04 $spacing-05;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  @include react.type-style('body-compact-01');
+  color: $text-primary;
+  text-align: left;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: $layer-hover-02;
+  }
+
+  &:focus {
+    outline: 2px solid $focus;
+    outline-offset: -2px;
+  }
+
+  svg {
+    color: $icon-secondary;
   }
 }
 
 // ==========================================
-// StatCard Component
-// IBM-style metric cards with consistent sizing
+// SideNav Link with Badge (Priority Alerts)
+// Badge positioned at far right edge
 // ==========================================
-
-.stat-card {
-  height: 100%;
-  margin-bottom: $spacing-05;
-  // Ensure consistent padding inside tiles
-  padding: $spacing-05;
-
-  @media (min-width: 1056px) {
-    padding: $spacing-06;
-  }
-
-  &__header {
-    @include flex-between;
-    margin-bottom: $spacing-03;
-  }
-
-  &__title {
-    @include type-style('label-01');
-    color: $text-secondary;
-  }
-
-  &__icon { color: $text-secondary; }
-
-  &__value {
-    @include type-style('productive-heading-05');
-    color: $text-primary;
-    margin-bottom: $spacing-02;
-    font-size: 2rem;
-    line-height: 1.25;
-
-    @media (min-width: 1056px) {
-      font-size: 2.625rem;
-    }
-  }
-
-  &__footer {
-    @include flex-between;
-  }
-
-  &__subtitle {
-    @include type-style('helper-text-01');
-    color: $text-secondary;
-  }
-
-  &__trend {
-    @include type-style('label-01');
-    &--up { color: $support-error; }
-    &--down { color: $support-success; }
-    &--neutral { color: $text-secondary; }
-  }
-
-  &--success { @include card-variant($support-success); }
-  &--warning { @include card-variant($support-warning); }
-  &--error { @include card-variant($support-error); }
-}
-
-// ==========================================
-// SeverityDistribution Component
-// ==========================================
-
-.severity-distribution {
-  margin-bottom: $spacing-05;
-
-  &__header {
-    @include section-header;
-  }
-
-  &__total {
-    @include type-style('label-01');
-    color: $text-secondary;
-    margin-left: auto;
-  }
-
-  &__grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: $spacing-05;
-    margin-bottom: $spacing-05;
-
-    @media (max-width: 672px) {
-      grid-template-columns: repeat(2, 1fr);
-    }
-  }
-
-  &__item {
-    @include flex-center;
-    gap: $spacing-03;
-  }
-
-  &__icon { flex-shrink: 0; }
-
-  &__details {
-    @include flex-column;
-  }
-
-  &__label {
-    @include type-style('label-01');
-    color: $text-secondary;
-  }
-
-  &__count {
-    @include type-style('productive-heading-04');
-  }
-
-  &__bar {
-    display: flex;
-    height: 8px;
-    border-radius: 4px;
-    overflow: hidden;
-    background-color: $layer-02;
-  }
-
-  &__bar-segment {
-    height: 100%;
-    transition: width motion(standard, productive) $duration-fast-02;
-
-    &--critical { background-color: $support-error; }
-    &--high { background-color: $support-warning; }
-    &--medium { background-color: $support-info; }
-    &--low { background-color: $support-success; }
-    &--info { background-color: $text-secondary; }
-  }
-}
-
-// ==========================================
-// RecentAlertsTable Component
-// @see https://carbondesignsystem.com/components/data-table/usage
-// Uses Carbon DataTable with TableContainer for responsive scrolling
-// ==========================================
-
-.recent-alerts-table {
-  margin-bottom: $spacing-05;
-
-  // TableContainer provides horizontal scroll on overflow
-  .cds--data-table-container {
-    background-color: $layer-01;
-  }
-
-  // Table header styling from Carbon
-  .cds--data-table-header {
-    padding: $spacing-05;
-    background-color: $layer-01;
-  }
-
-  .cds--data-table-header__title {
-    @include type-style('productive-heading-03');
-  }
-
-  .cds--data-table-header__description {
-    @include type-style('body-compact-01');
-    color: $text-secondary;
-  }
-
-  &__link {
-    cursor: pointer;
-    color: $link-primary;
-    text-decoration: none;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-
-  &__description-cell {
-    max-width: 400px;
-
-    // Truncate description to 2 lines max
-    .recent-alerts-table__link {
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      line-height: 1.4;
-    }
-
-    // Smaller on mobile
-    @media (max-width: 672px) {
-      max-width: 180px;
-    }
-  }
-
-  &__empty {
-    padding: $spacing-07;
-    text-align: center;
-    color: $text-secondary;
-    background-color: $layer-01;
-  }
-
-  // Toolbar filters styling - proper alignment
-  .cds--toolbar-content {
+.sidenav-link-with-badge {
+  .cds--side-nav__link-text {
     display: flex;
     align-items: center;
-    gap: $spacing-04;
-    flex-wrap: wrap;
-    justify-content: flex-end;
-
-    // Search bar takes remaining space
-    .cds--search {
-      flex: 1;
-      min-width: 200px;
-    }
+    justify-content: space-between;
+    width: 100%;
   }
+}
 
-  .cds--dropdown {
-    min-width: 140px;
-    flex-shrink: 0;
-  }
+.sidenav-link-text {
+  flex: 1;
+}
 
-  // Table cell padding
-  @media (max-width: 672px) {
-    .cds--data-table td,
-    .cds--data-table th {
-      padding: $spacing-03;
+.sidenav-alert-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+// ==========================================
+// Header Expandable Search
+// ==========================================
+.header-expandable-search {
+  display: flex;
+  align-items: center;
+  height: 48px;
+
+  &.expanded {
+    position: absolute;
+    left: 256px; // Account for sidenav width
+    right: 48px; // Account for notification icon
+    top: 0;
+    height: 48px;
+    z-index: 8000;
+
+    @media (max-width: 1055px) {
+      left: 48px; // Account for hamburger menu only
     }
   }
 }
 
-// ==========================================
-// AlertCard Component
-// ==========================================
+.header-search-expanded {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: $layer-01;
+  position: relative;
+}
 
-.alert-card {
-  margin-bottom: $spacing-05;
+.header-search-icon {
+  position: absolute;
+  left: $spacing-05;
+  fill: $icon-secondary;
+  pointer-events: none;
+}
+
+.header-search-input {
+  width: 100%;
+  height: 100%;
+  padding: 0 $spacing-09 0 $spacing-09;
+  border: none;
+  background: transparent;
+  @include react.type-style('body-compact-01');
+  color: $text-primary;
+
+  &::placeholder {
+    color: $text-placeholder;
+  }
+
+  &:focus {
+    outline: 2px solid $focus;
+    outline-offset: -2px;
+  }
+}
+
+.header-search-close {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: transparent;
+  border: none;
   cursor: pointer;
-  transition: box-shadow motion(standard, productive) $duration-fast-02;
-  padding: $spacing-05;
 
-  @media (min-width: 1056px) {
-    padding: $spacing-05 $spacing-06;
+  svg {
+    fill: $icon-secondary;
   }
 
   &:hover {
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  &__header {
-    @include flex-between;
-    flex-wrap: wrap;
-    gap: $spacing-03;
-    margin-bottom: $spacing-03;
-  }
-
-  &__title-row {
-    @include flex-center;
-    gap: $spacing-03;
-  }
-
-  &__device {
-    @include type-style('productive-heading-03');
-    color: $text-primary;
-  }
-
-  &__tags { @extend .tags; }
-
-  &__explanation {
-    @include type-style('body-long-01');
-    color: $text-secondary;
-    margin-bottom: $spacing-04;
-    display: -webkit-box;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
-  }
-
-  &__snippet {
-    @include type-style('body-short-01');
-    color: $text-secondary;
-    margin: $spacing-03 0;
-  }
-
-  &__footer {
-    @include flex-between;
-  }
-
-  &__meta { @extend .meta-row; }
-
-  &__time {
-    @include type-style('helper-text-01');
-    color: $text-secondary;
-  }
-
-  // Severity icon colors
-  &__icon {
-    &--critical { @include severity-icon($support-error); }
-    &--high { @include severity-icon($support-warning); }
-    &--medium { @include severity-icon($support-info); }
-    &--low { @include severity-icon($support-success); }
-    &--info { @include severity-icon($text-secondary); }
-  }
-
-  &--compact .alert-card__header {
-    margin-bottom: $spacing-02;
-  }
-
-  // Skeleton state
-  &--skeleton {
-    cursor: default;
-    min-height: 180px;
-
-    &:hover {
-      box-shadow: none;
-    }
-
-    .alert-card__header {
-      margin-bottom: $spacing-04;
-    }
-
-    .alert-card__explanation {
-      margin-bottom: $spacing-05;
-    }
-
-    .alert-card__footer {
-      margin-top: auto;
-    }
-
-    .alert-card__meta {
-      gap: $spacing-04;
-    }
-  }
-}
-
-// ==========================================
-// AlertDetailPage
-// ==========================================
-
-.alert-detail-page {
-  @include flex-column;
-  min-height: calc(100vh - 48px);
-  padding-bottom: $spacing-07;
-
-  &__breadcrumb {
-    margin-bottom: $spacing-04;
-
-    // Force single line display
-    .cds--breadcrumb {
-      display: flex;
-      flex-wrap: nowrap;
-      align-items: center;
-      white-space: nowrap;
-    }
-
-    .cds--breadcrumb-item {
-      display: inline-flex;
-      align-items: center;
-      white-space: nowrap;
-    }
-
-    // Separator slash
-    .cds--breadcrumb-item::after {
-      margin: 0 $spacing-02;
-    }
-  }
-
-  // Top navigation bar with title, tags, actions
-  &__topbar {
-    display: flex;
-    align-items: center;
-    gap: $spacing-04;
-    padding: $spacing-04 0;
-    margin-bottom: $spacing-03;
-    border-bottom: 1px solid $border-subtle-01;
-    flex-wrap: wrap;
-
-    @media (max-width: 672px) {
-      gap: $spacing-03;
-      padding: $spacing-03 0;
-    }
-  }
-
-  &__topbar-info {
-    display: flex;
-    align-items: center;
-    gap: $spacing-04;
-    flex: 1;
-    min-width: 0;
-
-    @media (max-width: 672px) {
-      flex-direction: column;
-      align-items: flex-start;
-      gap: $spacing-02;
-    }
-  }
-
-  &__hostname {
-    @include type-style('productive-heading-04');
-    margin: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-
-    @media (max-width: 672px) {
-      @include type-style('productive-heading-03');
-    }
-  }
-
-  &__tags {
-    display: flex;
-    gap: $spacing-02;
-    flex-shrink: 0;
-  }
-
-  &__topbar-actions {
-    display: flex;
-    align-items: center;
-    gap: $spacing-03;
-    flex-shrink: 0;
-
-    @media (max-width: 672px) {
-      width: 100%;
-      justify-content: flex-start;
-      margin-top: $spacing-02;
-      flex-wrap: wrap;
-    }
-  }
-
-  // Meta info bar (source type, IP, location, time)
-  &__meta-bar {
-    display: flex;
-    align-items: center;
-    gap: $spacing-05;
-    padding: $spacing-03 0;
-    margin-bottom: $spacing-05;
-    overflow-x: auto;
-    flex-wrap: wrap;
-
-    @media (max-width: 672px) {
-      gap: $spacing-03;
-    }
-  }
-
-  &__meta-item {
-    @include flex-center;
-    gap: $spacing-02;
-    @include type-style('body-compact-01');
-    color: $text-secondary;
-    white-space: nowrap;
+    background-color: $layer-hover-01;
 
     svg {
-      flex-shrink: 0;
-      color: $icon-secondary;
+      fill: $icon-primary;
     }
   }
 
-  // Main content grid - tighter spacing between sections
-  &__content {
-    flex: 1;
-
-    // Reduce vertical spacing between columns
-    > [class*="cds--col"] {
-      margin-bottom: $spacing-04;
-    }
-
-    // Remove margin from last row items
-    > [class*="cds--col"]:last-child,
-    > [class*="cds--col"]:nth-last-child(2):nth-child(odd) {
-      margin-bottom: 0;
-    }
-  }
-
-  // Legacy styles for error state
-  &__loading {
-    display: flex;
-    justify-content: center;
-    padding: $spacing-09;
+  &:focus {
+    outline: 2px solid $focus;
+    outline-offset: -2px;
   }
 }
 
-// ==========================================
-// ExplanationPanel Component
-// ==========================================
-
-.explanation-panel {
-  margin-bottom: $spacing-04;
-
-  // Tile padding override for consistency
-  .cds--tile {
-    padding: $spacing-05;
-
-    @media (min-width: 1056px) {
-      padding: $spacing-06;
-    }
-  }
-
-  &__header {
-    @include flex-between;
-    gap: $spacing-03;
-    margin-bottom: $spacing-04;
-    flex-wrap: wrap;
-
-    h4 {
-      @include flex-center;
-      gap: $spacing-03;
-      @include type-style('productive-heading-03');
-      margin: 0;
-
-      svg { color: $support-info; }
-    }
-  }
-
-  &__badge {
-    @include type-style('label-01');
-    color: $text-secondary;
-    background-color: $layer-02;
-    padding: $spacing-02 $spacing-03;
-    border-radius: 12px;
-    white-space: nowrap;
-
-    @media (max-width: 672px) {
-      margin-top: $spacing-02;
-    }
-  }
-
-  &__content p {
-    @include type-style('body-long-02');
-    color: $text-primary;
-    line-height: 1.6;
-    margin: 0;
-  }
-}
-
-// ==========================================
-// RecommendedActions Component
-// ==========================================
-
-.recommended-actions {
-  margin-bottom: $spacing-04;
-
-  &__title {
-    @include flex-center;
-    gap: $spacing-03;
-    @include type-style('productive-heading-03');
-    margin-bottom: $spacing-04;
-
-    svg { color: $support-info; }
-  }
-
-  &__skeleton { padding: $spacing-05; }
-
-  &__empty {
-    @include type-style('body-short-01');
-    color: $text-secondary;
-    padding: $spacing-05;
-  }
-
-  // Mobile card layout
-  &__cards {
-    display: flex;
-    flex-direction: column;
-    gap: $spacing-03;
-  }
-
-  &__card {
-    padding: $spacing-04 !important;
-
-    &-header {
-      display: flex;
-      gap: $spacing-02;
-      margin-bottom: $spacing-03;
-    }
-
-    &-action {
-      @include type-style('body-short-01');
-      margin-bottom: $spacing-03;
-    }
-
-    &-footer {
-      display: flex;
-      justify-content: flex-end;
-    }
-  }
-
-  &__list {
-    margin-bottom: 0;
-    overflow-x: auto;
-
-    // Tablet view - compact cells
-    @media (max-width: 672px) {
-      .cds--structured-list-td {
-        padding: $spacing-03;
-        vertical-align: top;
-      }
-    }
-  }
-}
-
-// ==========================================
-// AlertSourceInfo Component
-// ==========================================
-
-.alert-source-info {
-  margin-bottom: $spacing-03;
-
-  &__device,
-  &__log {
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
-  }
-
-  &__title {
-    @include flex-center;
-    gap: $spacing-03;
-    @include type-style('productive-heading-03');
-    margin-bottom: $spacing-04;
-
-    svg { color: $text-secondary; }
-  }
-
-  &__source-type { margin-bottom: $spacing-04; }
-
-  &__message {
-    @include type-style('code-01');
-    word-break: break-all;
-    white-space: pre-wrap;
-    max-width: 100%;
-    overflow-wrap: break-word;
-  }
-
-  &__raw-data {
-    margin-top: $spacing-05;
-    padding-top: $spacing-04;
-    border-top: 1px solid $border-subtle-01;
-
-    h5 {
-      @include type-style('label-01');
-      color: $text-secondary;
-      margin-bottom: $spacing-03;
-    }
-
-    pre {
-      @include type-style('code-01');
-      background-color: $layer-02;
-      padding: $spacing-04;
-      border-radius: 4px;
-      overflow-x: auto;
-      margin: 0;
-      max-width: 100%;
-      white-space: pre-wrap;
-      word-break: break-all;
-    }
-  }
-
-  // Responsive structured list - prevent overflow
-  .cds--structured-list {
-    margin-bottom: 0;
-    table-layout: fixed;
-    width: 100%;
-  }
-
-  .cds--structured-list-td {
-    word-break: break-word;
-    overflow-wrap: break-word;
-
-    code {
-      word-break: break-all;
-    }
-
-    @media (max-width: 672px) {
-      padding: $spacing-03 $spacing-02;
-    }
-  }
-}
-
-// ==========================================
-// AlertsPage
-// ==========================================
-
-.alerts-page {
-  @include page-section;
-
-  // IBM-style Breadcrumb - single line like "Home / Alerts"
-  &__breadcrumb {
-    margin-bottom: $spacing-04;
-
-    .cds--breadcrumb {
-      display: flex;
-      flex-wrap: nowrap;
-      align-items: center;
-      white-space: nowrap;
-    }
-
-    .cds--breadcrumb-item {
-      display: inline-flex;
-      align-items: center;
-      white-space: nowrap;
-    }
-  }
-
-  &__header {
-    @include flex-between;
-    align-items: flex-start;
-    margin-bottom: $spacing-05;
-
-    &-actions {
-      display: flex;
-      gap: $spacing-03;
-    }
-  }
-
-  &__toolbar {
-    @include flex-center;
-    gap: $spacing-04;
-    margin-bottom: $spacing-05;
-  }
-
-  &__filters {
-    @include flex-center;
-    flex-wrap: wrap;
-    gap: $spacing-04;
-    margin-bottom: $spacing-05;
-  }
-
-  &__search {
-    min-width: 300px;
-    flex: 1;
-
-    @media (max-width: 672px) {
-      min-width: 100%;
-    }
-  }
-
-  &__filter-btn {
-    display: flex;
-    align-items: center;
-    gap: $spacing-02;
-    flex-shrink: 0;
-  }
-
-  &__filter-count {
-    margin-left: $spacing-02;
-  }
-
-  &__active-filters {
-    @include flex-center;
-    flex-wrap: wrap;
-    gap: $spacing-03;
-    margin-bottom: $spacing-05;
-  }
-
-  &__skeleton {
-    height: 180px;
-    margin-bottom: $spacing-05;
-  }
-
-  &__empty { @include empty-state; }
-
-  &__count {
-    @include type-style('helper-text-01');
-    color: $text-secondary;
-    margin-top: $spacing-05;
-  }
-}
-
-// ==========================================
-// DashboardPage
-// @see https://carbondesignsystem.com/elements/2x-grid/overview/
-// ==========================================
-
-.dashboard-page {
-  @include page-section;
-
-  // IBM-style Breadcrumb - single line
-  &__breadcrumb {
-    margin-bottom: $spacing-05;
-    white-space: nowrap;
-
-    .cds--breadcrumb {
-      flex-wrap: nowrap;
-    }
-  }
-
-  // Page header with consistent spacing
-  &__header {
-    margin-bottom: $spacing-06;
-
-    h1 {
-      margin-bottom: $spacing-03;
-      // Consistent heading size
-      @include type-style('productive-heading-05');
-    }
-
-    p {
-      @include type-style('body-long-02');
-      color: $text-secondary;
-      max-width: 600px;
-    }
-  }
-
-  // Stat cards row with proper gap
-  &__stats {
-    margin-bottom: $spacing-07;
-  }
-
-  // Stat cards - ensure equal height
-  .stat-card {
-    margin-bottom: $spacing-05;
-  }
-
-  // Add gap before alerts table
-  .recent-alerts-table {
-    margin-top: $spacing-05;
-  }
-
-  // Mobile: Stack everything vertically
-  @media (max-width: 672px) {
-    h1 {
-      @include type-style('productive-heading-04');
-    }
-
-    // Full width stat cards on mobile
-    .cds--col-sm-4 {
-      margin-bottom: $spacing-04;
-    }
-  }
-}
-
-// ==========================================
-// HomePage - IBM Marketing/Hero Style
-// Consistent spacing and typography
-// ==========================================
-
-.home-page {
-  @include page-section;
-
-  &__hero {
-    margin-bottom: $spacing-07;
-
-    @media (min-width: 1056px) {
-      margin-bottom: $spacing-09;
-    }
-
-    h1 {
-      margin-bottom: $spacing-05;
-      @include type-style('productive-heading-05');
-
-      @media (min-width: 1056px) {
-        // Larger display heading on desktop
-        font-size: 2.625rem;
-        line-height: 1.19;
-      }
-    }
-
-    p {
-      @include type-style('body-long-02');
-      color: $text-secondary;
-      max-width: 600px;
-      margin-bottom: $spacing-06;
-    }
-  }
-
-  &__actions {
-    display: flex;
-    gap: $spacing-04;
-    flex-wrap: wrap;
-    margin-top: $spacing-06;
-  }
-
-  // Feature tiles with consistent sizing
-  &__features {
-    margin-top: $spacing-07;
-  }
-
-  &__feature-tile {
-    height: 100%;
-    min-height: 200px;
-    padding: $spacing-05;
-
-    @media (min-width: 1056px) {
-      padding: $spacing-06;
-      min-height: 220px;
-    }
-  }
-
-  &__feature-icon {
-    margin-bottom: $spacing-04;
-    color: $text-secondary;
-  }
-
-  &__feature-title {
-    @include type-style('productive-heading-03');
-    margin-bottom: $spacing-03;
-  }
-
-  &__feature-desc {
-    @include type-style('body-long-01');
-    color: $text-secondary;
-  }
-}
-
-// ==========================================
-// KnowledgeInsights Component (RAG)
-// @see docs/arch/AIProcessing/Class.puml - KnowledgeEntry
-// ==========================================
-
-.knowledge-insights {
-  margin-bottom: $spacing-04;
-
-  &__header {
-    @include flex-between;
-    gap: $spacing-03;
-    margin-bottom: $spacing-04;
-    flex-wrap: wrap;
-
-    h4 {
-      @include flex-center;
-      gap: $spacing-03;
-      @include type-style('productive-heading-03');
-      margin: 0;
-
-      svg { color: $support-info; }
-    }
-  }
-
-  &__badge {
-    @include type-style('label-01');
-    color: $text-secondary;
-    background-color: $layer-02;
-    padding: $spacing-02 $spacing-03;
-    border-radius: 12px;
-    white-space: nowrap;
-
-    @media (max-width: 672px) {
-      margin-top: $spacing-02;
-    }
-  }
-
-  &__description {
-    @include type-style('body-short-01');
-    color: $text-secondary;
-    margin-bottom: $spacing-04;
-  }
-
-  &__skeleton {
-    padding: $spacing-05;
-  }
-
-  &__list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-  }
-
-  &__item {
-    padding: $spacing-04;
-    background-color: $layer-02;
-    border-radius: 4px;
-    margin-bottom: $spacing-03;
-
-    &:last-child { margin-bottom: 0; }
-
-    @media (max-width: 672px) {
-      padding: $spacing-03;
-    }
-  }
-
-  &__item-header {
-    @include flex-center;
-    gap: $spacing-03;
-    margin-bottom: $spacing-03;
-    flex-wrap: wrap;
-
-    svg { color: $text-secondary; }
-  }
-
-  &__score {
-    @include type-style('helper-text-01');
-    color: $text-secondary;
-    margin-left: auto;
-
-    @media (max-width: 672px) {
-      margin-left: 0;
-      width: 100%;
-    }
-  }
-
-  &__content {
-    @include type-style('body-short-01');
-    color: $text-primary;
-    margin: 0;
-  }
-}
-
-// ==========================================
-// CreateIncidentButton Modal
-// @see docs/arch/Output&Integration/Component.puml - TicketingConnector
-// ==========================================
-
-.create-incident-modal {
-  &__success {
-    @include flex-center;
-    gap: $spacing-03;
-    margin-bottom: $spacing-05;
-    color: $support-success;
-  }
-
-  &__icon {
-    color: $support-success;
-  }
-
-  &__details {
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: $spacing-03 $spacing-05;
-    margin-bottom: $spacing-05;
-
-    dt {
-      @include type-style('label-01');
-      color: $text-secondary;
-    }
-
-    dd {
-      @include type-style('body-short-01');
-      color: $text-primary;
-      margin: 0;
-    }
-  }
-}
-
-// ==========================================
-// NotFoundPage
-// ==========================================
-
-.not-found-page {
-  text-align: center;
-  padding-top: $spacing-10;
-
-  &__code {
-    font-size: 5.25rem;
-    font-weight: 300;
-    line-height: 1.11;
-    letter-spacing: -0.96px;
-    color: $text-primary;
-    margin-bottom: $spacing-05;
-  }
-
-  .section-title {
-    margin-bottom: $spacing-03;
-  }
-
-  .body-text {
-    margin-bottom: $spacing-07;
-  }
-
-  &__button {
-    margin-top: $spacing-05;
-  }
-}
-
-// ==========================================
-// Connection Status Indicator
-// ==========================================
-
-.connection-status {
-  @include flex-center;
-  gap: $spacing-02;
-  @include type-style('helper-text-01');
-
-  &__dot {
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-
-    &--connected { background-color: $support-success; }
-    &--disconnected { background-color: $support-error; }
-    &--connecting {
-      background-color: $support-warning;
-      animation: pulse 1.5s infinite;
-    }
-  }
-
-  &__label {
-    color: $text-secondary;
-  }
-}
-
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
-}
-
-// ==========================================
-// GlobalSearch Component - IBM Style Search Bar
-// Appears below header as a search bar overlay
-// @see https://www.ibm.com search pattern
-// ==========================================
-
-.global-search {
-  position: fixed;
-  top: 48px;
+.header-search-results {
+  position: absolute;
+  top: 100%;
   left: 0;
   right: 0;
   background-color: $layer-01;
-  z-index: 9000;
-  border-bottom: 2px solid $link-primary;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border: 1px solid $border-subtle-01;
+  border-top: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 9999;
+}
 
-  &__form {
-    display: flex;
-    align-items: center;
-    height: 48px;
-    max-width: 100%;
-    padding: 0 $spacing-05;
+.header-search-result-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: $spacing-04 $spacing-05;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid $border-subtle-01;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: $layer-hover-01;
   }
 
-  &__icon {
-    color: $icon-secondary;
-    flex-shrink: 0;
-    margin-right: $spacing-03;
+  &:focus {
+    outline: 2px solid $focus;
+    outline-offset: -2px;
   }
 
-  &__input {
-    flex: 1;
-    height: 100%;
-    background: transparent;
-    border: none;
-    @include type-style('body-compact-01');
-    color: $text-primary;
-
-    &::placeholder {
-      color: $text-placeholder;
-    }
-
-    &:focus {
-      outline: none;
-    }
-  }
-
-  &__action {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 48px;
-    height: 48px;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    color: $icon-secondary;
-    flex-shrink: 0;
-
-    &:hover {
-      background-color: $layer-hover-01;
-    }
-  }
-
-  // Dropdown for search results
-  &__dropdown {
-    position: absolute;
-    top: 100%;
-    left: 0;
-    right: 0;
-    background-color: $layer-01;
-    max-height: calc(100vh - 96px - 48px);
-    overflow-y: auto;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-    padding: $spacing-05;
-  }
-
-  &__section {
-    margin-bottom: $spacing-05;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  &__section-title {
-    @include type-style('label-01');
-    color: $text-secondary;
-    text-transform: uppercase;
-    letter-spacing: 0.32px;
-    margin-bottom: $spacing-03;
-  }
-
-  &__result {
-    display: flex;
-    align-items: center;
-    gap: $spacing-03;
-    padding: $spacing-03 !important;
-    margin-bottom: $spacing-02;
-    min-height: auto !important;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  &__result-icon {
-    flex-shrink: 0;
-    color: $text-secondary;
-  }
-
-  &__result-content {
-    @include flex-column;
-    flex: 1;
-    min-width: 0;
-  }
-
-  &__result-title {
-    @include type-style('body-short-01');
-    color: $text-primary;
-  }
-
-  &__result-subtitle {
-    @include type-style('helper-text-01');
-    color: $text-secondary;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  &__result-arrow {
-    flex-shrink: 0;
-    color: $text-secondary;
-  }
-
-  &__view-all {
-    display: flex;
-    align-items: center;
-    gap: $spacing-02;
-    width: 100%;
-    padding: $spacing-03;
-    background: transparent;
-    border: none;
-    cursor: pointer;
-    @include type-style('body-short-01');
-    color: $link-primary;
-    text-align: left;
-
-    &:hover {
-      text-decoration: underline;
-    }
-  }
-
-  &__loading {
-    @include type-style('body-short-01');
-    color: $text-secondary;
-    padding: $spacing-05;
-    text-align: center;
-  }
-
-  &__empty {
-    padding: $spacing-05;
-    text-align: center;
-
-    p {
-      @include type-style('body-short-01');
-      color: $text-secondary;
-      margin: 0;
-    }
-  }
-
-  &__quick-links {
-    @include flex-column;
-    gap: $spacing-02;
-  }
-
-  // Overlay behind search - light dim
-  &__overlay {
-    position: fixed;
-    top: 48px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.3);
-    z-index: 8999;
+  &:last-child {
+    border-bottom: none;
   }
 }
 
-// ==========================================
-// FilterPanel Component - IBM Style Right Slide
-// @see https://www.ibm.com filter pattern
-// ==========================================
-
-.filter-panel {
-  position: fixed;
-  top: 48px;
-  right: 0;
-  bottom: 0;
-  width: 320px;
-  max-width: 90vw;
-  background-color: $layer-01;
-  z-index: 8101;
-  @include flex-column;
-  box-shadow: -4px 0 16px rgba(0, 0, 0, 0.15);
-  animation: filterPanelSlideIn motion(entrance, productive) $duration-moderate-01 forwards;
-
-  @media (max-width: 400px) {
-    width: 100%;
-    max-width: 100%;
-  }
-
-  &__overlay {
-    position: fixed;
-    top: 48px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 8100;
-  }
-
-  &__header {
-    @include flex-between;
-    padding: $spacing-05;
-    border-bottom: 1px solid $border-subtle-01;
-  }
-
-  &__title-row {
-    @include flex-center;
-    gap: $spacing-03;
-  }
-
-  &__title {
-    @include type-style('productive-heading-03');
-    margin: 0;
-  }
-
-  &__count {
-    @include type-style('label-01');
-    background-color: $interactive;
-    color: $text-on-color;
-    padding: 2px 8px;
-    border-radius: 12px;
-  }
-
-  &__content {
-    flex: 1;
-    overflow-y: auto;
-    padding: $spacing-05;
-  }
-
-  &__group {
-    margin-bottom: $spacing-05;
-
-    &:last-child {
-      margin-bottom: 0;
-    }
-  }
-
-  &__footer {
-    @include flex-between;
-    gap: $spacing-03;
-    padding: $spacing-05;
-    border-top: 1px solid $border-subtle-01;
-    background-color: $layer-01;
-  }
+.header-search-result-label {
+  @include react.type-style('body-compact-01');
+  color: $text-primary;
 }
 
-@keyframes filterPanelSlideIn {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
+.header-search-result-type {
+  @include react.type-style('helper-text-01');
+  color: $text-secondary;
+  text-transform: capitalize;
 }
 
-// ==========================================
-// AlertsPage - Updated for FilterPanel
-// ==========================================
-
-.alerts-page {
-  &__breadcrumb {
-    margin-bottom: $spacing-05;
-  }
-
-  &__header {
-    @include flex-between;
-    align-items: flex-start;
-    margin-bottom: $spacing-05;
-    flex-wrap: wrap;
-    gap: $spacing-03;
-
-    &-actions {
-      display: flex;
-      gap: $spacing-03;
-    }
-  }
-
-  &__toolbar {
-    @include flex-center;
-    gap: $spacing-04;
-    margin-bottom: $spacing-05;
-    flex-wrap: wrap;
-  }
-
-  &__search {
-    min-width: 300px;
-    flex: 1;
-
-    @media (max-width: 672px) {
-      min-width: 100%;
-      order: 2;
-    }
-  }
-
-  &__filter-btn {
-    display: flex;
-    align-items: center;
-    gap: $spacing-02;
-    flex-shrink: 0;
-
-    @media (max-width: 672px) {
-      order: 1;
-    }
-  }
-
-  &__filter-count {
-    margin-left: $spacing-02;
-  }
-
-  &__active-filters {
-    @include flex-center;
-    flex-wrap: wrap;
-    gap: $spacing-03;
-    margin-bottom: $spacing-05;
-  }
-
-  &__filters {
-    @include flex-center;
-    flex-wrap: wrap;
-    gap: $spacing-04;
-    margin-bottom: $spacing-05;
-  }
-
-  &__skeleton {
-    height: 180px;
-    margin-bottom: $spacing-05;
-  }
-
-  &__empty { @include empty-state; }
-
-  &__count {
-    @include type-style('helper-text-01');
-    color: $text-secondary;
-    margin-top: $spacing-05;
-  }
+.header-search-no-results {
+  padding: $spacing-05;
+  @include react.type-style('body-compact-01');
+  color: $text-secondary;
+  text-align: center;
 }

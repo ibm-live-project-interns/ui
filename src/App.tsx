@@ -1,37 +1,66 @@
 import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { AppLayout } from './components/layout';
+import { AppLayout, AuthLayout, PublicLayout } from './components/layout';
 import {
-  HomePage,
-  DashboardPage,
-  AlertsPage,
-  AlertDetailPage,
+  WelcomePage,
   NotFoundPage,
+  DashboardPage,
+  PriorityAlertsPage,
+  SettingsPage,
+  LoginPage,
+  RegisterPage,
+  ForgotPasswordPage,
+  AlertDetailsPage,
 } from './pages';
-import { bootstrapServices } from './core/di/bootstrap';
 
-// Initialize DI container
-bootstrapServices();
 
 const router = createBrowserRouter([
+  // Auth routes (header only, no sidebar)
   {
-    path: '/',
-    element: <AppLayout />,
+    element: <AuthLayout />,
     children: [
       {
-        index: true,
-        element: <HomePage />,
+        path: 'login',
+        element: <LoginPage />,
       },
+      {
+        path: 'register',
+        element: <RegisterPage />,
+      },
+      {
+        path: 'forgot-password',
+        element: <ForgotPasswordPage />,
+      },
+    ],
+  },
+  // Public routes (home page - header only, no sidebar)
+  {
+    element: <PublicLayout />,
+    children: [
+      {
+        path: '/',
+        element: <WelcomePage />,
+      },
+    ],
+  },
+  // Main app routes (with sidebar and header)
+  {
+    element: <AppLayout />,
+    children: [
       {
         path: 'dashboard',
         element: <DashboardPage />,
       },
       {
-        path: 'alerts',
-        element: <AlertsPage />,
+        path: 'priority-alerts',
+        element: <PriorityAlertsPage />,
+      },
+      {
+        path: 'settings',
+        element: <SettingsPage />,
       },
       {
         path: 'alerts/:alertId',
-        element: <AlertDetailPage />,
+        element: <AlertDetailsPage />,
       },
       {
         path: '*',

@@ -1,229 +1,364 @@
-import { useEffect, useState, useRef } from 'react';
 import {
-  Header,
-  HeaderContainer,
-  HeaderName,
-  HeaderNavigation,
-  HeaderMenuItem,
-  HeaderMenuButton,
-  HeaderGlobalBar,
-  HeaderGlobalAction,
-  SkipToContent,
-  SideNav,
-  SideNavItems,
-  SideNavLink,
-  SideNavDivider,
+    Header,
+    HeaderContainer,
+    HeaderName,
+    HeaderMenuButton,
+    HeaderGlobalBar,
+    HeaderGlobalAction,
+    SkipToContent,
+    SideNav,
+    SideNavItems,
+    SideNavLink,
+    Tag,
 } from '@carbon/react';
-import { Search, Notification, UserAvatar, Dashboard, WarningAlt, Home, Login } from '@carbon/icons-react';
+import {
+    Notification,
+    Dashboard,
+    WarningAlt,
+    ChartLine,
+    Devices,
+    Settings,
+    ChevronUp,
+    Logout,
+    Search as SearchIcon,
+    Close,
+} from '@carbon/icons-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { GlobalSearch } from './GlobalSearch';
-
-interface AppHeaderProps {
-  className?: string;
-}
+import { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
- * Carbon breakpoints for responsive behavior
- * @see https://carbondesignsystem.com/elements/2x-grid/overview/#breakpoints
- */
-const XS_BREAKPOINT = 410;  // Below this: only hamburger + logo + search
-const MD_BREAKPOINT = 672;  // Below this: hide notifications/profile, keep search
-const LG_BREAKPOINT = 1056; // Hide navigation below this
-
-/**
- * AppHeader Component
- *
- * Uses Carbon's HeaderContainer render prop pattern for proper responsive behavior.
- * - Below 672px (sm): Only logo + hamburger menu, everything else in SideNav
- * - 672px-1056px (md): Logo + hamburger + global actions, nav in SideNav
- * - Above 1056px (lg): Full header with navigation + global actions
- *
- * Search bar pattern: IBM-style search that expands in the header row
+ * AppHeader Component - Carbon UI Shell
+ * 
+ * Implements the Carbon UI Shell pattern with responsive SideNav:
+ * - Sidebar expanded by default on desktop
+ * - Collapses to hamburger menu overlay on mobile
+ * - Uses React Router Link for seamless client-side navigation
+ * - User profile at bottom with logout option sliding up
+ * - Expandable search that takes full width
+ * 
  * @see https://carbondesignsystem.com/components/UI-shell-header/usage/
  */
-export function AppHeader({ className }: AppHeaderProps) {
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [isSearchOpen, setIsSearchOpen] = useState(false);
-  const closeSideNavRef = useRef<(() => void) | null>(null);
 
-  // Track window width for responsive global actions
-  const [windowWidth, setWindowWidth] = useState(
-    typeof window !== 'undefined' ? window.innerWidth : LG_BREAKPOINT
-  );
+// User and navigation data from centralized mocks
+import { MOCK_USER, SEARCHABLE_ITEMS } from '@/__mocks__/alerts.mock';
+// Alert count via service (works with mock or API)
+import { alertDataService } from '@/services';
 
-  useEffect(() => {
-    const handleResize = () => {
-      const newWidth = window.innerWidth;
-      const oldWidth = windowWidth;
-      setWindowWidth(newWidth);
+/**
+ * Separate HeaderSearch component to isolate state from HeaderContainer re-renders
+ */
+function HeaderSearch() {
+    const navigate = useNavigate();
+    const [isExpanded, setIsExpanded] = useState(false);
+    const [searchValue, setSearchValue] = useState('');
+    const [searchResults, setSearchResults] = useState<typeof SEARCHABLE_ITEMS>([]);
+    const [showResults, setShowResults] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const containerRef = useRef<HTMLDivElement>(null);
 
-      // Force close sidebar when resizing from mobile to desktop
-      if (oldWidth < LG_BREAKPOINT && newWidth >= LG_BREAKPOINT && closeSideNavRef.current) {
-        closeSideNavRef.current();
-      }
-    };
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, [windowWidth]);
+    // Filter search results
+    useEffect(() => {
+        if (searchValue.trim()) {
+            const filtered = SEARCHABLE_ITEMS.filter((item) =>
+                item.label.toLowerCase().includes(searchValue.toLowerCase())
+            );
+            setSearchResults(filtered);
+            setShowResults(true);
+        } else {
+            setSearchResults([]);
+            setShowResults(false);
+        }
+    }, [searchValue]);
 
-  const isActive = (path: string) => {
-    if (path === '/') return location.pathname === '/';
-    return location.pathname.startsWith(path);
-  };
-
-  // Responsive visibility for global actions
-  const showSearch = windowWidth >= XS_BREAKPOINT;
-  const showNotificationsAndProfile = windowWidth >= MD_BREAKPOINT;
-
-  return (
-    <>
-      <HeaderContainer
-        render={({ isSideNavExpanded, onClickSideNavExpand }) => {
-          // Store close function in ref
-          closeSideNavRef.current = isSideNavExpanded ? onClickSideNavExpand : null;
-
-          const handleNavClick = (path: string) => {
-            if (isSideNavExpanded) {
-              onClickSideNavExpand();
+    // Click outside to close
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+                if (!searchValue.trim()) {
+                    setIsExpanded(false);
+                }
+                setShowResults(false);
             }
-            navigate(path);
-          };
+        };
 
-          return (
-            <Header aria-label="IBM watsonx Alerts" className={className}>
-              <SkipToContent />
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [searchValue]);
 
-              {/* Hamburger menu button - visible on mobile/tablet */}
-              <HeaderMenuButton
-                aria-label={isSideNavExpanded ? 'Close menu' : 'Open menu'}
-                onClick={onClickSideNavExpand}
-                isActive={isSideNavExpanded}
-                aria-expanded={isSideNavExpanded}
-              />
+    // Focus input when expanded
+    useEffect(() => {
+        if (isExpanded && inputRef.current) {
+            inputRef.current.focus();
+        }
+    }, [isExpanded]);
 
-              <HeaderName as={Link} to="/" prefix="IBM">
-                watsonx Alerts
-              </HeaderName>
+    const handleExpand = useCallback(() => {
+        setIsExpanded(true);
+    }, []);
 
-              {/* Desktop navigation - hidden on mobile via Carbon's responsive styles */}
-              <HeaderNavigation aria-label="Main navigation">
-                <HeaderMenuItem
-                  as={Link}
-                  to="/dashboard"
-                  isCurrentPage={isActive('/dashboard')}
-                >
-                  Dashboard
-                </HeaderMenuItem>
-                <HeaderMenuItem
-                  as={Link}
-                  to="/alerts"
-                  isCurrentPage={isActive('/alerts')}
-                >
-                  Alerts
-                </HeaderMenuItem>
-              </HeaderNavigation>
+    const handleClose = useCallback(() => {
+        setSearchValue('');
+        setShowResults(false);
+        setIsExpanded(false);
+    }, []);
 
-              {/* Global actions - responsive visibility */}
-              <HeaderGlobalBar>
-                {/* Search visible down to 410px */}
-                {showSearch && (
-                  <HeaderGlobalAction
+    const handleResultClick = useCallback((path: string) => {
+        navigate(path);
+        setSearchValue('');
+        setShowResults(false);
+        setIsExpanded(false);
+    }, [navigate]);
+
+    const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchValue(e.target.value);
+    }, []);
+
+    const handleKeyDown = useCallback((e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Escape') {
+            handleClose();
+        }
+    }, [handleClose]);
+
+    return (
+        <div
+            className={`header-expandable-search ${isExpanded ? 'expanded' : ''}`}
+            ref={containerRef}
+        >
+            {!isExpanded ? (
+                <HeaderGlobalAction
                     aria-label="Search"
-                    tooltipAlignment="end"
-                    onClick={() => setIsSearchOpen(true)}
-                    isActive={isSearchOpen}
-                  >
-                    <Search size={20} />
-                  </HeaderGlobalAction>
-                )}
-                {/* Notifications and Profile hidden on smaller screens */}
-                {showNotificationsAndProfile && (
-                  <>
-                    <HeaderGlobalAction
-                      aria-label="Notifications"
-                      tooltipAlignment="end"
+                    onClick={handleExpand}
+                >
+                    <SearchIcon size={20} />
+                </HeaderGlobalAction>
+            ) : (
+                <div className="header-search-expanded">
+                    <SearchIcon size={20} className="header-search-icon" />
+                    <input
+                        ref={inputRef}
+                        type="text"
+                        className="header-search-input"
+                        placeholder="Search pages, devices..."
+                        value={searchValue}
+                        onChange={handleInputChange}
+                        onKeyDown={handleKeyDown}
+                        autoComplete="off"
+                        aria-label="Search pages, devices, and alerts"
+                        aria-expanded={showResults}
+                        aria-controls="header-search-results"
+                        role="combobox"
+                        aria-autocomplete="list"
+                    />
+                    <button
+                        className="header-search-close"
+                        onClick={handleClose}
+                        aria-label="Close search"
                     >
-                      <Notification size={20} />
-                    </HeaderGlobalAction>
-                    <HeaderGlobalAction aria-label="User" tooltipAlignment="end">
-                      <UserAvatar size={20} />
-                    </HeaderGlobalAction>
-                  </>
-                )}
-              </HeaderGlobalBar>
+                        <Close size={20} />
+                    </button>
 
-              {/* Mobile/Tablet side navigation */}
-              <SideNav
-                aria-label="Side navigation"
-                expanded={isSideNavExpanded}
-                isPersistent={false}
-                onOverlayClick={onClickSideNavExpand}
-                onSideNavBlur={onClickSideNavExpand}
-              >
-                <SideNavItems>
-                  {/* Search link - only show on very small screens */}
-                  {!showSearch && (
-                    <SideNavLink
-                      renderIcon={Search}
-                      onClick={() => {
-                        if (isSideNavExpanded) onClickSideNavExpand();
-                        setIsSearchOpen(true);
-                      }}
-                    >
-                      Search
-                    </SideNavLink>
-                  )}
-
-                  {/* Navigation Links */}
-                  <SideNavLink
-                    renderIcon={Home}
-                    onClick={() => handleNavClick('/')}
-                    isActive={isActive('/')}
-                  >
-                    Home
-                  </SideNavLink>
-                  <SideNavLink
-                    renderIcon={Dashboard}
-                    onClick={() => handleNavClick('/dashboard')}
-                    isActive={isActive('/dashboard')}
-                  >
-                    Dashboard
-                  </SideNavLink>
-                  <SideNavLink
-                    renderIcon={WarningAlt}
-                    onClick={() => handleNavClick('/alerts')}
-                    isActive={isActive('/alerts')}
-                  >
-                    Alerts
-                  </SideNavLink>
-
-                  {/* Divider before account section */}
-                  <SideNavDivider />
-
-                  {/* Notifications - show in sidebar when hidden from header */}
-                  {!showNotificationsAndProfile && (
-                    <SideNavLink renderIcon={Notification}>
-                      Notifications
-                    </SideNavLink>
-                  )}
-
-                  {/* Account section - always visible in SideNav */}
-                  <SideNavLink renderIcon={UserAvatar}>
-                    Profile
-                  </SideNavLink>
-                  <SideNavLink renderIcon={Login}>
-                    Log in
-                  </SideNavLink>
-                </SideNavItems>
-              </SideNav>
-            </Header>
-          );
-        }}
-      />
-
-      {/* Global Search - IBM-style header search bar */}
-      <GlobalSearch isOpen={isSearchOpen} onClose={() => setIsSearchOpen(false)} />
-    </>
-  );
+                    {/* Search Results Dropdown */}
+                    {showResults && searchResults.length > 0 && (
+                        <div className="header-search-results" id="header-search-results" role="listbox" aria-label="Search results">
+                            {searchResults.map((result, index) => (
+                                <button
+                                    key={result.path || index}
+                                    className="header-search-result-item"
+                                    onClick={() => handleResultClick(result.path)}
+                                    role="option"
+                                    aria-label={`Navigate to ${result.label}`}
+                                >
+                                    <span className="header-search-result-label">{result.label}</span>
+                                    <span className="header-search-result-type">{result.type}</span>
+                                </button>
+                            ))}
+                        </div>
+                    )}
+                    {showResults && searchValue.trim() && searchResults.length === 0 && (
+                        <div className="header-search-results">
+                            <div className="header-search-no-results">
+                                No results found for "{searchValue}"
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    );
 }
+
+export function AppHeader() {
+    const location = useLocation();
+    const [userMenuOpen, setUserMenuOpen] = useState(false);
+    const [alertCount, setAlertCount] = useState(0);
+    const userMenuRef = useRef<HTMLDivElement>(null);
+
+    // Fetch alert count on mount and periodically
+    useEffect(() => {
+        const fetchCount = async () => {
+            const count = await alertDataService.getActiveAlertCount();
+            setAlertCount(count);
+        };
+        fetchCount();
+        // Refresh every 30 seconds
+        const interval = setInterval(fetchCount, 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+    const isActive = (path: string) => {
+        if (path === '/') return location.pathname === '/';
+        return location.pathname.startsWith(path);
+    };
+
+    // Close user menu when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (userMenuRef.current && !userMenuRef.current.contains(event.target as Node)) {
+                setUserMenuOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    return (
+        <HeaderContainer
+            render={({ isSideNavExpanded, onClickSideNavExpand }) => (
+                <Header aria-label="IBM watsonx Alerts">
+                    <SkipToContent />
+                    <HeaderMenuButton
+                        aria-label={isSideNavExpanded ? 'Close menu' : 'Open menu'}
+                        onClick={onClickSideNavExpand}
+                        isActive={isSideNavExpanded}
+                        aria-expanded={isSideNavExpanded}
+                    />
+                    <HeaderName as={Link} to="/" prefix="IBM">
+                        watsonx Alerts
+                    </HeaderName>
+
+                    {/* Global Bar - Expandable Search and Notifications */}
+                    <HeaderGlobalBar>
+                        {/* Isolated Search Component */}
+                        <HeaderSearch />
+
+                        {/* Notifications */}
+                        <HeaderGlobalAction
+                            aria-label="Notifications"
+                            tooltipAlignment="end"
+                        >
+                            <Notification size={20} />
+                        </HeaderGlobalAction>
+                    </HeaderGlobalBar>
+
+                    <SideNav
+                        aria-label="Side navigation"
+                        expanded={isSideNavExpanded}
+                        onOverlayClick={onClickSideNavExpand}
+                        onSideNavBlur={onClickSideNavExpand}
+                        isChildOfHeader
+                    >
+                        <SideNavItems>
+                            {/* Dashboard */}
+                            <SideNavLink
+                                as={Link}
+                                to="/dashboard"
+                                renderIcon={Dashboard}
+                                isActive={isActive('/dashboard')}
+                            >
+                                Dashboard
+                            </SideNavLink>
+
+                            {/* Priority Alerts with dynamic badge */}
+                            <SideNavLink
+                                as={Link}
+                                to="/priority-alerts"
+                                renderIcon={WarningAlt}
+                                isActive={isActive('/priority-alerts')}
+                                className="sidenav-link-with-badge"
+                            >
+                                <span className="sidenav-link-text">Priority Alerts</span>
+                                <Tag type="red" size="sm" className="sidenav-alert-badge">
+                                    {alertCount}
+                                </Tag>
+                            </SideNavLink>
+
+
+
+                            {/* Trends & Insights */}
+                            <SideNavLink
+                                as={Link}
+                                to="/trends"
+                                renderIcon={ChartLine}
+                                isActive={isActive('/trends')}
+                            >
+                                Trends & Insights
+                            </SideNavLink>
+
+                            {/* Device Explorer */}
+                            <SideNavLink
+                                as={Link}
+                                to="/devices"
+                                renderIcon={Devices}
+                                isActive={isActive('/devices')}
+                            >
+                                Device Explorer
+                            </SideNavLink>
+
+                            {/* Settings */}
+                            <SideNavLink
+                                as={Link}
+                                to="/settings"
+                                renderIcon={Settings}
+                                isActive={isActive('/settings')}
+                            >
+                                Settings
+                            </SideNavLink>
+                        </SideNavItems>
+
+                        {/* User Profile Footer - Logout slides up from bottom */}
+                        <div className="sidenav-user-footer" ref={userMenuRef}>
+                            {/* Logout menu - slides up when open */}
+                            <div className={`sidenav-user-menu ${userMenuOpen ? 'open' : ''}`}>
+                                <button
+                                    className="sidenav-user-menu-item"
+                                    onClick={() => {
+                                        // Handle logout
+                                        console.log('Logout clicked');
+                                        setUserMenuOpen(false);
+                                    }}
+                                >
+                                    <Logout size={16} />
+                                    <span>Log out</span>
+                                </button>
+                            </div>
+
+                            {/* User profile row - stays at bottom */}
+                            <div
+                                className="sidenav-user-profile"
+                                onClick={() => setUserMenuOpen(!userMenuOpen)}
+                                role="button"
+                                tabIndex={0}
+                                onKeyDown={(e) => e.key === 'Enter' && setUserMenuOpen(!userMenuOpen)}
+                            >
+                                <div className="sidenav-user-avatar">
+                                    {MOCK_USER.initials}
+                                </div>
+                                <div className="sidenav-user-info">
+                                    <span className="sidenav-user-name">{MOCK_USER.name}</span>
+                                    <span className="sidenav-user-role">{MOCK_USER.role}</span>
+                                </div>
+                                <ChevronUp
+                                    size={16}
+                                    className={`sidenav-user-chevron ${userMenuOpen ? 'open' : ''}`}
+                                />
+                            </div>
+                        </div>
+                    </SideNav>
+                </Header>
+            )}
+        />
+    );
+}
+
+export default AppHeader;

@@ -11,7 +11,6 @@
 
 import { HttpService } from './HttpService';
 import { env } from '../config/environment';
-import { incidentFactory } from '../domain/factories';
 import type { Alert } from '../models';
 
 /**
@@ -55,6 +54,19 @@ export interface CreateIncidentResponse {
 }
 
 /**
+ * Create incident request from alert
+ */
+function createRequestFromAlert(alert: Alert): CreateIncidentRequest {
+  return {
+    alertId: alert.id,
+    title: `Alert: ${alert.device.hostname} - ${alert.severity.toUpperCase()}`,
+    description: alert.explanation,
+    severity: alert.severity === 'info' ? 'low' : alert.severity,
+    category: 'Network',
+  };
+}
+
+/**
  * TicketingService - Handles incident creation and management
  * Integrates with ServiceNow via Agents-api ticketing connector
  *
@@ -79,7 +91,7 @@ export class TicketingService extends HttpService {
    * Check if ticketing integration is enabled
    */
   public isEnabled(): boolean {
-    return env.ticketingEnabled && env.ticketingProvider !== 'none';
+    return env.enableTicketing && env.ticketingProvider !== 'none';
   }
 
   /**
@@ -101,8 +113,8 @@ export class TicketingService extends HttpService {
       };
     }
 
-    // Use factory to create incident request
-    const request = incidentFactory.createRequestFromAlert(alert);
+    // Create incident request from alert
+    const request = createRequestFromAlert(alert);
 
     // Production: return this.post<CreateIncidentResponse>('/incidents', request);
 

@@ -1,27 +1,26 @@
 /**
  * useRealTimeAlerts Hook
- * Combines polling and WebSocket for real-time alert updates
- *
- * @architecture docs/arch/UI/README.md
- * "Provides real-time updates, historical alert navigation"
- *
- * Uses WebSocket when available, falls back to polling
+ * 
+ * Provides real-time alert updates via WebSocket or polling fallback.
+ * Uses AlertDataService which automatically switches between mock/API.
+ * 
+ * Usage:
+ *   const { alerts, loading, isConnected, refresh } = useRealTimeAlerts();
  */
 
 import { useEffect, useState, useCallback, useRef } from 'react';
-import { alertService } from '../services';
-import { webSocketService, type WebSocketMessage } from '../services/WebSocketService';
-import { env } from '../config/environment';
-import type { Alert, AlertFilters } from '../models';
+import { alertDataService } from '@/services';
+import { webSocketService, type WebSocketMessage } from '@/services/WebSocketService';
+import { env } from '@/config';
+import type { PriorityAlert } from '@/constants';
 
 interface UseRealTimeAlertsOptions {
-  filters?: AlertFilters;
   pollingInterval?: number;
   enableRealTime?: boolean;
 }
 
 interface UseRealTimeAlertsReturn {
-  alerts: Alert[];
+  alerts: PriorityAlert[];
   loading: boolean;
   error: string | null;
   isConnected: boolean;
@@ -29,63 +28,56 @@ interface UseRealTimeAlertsReturn {
   refresh: () => Promise<void>;
 }
 
-/**
- * Hook for real-time alert updates
- * Automatically switches between WebSocket and polling based on availability
- */
-export function useRealTimeAlerts(options: UseRealTimeAlertsOptions = {}): UseRealTimeAlertsReturn {
+export function useRealTimeAlerts(
+  options: UseRealTimeAlertsOptions = {}
+): UseRealTimeAlertsReturn {
   const {
-    filters,
     pollingInterval = env.alertPollingInterval,
     enableRealTime = true,
   } = options;
 
-  const [alerts, setAlerts] = useState<Alert[]>([]);
+  const [alerts, setAlerts] = useState<PriorityAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionType, setConnectionType] = useState<'websocket' | 'polling' | 'none'>('none');
 
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const filtersRef = useRef(filters);
-  filtersRef.current = filters;
 
-  // Fetch alerts from API
+  // Fetch alerts from service
   const fetchAlerts = useCallback(async () => {
     try {
       setError(null);
-      const data = await alertService.fetchAlerts(filtersRef.current);
+      const data = await alertDataService.getAlerts();
       setAlerts(data);
-    } catch {
-      setError('Failed to fetch alerts');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to fetch alerts');
     } finally {
       setLoading(false);
     }
   }, []);
 
-  // Handle incoming WebSocket messages
+  // Handle WebSocket messages
   const handleWebSocketMessage = useCallback((message: WebSocketMessage) => {
     switch (message.type) {
       case 'alert:new':
         if (message.payload) {
-          setAlerts(prev => [message.payload as Alert, ...prev]);
+          setAlerts(prev => [message.payload as unknown as PriorityAlert, ...prev]);
         }
         break;
 
       case 'alert:updated':
         if (message.payload) {
-          const updatedAlert = message.payload as Alert;
-          setAlerts(prev =>
-            prev.map(a => (a.id === updatedAlert.id ? updatedAlert : a))
-          );
+          const updated = message.payload as unknown as PriorityAlert;
+          setAlerts(prev => prev.map(a => (a.id === updated.id ? updated : a)));
         }
         break;
 
       case 'alert:resolved':
         if (message.payload) {
-          const resolvedAlert = message.payload as Alert;
+          const resolved = message.payload as unknown as PriorityAlert;
           setAlerts(prev =>
-            prev.map(a => (a.id === resolvedAlert.id ? { ...a, status: 'resolved' } : a))
+            prev.map(a => (a.id === resolved.id ? { ...a, status: 'resolved' as const } : a))
           );
         }
         break;
@@ -93,7 +85,7 @@ export function useRealTimeAlerts(options: UseRealTimeAlertsOptions = {}): UseRe
       case 'connection:open':
         setIsConnected(true);
         setConnectionType('websocket');
-        // Clear polling when WebSocket is connected
+        // Clear polling when WebSocket connects
         if (pollingRef.current) {
           clearInterval(pollingRef.current);
           pollingRef.current = null;
@@ -136,7 +128,7 @@ export function useRealTimeAlerts(options: UseRealTimeAlertsOptions = {}): UseRe
         webSocketService.subscribe('connection:error', handleWebSocketMessage),
       ];
 
-      // Fallback to polling if WebSocket doesn't connect within 5 seconds
+      // Fallback to polling if WebSocket doesn't connect
       const timeout = setTimeout(() => {
         if (!webSocketService.isConnected()) {
           setConnectionType('polling');
@@ -154,7 +146,7 @@ export function useRealTimeAlerts(options: UseRealTimeAlertsOptions = {}): UseRe
     } else {
       // Use polling if WebSocket is disabled
       setConnectionType('polling');
-      setIsConnected(true); // Consider polling as "connected"
+      setIsConnected(true);
       pollingRef.current = setInterval(fetchAlerts, pollingInterval);
 
       return () => {
@@ -164,11 +156,6 @@ export function useRealTimeAlerts(options: UseRealTimeAlertsOptions = {}): UseRe
       };
     }
   }, [enableRealTime, fetchAlerts, handleWebSocketMessage, pollingInterval]);
-
-  // Re-fetch when filters change
-  useEffect(() => {
-    fetchAlerts();
-  }, [filters, fetchAlerts]);
 
   return {
     alerts,
