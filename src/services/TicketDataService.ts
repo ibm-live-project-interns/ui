@@ -1,6 +1,6 @@
 /**
  * Ticket Data Service
- * 
+ *
  * Unified data layer for ticket operations.
  * Persists tickets in localStorage for mock mode, API for production.
  */
@@ -144,10 +144,10 @@ class MockTicketDataService implements ITicketDataService {
 
     async createTicket(data: CreateTicketData): Promise<TicketInfo> {
         await this.simulateDelay();
-        
+
         const tickets = this.getStoredTickets();
         const now = new Date().toISOString().replace('T', ' ').slice(0, 19);
-        
+
         const newTicket: TicketInfo = {
             id: `ticket-${Date.now()}`,
             ticketNumber: this.generateTicketNumber(),
@@ -164,17 +164,17 @@ class MockTicketDataService implements ITicketDataService {
 
         tickets.unshift(newTicket); // Add to beginning
         this.saveTickets(tickets);
-        
+
         console.log('[MockTicketService] Created ticket:', newTicket);
         return newTicket;
     }
 
     async updateTicket(id: string, data: Partial<TicketInfo>): Promise<TicketInfo> {
         await this.simulateDelay();
-        
+
         const tickets = this.getStoredTickets();
         const index = tickets.findIndex(t => t.id === id);
-        
+
         if (index === -1) {
             throw new Error('Ticket not found');
         }
@@ -192,7 +192,7 @@ class MockTicketDataService implements ITicketDataService {
 
     async deleteTicket(id: string): Promise<void> {
         await this.simulateDelay();
-        
+
         const tickets = this.getStoredTickets();
         const filtered = tickets.filter(t => t.id !== id);
         this.saveTickets(filtered);
@@ -206,7 +206,9 @@ class MockTicketDataService implements ITicketDataService {
 class ApiTicketDataService extends HttpService implements ITicketDataService {
     constructor() {
         const baseUrl = env.apiBaseUrl.replace(/\/$/, '');
-        super(`${baseUrl}/api/${env.apiVersion}`);
+        // Build URL: baseUrl + /api/v1
+        const apiPath = baseUrl ? `${baseUrl}/api/${env.apiVersion}` : `/api/${env.apiVersion}`;
+        super(apiPath);
     }
 
     async getTickets(): Promise<TicketInfo[]> {

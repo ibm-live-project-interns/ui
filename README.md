@@ -24,10 +24,12 @@ npm run build
 
 ## Access Points
 
-| Mode | URL | Data Source |
-|------|-----|-------------|
-| Development | http://localhost:5173 | Mock data |
-| Production | http://localhost:3000 | Real API |
+| Mode | URL | Data Source | Login |
+|------|-----|-------------|-------|
+| Development | http://localhost:5173 | Mock data | Any credentials |
+| Production | http://localhost:3000 | Real API | `admin` / `admin123` (any works) |
+
+**Demo Login:** The application accepts any non-empty username and password for demonstration. Try `admin` / `admin123`.
 
 ## Project Structure
 
@@ -101,10 +103,12 @@ docker compose down
 
 | Service | URL | Credentials |
 |---------|-----|-------------|
-| UI | http://localhost:3000 | - |
-| API | http://localhost:8080/api/v1 | JWT Auth |
+| UI | http://localhost:3000 | `admin` / `admin123` (any password works) |
+| API | http://localhost:8080/api/v1 | JWT Auth (Direct access) |
 | PgAdmin | http://localhost:5050 | admin@admin.com / root |
 | Kafka UI | http://localhost:8090 | - |
+
+**Note:** When using the web UI at port 3000, nginx proxies API requests to the backend at port 8080.
 
 ### Using PgAdmin
 

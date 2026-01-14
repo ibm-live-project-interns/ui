@@ -1,12 +1,12 @@
 /**
  * Environment Configuration
- * 
+ *
  * Centralized configuration for the application including:
  * - API endpoints and base URLs
  * - Feature flags (WebSocket, ticketing, RAG)
  * - Polling intervals
  * - Mock data switching
- * 
+ *
  * Usage:
  *   import { env, API_ENDPOINTS, buildApiUrl } from '@/config';
  */
@@ -82,7 +82,7 @@ const development: EnvironmentConfig = {
 };
 
 const production: EnvironmentConfig = {
-  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '/api',
+  apiBaseUrl: import.meta.env.VITE_API_BASE_URL || '',
   apiVersion: 'v1',
   apiTimeout: 30000,
   apiRetryAttempts: 3,

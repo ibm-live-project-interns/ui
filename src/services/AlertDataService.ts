@@ -1,9 +1,9 @@
 /**
  * Alert Data Service
- * 
+ *
  * Unified data layer for alert operations.
  * Automatically switches between mock data and real API based on environment config.
- * 
+ *
  * Usage:
  *   import { alertDataService } from '@/services/AlertDataService';
  *   const alerts = await alertDataService.getAlerts();
@@ -244,9 +244,9 @@ class MockAlertDataService implements IAlertDataService {
 
     async exportReport(format: 'csv' | 'pdf'): Promise<void> {
         await this.simulateDelay();
-        
+
         const alerts = MOCK_PRIORITY_ALERTS;
-        
+
         if (format === 'csv') {
             const headers = ['ID', 'Severity', 'Status', 'Device', 'IP', 'Summary', 'Confidence', 'Timestamp'];
             const rows = alerts.map(a => [
@@ -260,7 +260,7 @@ class MockAlertDataService implements IAlertDataService {
                 a.timestamp.absolute
             ]);
             const csv = [headers.join(','), ...rows.map(r => r.join(','))].join('\n');
-            
+
             // Trigger download
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const url = URL.createObjectURL(blob);
@@ -284,9 +284,10 @@ class MockAlertDataService implements IAlertDataService {
 
 class ApiAlertDataService extends HttpService implements IAlertDataService {
     constructor() {
-        // Use base URL + /api/v1 directly to avoid double slashes
+        // Build URL: baseUrl + /api/v1
         const baseUrl = env.apiBaseUrl.replace(/\/$/, '');
-        super(`${baseUrl}/api/${env.apiVersion}`);
+        const apiPath = baseUrl ? `${baseUrl}/api/${env.apiVersion}` : `/api/${env.apiVersion}`;
+        super(apiPath);
     }
 
     async getAlerts(): Promise<PriorityAlert[]> {
@@ -369,7 +370,7 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
     }
 
     async exportReport(format: 'csv' | 'pdf'): Promise<void> {
-        // For file downloads, we might need a different handling in HttpService, 
+        // For file downloads, we might need a different handling in HttpService,
         // but for now assuming it triggers a download or returns a URL
         return this.get<void>(`/reports/export?format=${format}`);
     }

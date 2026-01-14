@@ -23,9 +23,11 @@ class AuthService extends HttpService {
 
     constructor() {
         const baseUrl = env.apiBaseUrl.replace(/\/$/, '');
-        super(`${baseUrl}/api/${env.apiVersion}`);
+        // Build URL: baseUrl + /api/v1
+        const apiPath = baseUrl ? `${baseUrl}/api/${env.apiVersion}` : `/api/${env.apiVersion}`;
+        super(apiPath);
         this.loadUser();
-        
+
         // Clear invalid mock tokens when in API mode
         if (!env.useMockData) {
             const token = localStorage.getItem('noc_token');
