@@ -1,7 +1,6 @@
-import { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
-    Tile,
     DataTable,
     TableContainer,
     Table,
@@ -17,14 +16,18 @@ import {
     Pagination,
     Checkbox,
     ProgressBar,
+    DataTableSkeleton,
+    SkeletonText,
+    Tile,
 } from '@carbon/react';
 import {
     Export,
     Checkmark,
     View,
-    Filter,
+    Close,
 } from '@carbon/icons-react';
 import '@/styles/PriorityAlertsPage.scss';
+import '@/styles/KPICard.scss';
 
 // All from consolidated constants
 import {
@@ -33,13 +36,18 @@ import {
     getStatusTag,
     getDeviceIcon,
     type Severity,
+    type PriorityAlert,
 } from '@/constants';
 
-// Mock data
-import { MOCK_PRIORITY_ALERTS } from '@/__mocks__/alerts.mock';
+// Data Service
+import { alertDataService } from '@/services';
+
+// Reusable components
+import { KPICard } from '@/components';
+import type { KPICardData, KPIColor } from '@/components';
 
 // KPI data derived from alerts
-const getKPIData = () => {
+const generateKPIData = (alerts: PriorityAlert[]): KPICardData[] => {
     const counts: Record<Severity, number> = {
         critical: 0,
         major: 0,
@@ -47,42 +55,55 @@ const getKPIData = () => {
         info: 0,
     };
 
-    MOCK_PRIORITY_ALERTS.forEach((alert) => {
-        counts[alert.severity]++;
+    alerts.forEach((alert) => {
+        if (counts[alert.severity] !== undefined) {
+            counts[alert.severity]++;
+        }
     });
+
+    const colorMap: Record<string, KPIColor> = {
+        critical: 'red',
+        major: 'orange',
+        minor: 'yellow',
+        info: 'green',
+    };
 
     return [
         {
-            severity: 'critical' as Severity,
-            count: counts.critical,
+            id: 'critical',
             label: 'Critical Alerts',
-            subtitle: SEVERITY_CONFIG.critical.description,
-            icon: SEVERITY_CONFIG.critical.icon,
-            color: 'red'
+            value: counts.critical,
+            footnote: `Priority ${SEVERITY_CONFIG.critical.priority}`,
+            IconComponent: SEVERITY_CONFIG.critical.icon,
+            color: colorMap.critical,
+            borderColor: colorMap.critical,
         },
         {
-            severity: 'major' as Severity,
-            count: counts.major,
+            id: 'major',
             label: 'Major Alerts',
-            subtitle: SEVERITY_CONFIG.major.description,
-            icon: SEVERITY_CONFIG.major.icon,
-            color: 'orange'
+            value: counts.major,
+            footnote: `Priority ${SEVERITY_CONFIG.major.priority}`,
+            IconComponent: SEVERITY_CONFIG.major.icon,
+            color: colorMap.major,
+            borderColor: colorMap.major,
         },
         {
-            severity: 'minor' as Severity,
-            count: counts.minor,
+            id: 'minor',
             label: 'Minor Alerts',
-            subtitle: SEVERITY_CONFIG.minor.description,
-            icon: SEVERITY_CONFIG.minor.icon,
-            color: 'yellow'
+            value: counts.minor,
+            footnote: `Priority ${SEVERITY_CONFIG.minor.priority}`,
+            IconComponent: SEVERITY_CONFIG.minor.icon,
+            color: colorMap.minor,
+            borderColor: colorMap.minor,
         },
         {
-            severity: 'info' as Severity,
-            count: counts.info,
+            id: 'info',
             label: 'Info Alerts',
-            subtitle: SEVERITY_CONFIG.info.description,
-            icon: SEVERITY_CONFIG.info.icon,
-            color: 'green'
+            value: counts.info,
+            footnote: `Priority ${SEVERITY_CONFIG.info.priority}`,
+            IconComponent: SEVERITY_CONFIG.info.icon,
+            color: colorMap.info,
+            borderColor: colorMap.info,
         },
     ];
 };
@@ -112,7 +133,10 @@ const TIME_OPTIONS = [
 const QUICK_FILTERS = ['Critical Only', 'Unacknowledged', 'My Devices', 'Repeated Alerts'];
 
 export function PriorityAlertsPage() {
-    const [searchQuery, setSearchQuery] = useState('');
+    const [searchParams] = useSearchParams();
+    const deviceFilter = searchParams.get('device');
+    
+    const [searchQuery, setSearchQuery] = useState(deviceFilter || '');
     const [selectedSeverity, setSelectedSeverity] = useState(SEVERITY_OPTIONS[0]);
     const [selectedStatus, setSelectedStatus] = useState(STATUS_OPTIONS[0]);
     const [selectedTime, setSelectedTime] = useState(TIME_OPTIONS[0]);
@@ -121,19 +145,94 @@ export function PriorityAlertsPage() {
     const [pageSize, setPageSize] = useState(10);
     const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
-    const kpiData = useMemo(() => getKPIData(), []);
+    // Data State
+    const [alerts, setAlerts] = useState<PriorityAlert[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
     const navigate = useNavigate();
+
+    // Update search when device filter changes from URL
+    useEffect(() => {
+        if (deviceFilter) {
+            setSearchQuery(deviceFilter);
+        }
+    }, [deviceFilter]);
+
+    // Action Handlers
+    const handleAcknowledgeAlert = async (alertId: string) => {
+        try {
+            await alertDataService.acknowledgeAlert(alertId);
+            // Refresh alerts after acknowledging
+            const updatedAlerts = await alertDataService.getAlerts();
+            setAlerts(updatedAlerts);
+        } catch (error) {
+            console.error('Failed to acknowledge alert:', error);
+        }
+    };
+
+    const handleAcknowledgeAll = async () => {
+        try {
+            // Acknowledge all selected or all alerts if none selected
+            const alertsToAck = selectedRows.size > 0
+                ? Array.from(selectedRows)
+                : alerts.map(a => a.id);
+
+            await Promise.all(alertsToAck.map(id => alertDataService.acknowledgeAlert(id)));
+
+            // Refresh alerts
+            const updatedAlerts = await alertDataService.getAlerts();
+            setAlerts(updatedAlerts);
+            setSelectedRows(new Set());
+        } catch (error) {
+            console.error('Failed to acknowledge alerts:', error);
+        }
+    };
+
+    const handleExport = async () => {
+        try {
+            await alertDataService.exportReport('csv');
+            console.log('Export completed successfully');
+        } catch (error) {
+            console.error('Failed to export report:', error);
+        }
+    };
+
+    // Fetch Alerts - Re-fetch when time period changes
+    useEffect(() => {
+        const fetchAlerts = async () => {
+            setIsLoading(true);
+            try {
+                // TODO: When API supports time filtering, pass selectedTime.id to getAlerts()
+                // For now, we fetch all and filter client-side
+                const data = await alertDataService.getAlerts();
+                setAlerts(data);
+            } catch (error) {
+                console.error("Failed to fetch priority alerts:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchAlerts();
+        const interval = setInterval(fetchAlerts, 30000); // Polling
+        return () => clearInterval(interval);
+    }, [selectedTime]); // Re-fetch when time period changes
+
+    const kpiData = useMemo(() => generateKPIData(alerts), [alerts]);
 
     // Filter alerts
     const filteredAlerts = useMemo(() => {
-        let result = [...MOCK_PRIORITY_ALERTS];
+        let result = [...alerts];
 
         if (searchQuery) {
             const query = searchQuery.toLowerCase();
             result = result.filter(
                 (alert) =>
                     alert.device.name.toLowerCase().includes(query) ||
-                    alert.aiSummary.toLowerCase().includes(query)
+                    alert.device.ip.toLowerCase().includes(query) ||
+                    alert.aiSummary.toLowerCase().includes(query) ||
+                    alert.aiTitle.toLowerCase().includes(query) ||
+                    alert.id.toLowerCase().includes(query)
             );
         }
 
@@ -153,8 +252,21 @@ export function PriorityAlertsPage() {
             result = result.filter((alert) => alert.status === 'new');
         }
 
+        if (activeQuickFilters.includes('My Devices')) {
+            // TODO: Replace with actual user's assigned devices from backend/user profile
+            const myDevices = ['Core-SW-01', 'FW-DMZ-03', 'RTR-EDGE-05'];
+            result = result.filter((alert) => myDevices.includes(alert.device.name));
+        }
+
+        if (activeQuickFilters.includes('Repeated Alerts')) {
+            // Find alerts that appear more than once (by title)
+            const alertCounts = new Map<string, number>();
+            alerts.forEach(a => alertCounts.set(a.aiTitle, (alertCounts.get(a.aiTitle) || 0) + 1));
+            result = result.filter((alert) => (alertCounts.get(alert.aiTitle) || 0) > 1);
+        }
+
         return result;
-    }, [searchQuery, selectedSeverity, selectedStatus, activeQuickFilters]);
+    }, [searchQuery, selectedSeverity, selectedStatus, activeQuickFilters, alerts]);
 
     // Paginate
     const paginatedAlerts = useMemo(() => {
@@ -168,7 +280,32 @@ export function PriorityAlertsPage() {
                 ? prev.filter((f) => f !== filter)
                 : [...prev, filter]
         );
+        setCurrentPage(1); // Reset to first page when filter changes
     };
+
+    // Clear all filters
+    const clearAllFilters = () => {
+        setSearchQuery('');
+        setSelectedSeverity(SEVERITY_OPTIONS[0]);
+        setSelectedStatus(STATUS_OPTIONS[0]);
+        setSelectedTime(TIME_OPTIONS[0]);
+        setActiveQuickFilters([]);
+        setCurrentPage(1);
+    };
+
+    // Check if any filters are active
+    const hasActiveFilters = searchQuery || 
+        selectedSeverity.id !== 'all' || 
+        selectedStatus.id !== 'all' || 
+        activeQuickFilters.length > 0;
+
+    // Count active filters for indicator
+    const activeFilterCount = [
+        searchQuery ? 1 : 0,
+        selectedSeverity.id !== 'all' ? 1 : 0,
+        selectedStatus.id !== 'all' ? 1 : 0,
+        activeQuickFilters.length,
+    ].reduce((a, b) => a + b, 0);
 
     const toggleRowSelection = (id: string) => {
         setSelectedRows((prev) => {
@@ -193,6 +330,49 @@ export function PriorityAlertsPage() {
         { key: 'actions', header: 'Actions' },
     ];
 
+    if (isLoading && alerts.length === 0) {
+        return (
+            <div className="priority-alerts-page">
+                {/* Header */}
+                <div className="page-header">
+                    <div className="page-header-left">
+                        <h1 className="page-title">Priority Alerts</h1>
+                        <p className="page-description">
+                            Critical and high-priority network alerts requiring immediate attention
+                        </p>
+                    </div>
+                    <div className="page-header-actions">
+                        <Button kind="tertiary" renderIcon={Export} disabled>
+                            Export
+                        </Button>
+                        <Button kind="primary" renderIcon={Checkmark} disabled>
+                            Acknowledge All
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Skeleton KPI Row */}
+                <div className="kpi-row">
+                    {[1, 2, 3, 4].map((i) => (
+                        <Tile key={i} className="kpi-card-skeleton">
+                            <SkeletonText width="60%" />
+                            <SkeletonText heading width="40%" />
+                            <SkeletonText width="80%" />
+                        </Tile>
+                    ))}
+                </div>
+
+                {/* Skeleton Table */}
+                <DataTableSkeleton
+                    columnCount={headers.length}
+                    rowCount={5}
+                    showHeader
+                    showToolbar
+                />
+            </div>
+        );
+    }
+
     return (
         <div className="priority-alerts-page">
             {/* Header */}
@@ -204,28 +384,19 @@ export function PriorityAlertsPage() {
                     </p>
                 </div>
                 <div className="page-header-actions">
-                    <Button kind="tertiary" renderIcon={Export}>
+                    <Button kind="tertiary" renderIcon={Export} onClick={handleExport}>
                         Export
                     </Button>
-                    <Button kind="primary" renderIcon={Checkmark}>
+                    <Button kind="primary" renderIcon={Checkmark} onClick={handleAcknowledgeAll}>
                         Acknowledge All
                     </Button>
                 </div>
             </div>
 
-            {/* KPI Tiles */}
+            {/* KPI Tiles - Using unified KPICard component */}
             <div className="kpi-row">
                 {kpiData.map((kpi) => (
-                    <Tile key={kpi.severity} className={`kpi-tile kpi-tile--${kpi.color}`}>
-                        <div className={`kpi-icon kpi-icon--${kpi.color}`}>
-                            <kpi.icon size={24} />
-                        </div>
-                        <div className="kpi-value">{kpi.count}</div>
-                        <div className="kpi-details">
-                            <div className="kpi-label">{kpi.label}</div>
-                            <div className="kpi-subtitle">{kpi.subtitle}</div>
-                        </div>
-                    </Tile>
+                    <KPICard key={kpi.id} {...kpi} />
                 ))}
             </div>
 
@@ -233,10 +404,17 @@ export function PriorityAlertsPage() {
             <div className="filters-row">
                 <Search
                     size="lg"
-                    placeholder="Search alerts..."
-                    labelText="Search"
+                    placeholder="Search by device, summary, or title..."
+                    labelText="Search alerts"
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        setCurrentPage(1);
+                    }}
+                    onClear={() => {
+                        setSearchQuery('');
+                        setCurrentPage(1);
+                    }}
                     className="filters-search"
                 />
                 <Dropdown
@@ -246,7 +424,10 @@ export function PriorityAlertsPage() {
                     items={SEVERITY_OPTIONS}
                     itemToString={(item) => item?.text || ''}
                     selectedItem={selectedSeverity}
-                    onChange={({ selectedItem }) => setSelectedSeverity(selectedItem || SEVERITY_OPTIONS[0])}
+                    onChange={({ selectedItem }) => {
+                        setSelectedSeverity(selectedItem || SEVERITY_OPTIONS[0]);
+                        setCurrentPage(1);
+                    }}
                     size="lg"
                 />
                 <Dropdown
@@ -256,7 +437,10 @@ export function PriorityAlertsPage() {
                     items={STATUS_OPTIONS}
                     itemToString={(item) => item?.text || ''}
                     selectedItem={selectedStatus}
-                    onChange={({ selectedItem }) => setSelectedStatus(selectedItem || STATUS_OPTIONS[0])}
+                    onChange={({ selectedItem }) => {
+                        setSelectedStatus(selectedItem || STATUS_OPTIONS[0]);
+                        setCurrentPage(1);
+                    }}
                     size="lg"
                 />
                 <Dropdown
@@ -266,10 +450,22 @@ export function PriorityAlertsPage() {
                     items={TIME_OPTIONS}
                     itemToString={(item) => item?.text || ''}
                     selectedItem={selectedTime}
-                    onChange={({ selectedItem }) => setSelectedTime(selectedItem || TIME_OPTIONS[0])}
+                    onChange={({ selectedItem }) => {
+                        setSelectedTime(selectedItem || TIME_OPTIONS[0]);
+                        setCurrentPage(1);
+                    }}
                     size="lg"
                 />
-                <Button kind="ghost" renderIcon={Filter} hasIconOnly iconDescription="More Filters" />
+                {hasActiveFilters && (
+                    <Button 
+                        kind="ghost" 
+                        size="lg"
+                        renderIcon={Close}
+                        onClick={clearAllFilters}
+                    >
+                        Clear filters ({activeFilterCount})
+                    </Button>
+                )}
             </div>
 
             {/* Quick Filters */}
@@ -286,6 +482,13 @@ export function PriorityAlertsPage() {
                     </Tag>
                 ))}
             </div>
+
+            {/* Filter Results Summary */}
+            {hasActiveFilters && (
+                <div className="filter-results-summary">
+                    Showing {filteredAlerts.length} of {alerts.length} alerts
+                </div>
+            )}
 
             {/* Alerts Table */}
             <div className="alerts-table-container">
@@ -372,6 +575,7 @@ export function PriorityAlertsPage() {
                                                             renderIcon={Checkmark}
                                                             hasIconOnly
                                                             iconDescription="Acknowledge"
+                                                            onClick={() => handleAcknowledgeAlert(alert.id)}
                                                         />
                                                     </div>
                                                 </TableCell>

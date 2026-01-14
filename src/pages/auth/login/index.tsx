@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import {
     TextInput,
     PasswordInput,
@@ -9,6 +9,7 @@ import {
     InlineLoading,
 } from '@carbon/react';
 import { Login as LoginIcon, ArrowRight } from '@carbon/icons-react';
+import { authService } from '@/services/AuthService';
 import '@/styles/AuthPages.scss';
 
 const ROLES = [
@@ -23,8 +24,14 @@ export function LoginPage() {
     const [role, setRole] = useState<{ id: string; text: string } | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    
+    const navigate = useNavigate();
+    const location = useLocation();
+    
+    // Get the page user was trying to access before being redirected to login
+    const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
@@ -34,12 +41,16 @@ export function LoginPage() {
         }
 
         setIsLoading(true);
-        // Simulate login
-        setTimeout(() => {
+        try {
+            await authService.login(username, password, role);
+            // Navigate to the page they were trying to access, or dashboard
+            navigate(from, { replace: true });
+        } catch (err: any) {
+            console.error('Login failed:', err);
+            setError(err.message || 'Login failed. Please check your credentials.');
+        } finally {
             setIsLoading(false);
-            // Navigate to dashboard on success
-            window.location.href = '/dashboard';
-        }, 1500);
+        }
     };
 
     return (

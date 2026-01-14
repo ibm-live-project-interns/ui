@@ -61,13 +61,39 @@ export function SettingsPage() {
     // Success notification state
     const [showSaveSuccess, setShowSaveSuccess] = useState(false);
 
-    // Load theme setting from document on mount
+    // Load all settings from localStorage on mount
     useEffect(() => {
-        const currentTheme = document.documentElement.getAttribute('data-theme-setting');
-        if (currentTheme === 'light' || currentTheme === 'dark' || currentTheme === 'system') {
-            setThemeSetting(currentTheme);
+        // Load theme setting
+        const savedTheme = localStorage.getItem('theme-setting');
+        if (savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system') {
+            setThemeSetting(savedTheme);
         } else {
-            setThemeSetting('system');
+            const currentTheme = document.documentElement.getAttribute('data-theme-setting');
+            if (currentTheme === 'light' || currentTheme === 'dark' || currentTheme === 'system') {
+                setThemeSetting(currentTheme);
+            }
+        }
+
+        // Load notification settings
+        const savedNotifications = localStorage.getItem('notification-settings');
+        if (savedNotifications) {
+            try {
+                const parsed = JSON.parse(savedNotifications);
+                setNotificationSettings(prev => ({ ...prev, ...parsed }));
+            } catch (e) {
+                console.error('Failed to parse notification settings:', e);
+            }
+        }
+
+        // Load general settings
+        const savedGeneral = localStorage.getItem('general-settings');
+        if (savedGeneral) {
+            try {
+                const parsed = JSON.parse(savedGeneral);
+                setGeneralSettings(prev => ({ ...prev, ...parsed }));
+            } catch (e) {
+                console.error('Failed to parse general settings:', e);
+            }
         }
     }, []);
 

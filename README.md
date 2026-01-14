@@ -9,24 +9,58 @@ Shows alerts from network devices (SNMP traps, syslogs) with AI-generated explan
 ## Quick Start
 
 ```bash
+# Install dependencies
 npm install
-npm run dev      # Development with mock data
-npm run build    # Production build
+
+# Start development server (uses mock data)
+npm run dev
+
+# Start with real API
+VITE_USE_MOCK=false npm run dev
+
+# Production build
+npm run build
 ```
+
+## Access Points
+
+| Mode | URL | Data Source |
+|------|-----|-------------|
+| Development | http://localhost:5173 | Mock data |
+| Production | http://localhost:3000 | Real API |
 
 ## Project Structure
 
 ```
 src/
-├── __mocks__/      # Mock data for development
-├── components/     # React components
-├── config/         # Environment and API config
-├── constants/      # Types, constants, helpers
-├── hooks/          # Custom React hooks
-├── pages/          # Page components
-├── services/       # Data services (mock/API)
-└── styles/         # SCSS styles
+├── __mocks__/          # Mock data for development
+├── components/         # React components
+│   ├── alerts/         # Alert-specific components
+│   ├── auth/           # Authentication
+│   ├── common/         # Common UI elements
+│   ├── dashboard/      # Dashboard components
+│   ├── layout/         # App layout (Header, Sidebar)
+│   └── shared/         # Reusable components (KPICard, etc.)
+├── config/             # Environment configuration
+├── constants/          # Types, constants, helpers
+├── hooks/              # Custom React hooks
+├── pages/              # Page components
+│   ├── dashboard/
+│   ├── priority-alerts/
+│   ├── tickets/
+│   ├── ticket-details/
+│   └── trends-insights/
+├── services/           # Data services (API/Mock)
+└── styles/             # SCSS styles
 ```
+
+## Key Features
+
+- **Dashboard** - Real-time overview with KPIs and charts
+- **Priority Alerts** - Filter and manage critical alerts
+- **Alert Details** - AI analysis with root causes and recommendations
+- **Tickets** - Issue tracking system
+- **Trends & Insights** - Historical analysis and patterns
 
 ## Data Layer
 
@@ -35,53 +69,95 @@ The app uses `AlertDataService` which automatically switches between mock and re
 ```typescript
 import { alertDataService } from '@/services';
 
+// Works with mock OR API based on VITE_USE_MOCK
 const alerts = await alertDataService.getAlerts();
+const summary = await alertDataService.getAlertsSummary();
 ```
 
-**Environment switching:**
+## Environment Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `VITE_USE_MOCK` | `true` (dev) | Use mock data |
+| `VITE_API_BASE_URL` | `http://localhost:8080` | API base URL |
+| `VITE_ENABLE_WEBSOCKET` | `false` | Enable WebSocket |
+
+## Docker
+
+### Full Stack Deployment
+
 ```bash
-# Development: uses mock data by default
-npm run dev
+# Start all services (requires ingestor repo cloned alongside)
+docker compose up -d --build
 
-# Development with real API
-VITE_USE_MOCK=false npm run dev
+# View logs
+docker compose logs -f
 
-# Production: uses real API by default
-npm run build
-
-# Production demo with mock data
-VITE_USE_MOCK=true npm run build
+# Stop services
+docker compose down
 ```
 
-## Key Imports
+### Access Points (Docker)
 
-```typescript
-// Types and constants
-import { Severity, SEVERITY_CONFIG, getSeverityTag } from '@/constants';
+| Service | URL | Credentials |
+|---------|-----|-------------|
+| UI | http://localhost:3000 | - |
+| API | http://localhost:8080/api/v1 | JWT Auth |
+| PgAdmin | http://localhost:5050 | admin@admin.com / root |
+| Kafka UI | http://localhost:8090 | - |
 
-// Data service
-import { alertDataService } from '@/services';
+### Using PgAdmin
 
-// Environment config
-import { env, API_ENDPOINTS } from '@/config';
+1. Open http://localhost:5050
+2. Login: `admin@admin.com` / `root`
+3. Server "NOC Database" is pre-configured (password: `secret` if prompted)
+4. Browse: Servers → NOC Database → Databases → noc_alerts → Schemas → public → Tables
+
+### Troubleshooting
+
+If database tables are missing on first run:
+```bash
+# Reset and recreate database
+docker compose down -v
+docker compose up -d --build
 ```
-
-## Carbon Design System
-
-Uses IBM Carbon components:
-- `DataTable` for alert lists
-- `Tag` for severity/status badges
-- `Tile` for card layouts
-- Carbon charts for visualizations
 
 ## Documentation
 
-- [Architecture](./docs/ARCHITECTURE.md) - Project structure and data layer
-- [Developer Guide](./docs/DEVELOPER_GUIDE.md) - Common patterns and examples
+Full documentation is in the [docs repository](https://github.com/ibm-live-project-interns/docs):
+
+- [UI Screens & Components](https://github.com/ibm-live-project-interns/docs/blob/main/docs/UI_SCREENS.md) - Complete UI guide with code examples
+- [API Reference](https://github.com/ibm-live-project-interns/docs/blob/main/docs/API.md) - REST API documentation
+- [Architecture](https://github.com/ibm-live-project-interns/docs/blob/main/docs/ARCHITECTURE.md) - System design
+- [Environment Config](https://github.com/ibm-live-project-interns/docs/blob/main/docs/ENVIRONMENT.md) - All environment variables
+- [Deployment](https://github.com/ibm-live-project-interns/docs/blob/main/docs/DEPLOYMENT.md) - Deployment guide
+
+**Offline Access:** If you have all repos cloned side-by-side, docs are at `../docs/docs/`
+
+## Related Repositories
+
+| Repository | Description |
+|------------|-------------|
+| [docs](https://github.com/ibm-live-project-interns/docs) | Documentation |
+| [ingestor](https://github.com/ibm-live-project-interns/ingestor) | Backend services |
+| [datasource](https://github.com/ibm-live-project-interns/datasource) | Data simulation |
+| [infra](https://github.com/ibm-live-project-interns/infra) | Infrastructure |
 
 ## Tech Stack
 
 - React 19 + TypeScript
 - Vite
-- Carbon Design System
+- IBM Carbon Design System
+- Carbon Charts
 - React Router
+- SCSS
+
+## Scripts
+
+```bash
+npm run dev       # Start dev server
+npm run build     # Production build
+npm run preview   # Preview production build
+npm run lint      # Run ESLint
+npm run format    # Format with Prettier
+```

@@ -1,0 +1,568 @@
+// Trends & Insights Page Styles - FULL from original (NO NoisyDevicesCard CSS)
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as *;
+@use '@carbon/react' as react;
+@use '@carbon/colors' as *;
+
+.trends-insights-page {
+
+  // Filter Popover Simple - for recurring alerts filter
+  .filter-popover-simple {
+    min-width: 180px;
+    padding: $spacing-03;
+
+    &__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: $spacing-03;
+      margin-bottom: $spacing-03;
+      border-bottom: 1px solid $border-subtle-01;
+      @include react.type-style('label-01');
+      font-weight: 600;
+    }
+
+    &__options {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-01;
+    }
+
+    .filter-option {
+      display: block;
+      width: 100%;
+      padding: $spacing-03;
+      text-align: left;
+      background: transparent;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      @include react.type-style('body-compact-01');
+      color: $text-primary;
+      transition: background-color 0.15s ease;
+
+      &:hover {
+        background: $layer-hover-01;
+      }
+
+      &.active {
+        background: $layer-selected-01;
+        font-weight: 600;
+      }
+    }
+  }
+
+  // KPI Card Skeleton
+  .kpi-card-skeleton {
+    padding: $spacing-05;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-03;
+  }
+
+  // KPI Row for skeleton
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $spacing-05;
+    margin-bottom: $spacing-05;
+
+    @media (max-width: 1056px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 672px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // Page Header
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: $spacing-05;
+    flex-wrap: wrap;
+    gap: $spacing-04;
+
+    .header-left,
+    .page-header-left {
+      .page-title {
+        @include react.type-style('productive-heading-05');
+        margin: 0 0 $spacing-02 0;
+      }
+
+      .page-subtitle,
+      .page-description {
+        @include react.type-style('body-compact-01');
+        color: $text-secondary;
+        margin: 0;
+      }
+    }
+
+    .header-right,
+    .page-header-actions {
+      display: flex;
+      align-items: center;
+      gap: $spacing-04;
+    }
+  }
+
+  // Section Common Styles
+  .section-header,
+  .chart-header,
+  .tile-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: $spacing-05;
+    gap: $spacing-03;
+    flex-wrap: wrap;
+
+    h3 {
+      @include react.type-style('heading-compact-02');
+      margin: 0;
+    }
+
+    .section-subtitle,
+    .chart-subtitle,
+    .tile-subtitle {
+      @include react.type-style('body-compact-01');
+      color: $text-secondary;
+      margin: $spacing-02 0 0 0;
+    }
+
+    .section-title-group,
+    .chart-title-group {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-02;
+    }
+  }
+
+  // Mobile Responsive
+  .hide-on-mobile {
+    @media (max-width: 672px) {
+      display: none !important;
+    }
+  }
+
+  // Charts Section
+  .chart-section,
+  .alerts-chart-tile {
+    padding: $spacing-05;
+    margin-bottom: $spacing-05;
+
+    .section-controls {
+      display: flex;
+      gap: $spacing-03;
+    }
+
+    .severity-filters {
+      display: flex;
+      gap: $spacing-02;
+
+      .severity-filter-btn {
+        min-width: 70px;
+
+        &--critical.cds--btn--primary {
+          background-color: $red-60;
+          border-color: $red-60;
+        }
+
+        &--major.cds--btn--primary {
+          background-color: $orange-40;
+          border-color: $orange-40;
+        }
+
+        &--minor.cds--btn--primary {
+          background-color: $yellow-30;
+          border-color: $yellow-30;
+          color: $gray-100;
+        }
+
+        &--info.cds--btn--primary {
+          background-color: $blue-60;
+          border-color: $blue-60;
+        }
+      }
+    }
+
+    .chart-container {
+      margin-top: $spacing-04;
+      min-height: 320px;
+    }
+  }
+
+  // Middle Row Layout
+  .middle-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-05;
+    margin-bottom: $spacing-05;
+    align-items: stretch; // Ensure items stretch to fill height
+
+    @media (max-width: 1056px) {
+      grid-template-columns: 1fr;
+    }
+
+    >* {
+      height: 100%; // Force children to take full height
+      display: flex;
+      flex-direction: column;
+    }
+  }
+
+  // Recurring Alert Types
+  .recurring-alerts-tile {
+    padding: $spacing-05;
+
+    .alert-types-list {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-05;
+    }
+
+    .recurring-alerts-list {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-05;
+      flex: 1; // Allow list to expand
+    }
+
+    .alert-type-item,
+    .recurring-alert-row {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-02;
+
+      .alert-type-header,
+      .alert-info {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: $spacing-04;
+
+        .alert-type-left,
+        .alert-name-row {
+          display: flex;
+          align-items: center;
+          gap: $spacing-03;
+        }
+
+        .alert-type-icon,
+        .alert-severity-icon {
+          width: 32px;
+          height: 32px;
+          border-radius: 6px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+
+        .alert-type-name,
+        .alert-name {
+          @include react.type-style('body-compact-01');
+          font-weight: 600;
+        }
+
+        .alert-type-occurrences,
+        .alert-count {
+          @include react.type-style('body-compact-01');
+          font-weight: 600;
+          white-space: nowrap;
+        }
+      }
+
+      .alert-type-bar-container,
+      .alert-progress-bar {
+        height: 8px;
+        background: $layer-02;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: $spacing-02;
+
+        .alert-type-bar,
+        .progress-fill,
+        .progress-track {
+          height: 100%;
+          border-radius: 4px;
+          transition: width 0.3s ease;
+        }
+      }
+
+      .alert-type-meta,
+      .alert-resolution {
+        @include react.type-style('label-01');
+        color: $text-secondary;
+
+        .resolution-time {
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  // Time Distribution
+  .time-distribution-tile,
+  .distribution-tile {
+    padding: $spacing-05;
+
+    .pie-chart-container,
+    .chart-container {
+      min-height: 220px;
+    }
+
+    .peak-hours-info,
+    .time-highlights {
+      display: flex;
+      gap: $spacing-04;
+      margin-top: $spacing-04;
+      padding-top: $spacing-04;
+      border-top: 1px solid $border-subtle-01;
+
+      .peak-hour-item,
+      .time-card {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-01;
+
+        &.peak {
+          border-left: 4px solid $green-50;
+          padding-left: $spacing-03;
+        }
+
+        .peak-label,
+        .time-label {
+          @include react.type-style('label-01');
+          color: $text-secondary;
+        }
+
+        .peak-value,
+        .time-value {
+          @include react.type-style('body-compact-01');
+          font-weight: 600;
+        }
+      }
+    }
+  }
+
+  // AI Impact Row (KEEPS NoisyDevicesCard container)
+  .ai-impact-row,
+  .bottom-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-05;
+    margin-bottom: $spacing-05;
+
+    @media (max-width: 1056px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // AI Impact Tile
+  .ai-impact-tile {
+    padding: $spacing-05;
+
+    .chart-container {
+      min-height: 240px;
+      margin-bottom: $spacing-04;
+    }
+
+    .ai-impact-summary,
+    .impact-metrics {
+      display: flex;
+      gap: $spacing-03;
+
+      @media (max-width: 672px) {
+        flex-direction: column;
+      }
+
+      .summary-item,
+      .metric-card {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        padding: $spacing-03;
+        border-radius: 4px;
+
+        &.summary-item--blue,
+        &.positive {
+          background: rgba($blue-60, 0.1);
+        }
+
+        &.summary-item--purple {
+          background: rgba($purple-60, 0.1);
+        }
+
+        &.summary-item--green {
+          background: rgba($green-50, 0.1);
+        }
+
+        .summary-label,
+        .metric-label {
+          @include react.type-style('label-01');
+          color: $text-secondary;
+          margin-bottom: $spacing-01;
+        }
+
+        .summary-value,
+        .metric-value {
+          @include react.type-style('heading-compact-02');
+          font-weight: 600;
+
+          &.positive {
+            color: $green-50;
+          }
+
+          &.negative {
+            color: $red-60;
+          }
+        }
+      }
+    }
+  }
+
+  // AI Generated Insights
+  .ai-insights-section,
+  .ai-insights-tile {
+    padding: $spacing-05;
+
+    .ai-insights-header,
+    .insights-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: $spacing-05;
+      padding-bottom: $spacing-04;
+      border-bottom: 1px solid $border-subtle-01;
+      gap: $spacing-04;
+
+      .ai-insights-title-group,
+      .insights-title-group {
+        display: flex;
+        align-items: flex-start;
+        gap: $spacing-04;
+      }
+
+      .ai-insights-icon,
+      .insights-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, $purple-60 0%, $blue-60 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: $white-0;
+        flex-shrink: 0;
+        font-size: 24px;
+      }
+
+      .ai-insights-title-content {
+        h3 {
+          @include react.type-style('productive-heading-03');
+          margin: 0 0 $spacing-02 0;
+        }
+      }
+
+      .ai-insights-subtitle,
+      .insights-subtitle {
+        @include react.type-style('body-compact-01');
+        color: $text-secondary;
+        margin: 0;
+      }
+    }
+
+    .ai-insights-grid,
+    .insights-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: $spacing-05;
+
+      @media (max-width: 1056px) {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      @media (max-width: 672px) {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .ai-insight-card,
+    .insight-card {
+      background: $layer-02;
+      border-radius: 8px;
+      padding: $spacing-05;
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-04;
+      border: 1px solid $border-subtle-01;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+
+      &:hover {
+        background: $layer-hover-02;
+        border-color: $border-strong-01;
+      }
+
+      .ai-insight-card-header,
+      .insight-header {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+      }
+
+      .ai-insight-card-icon,
+      .insight-icon-badge {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        font-size: 14px;
+
+        &.pattern {
+          background: #da1e28;
+          color: #fff;
+        }
+
+        &.optimization {
+          background: #24a148;
+          color: #fff;
+        }
+
+        &.recommendation {
+          background: #a56eff;
+          color: #fff;
+        }
+      }
+
+      .ai-insight-card-label,
+      .insight-type {
+        @include react.type-style('body-compact-01');
+        font-weight: 600;
+      }
+
+      .ai-insight-card-description,
+      .insight-title,
+      .insight-description {
+        @include react.type-style('body-compact-01');
+        color: $text-secondary;
+        margin: 0;
+        flex: 1;
+        line-height: 1.5;
+      }
+
+      .ai-insight-card-action,
+      .insight-action {
+        align-self: flex-start;
+        padding-left: 0;
+      }
+    }
+  }
+}

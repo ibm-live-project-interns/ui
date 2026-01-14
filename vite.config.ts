@@ -11,28 +11,50 @@ export default defineConfig({
     },
   },
   optimizeDeps: {
-    include: ['@carbon/react', '@carbon/icons-react', '@carbon/charts-react'],
+    // Pre-bundle heavy dependencies to avoid slow first load
+    include: [
+      '@carbon/react',
+      '@carbon/icons-react',
+      '@carbon/charts-react',
+      'react',
+      'react-dom',
+      'react-router-dom',
+    ],
+    // Exclude from optimization if causing issues
+    exclude: [],
+  },
+  build: {
+    // Split chunks for better caching
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          // Vendor chunk for React
+          'vendor-react': ['react', 'react-dom', 'react-router-dom'],
+          // Carbon UI components
+          'vendor-carbon': ['@carbon/react', '@carbon/icons-react'],
+          // Carbon charts (heavy, separate chunk)
+          'vendor-charts': ['@carbon/charts-react'],
+        },
+      },
+    },
+    // Increase chunk size warning limit for Carbon
+    chunkSizeWarningLimit: 1000,
   },
   css: {
     preprocessorOptions: {
       scss: {
-        // Silence deprecation warnings from Carbon Design System internals
         silenceDeprecations: ['if-function'],
       },
     },
   },
   server: {
-    // Improve HMR stability by pre-transforming common modules
     warmup: {
       clientFiles: [
         './src/components/layout/index.ts',
-        './src/components/index.ts',
-        './src/constants/index.ts',
-        './src/services/index.ts',
-        './src/hooks/*.ts',
+        './src/pages/welcome/index.tsx',
+        './src/pages/auth/login/index.tsx',
       ],
     },
-    // Increase HMR timeout for slower connections
     hmr: {
       timeout: 5000,
     },

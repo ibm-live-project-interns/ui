@@ -18,10 +18,12 @@ import {
     ChartLine,
     Devices,
     Settings,
+    Ticket,
     ChevronUp,
     Logout,
     Search as SearchIcon,
     Close,
+    CheckmarkOutline,
 } from '@carbon/icons-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -40,35 +42,195 @@ import { useState, useEffect, useRef, useCallback } from 'react';
  */
 
 // User and navigation data from centralized mocks
-import { MOCK_USER, SEARCHABLE_ITEMS } from '@/__mocks__/alerts.mock';
-// Alert count via service (works with mock or API)
-import { alertDataService } from '@/services';
+// User and navigation data from centralized mocks
+import { SEARCHABLE_ITEMS, MOCK_PRIORITY_ALERTS, type SearchableItem } from '@/__mocks__/alerts.mock';
+// Alert count and auth services
+import { alertDataService, authService, ticketDataService } from '@/services';
+
+// Helper to get initials from username or name
+function getInitials(name?: string): string {
+    if (!name) return '??';
+    const parts = name.split(' ');
+    if (parts.length >= 2) {
+        return (parts[0][0] + parts[1][0]).toUpperCase();
+    }
+    return name.slice(0, 2).toUpperCase();
+}
+
+/**
+ * Notification Dropdown Component
+ */
+function NotificationDropdown() {
+    const navigate = useNavigate();
+    const [isOpen, setIsOpen] = useState(false);
+    const [notifications, setNotifications] = useState<typeof MOCK_PRIORITY_ALERTS>([]);
+    const dropdownRef = useRef<HTMLDivElement>(null);
+
+    // Load recent alerts as notifications
+    useEffect(() => {
+        const loadNotifications = async () => {
+            try {
+                const alerts = await alertDataService.getAlerts();
+                // Get the 5 most recent alerts
+                setNotifications(alerts.slice(0, 5));
+            } catch (error) {
+                console.error('Failed to load notifications:', error);
+            }
+        };
+        loadNotifications();
+        
+        // Refresh every 30 seconds
+        const interval = setInterval(loadNotifications, 30000);
+        return () => clearInterval(interval);
+    }, []);
+
+    // Click outside to close
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    const handleNotificationClick = (alertId: string) => {
+        navigate(`/alerts/${alertId}`);
+        setIsOpen(false);
+    };
+
+    const handleViewAll = () => {
+        navigate('/priority-alerts');
+        setIsOpen(false);
+    };
+
+    const getSeverityColor = (severity: string) => {
+        const colors: Record<string, string> = {
+            critical: '#da1e28',
+            major: '#ff832b',
+            minor: '#f1c21b',
+            info: '#0043ce',
+        };
+        return colors[severity] || colors.info;
+    };
+
+    return (
+        <div className="notification-dropdown-container" ref={dropdownRef}>
+            <HeaderGlobalAction
+                aria-label="Notifications"
+                tooltipAlignment="end"
+                onClick={() => setIsOpen(!isOpen)}
+                isActive={isOpen}
+            >
+                <Notification size={20} />
+                {notifications.length > 0 && (
+                    <span className="notification-badge">{notifications.length}</span>
+                )}
+            </HeaderGlobalAction>
+
+            {isOpen && (
+                <div className="notification-dropdown">
+                    <div className="notification-dropdown-header">
+                        <span className="notification-dropdown-title">Notifications</span>
+                        <span className="notification-dropdown-count">{notifications.length} new</span>
+                    </div>
+                    
+                    <div className="notification-dropdown-list">
+                        {notifications.length === 0 ? (
+                            <div className="notification-dropdown-empty">
+                                <CheckmarkOutline size={24} />
+                                <span>No new notifications</span>
+                            </div>
+                        ) : (
+                            notifications.map((alert) => (
+                                <button
+                                    key={alert.id}
+                                    className="notification-dropdown-item"
+                                    onClick={() => handleNotificationClick(alert.id)}
+                                >
+                                    <div 
+                                        className="notification-severity-indicator"
+                                        style={{ backgroundColor: getSeverityColor(alert.severity) }}
+                                    />
+                                    <div className="notification-content">
+                                        <span className="notification-title">{alert.aiTitle}</span>
+                                        <span className="notification-device">{alert.device.name}</span>
+                                        <span className="notification-time">{alert.timestamp.relative}</span>
+                                    </div>
+                                </button>
+                            ))
+                        )}
+                    </div>
+
+                    <button className="notification-dropdown-footer" onClick={handleViewAll}>
+                        View all alerts
+                    </button>
+                </div>
+            )}
+        </div>
+    );
+}
 
 /**
  * Separate HeaderSearch component to isolate state from HeaderContainer re-renders
  */
 function HeaderSearch() {
+    // ... search implementation remains same
     const navigate = useNavigate();
     const [isExpanded, setIsExpanded] = useState(false);
     const [searchValue, setSearchValue] = useState('');
     const [searchResults, setSearchResults] = useState<typeof SEARCHABLE_ITEMS>([]);
+    const [ticketResults, setTicketResults] = useState<SearchableItem[]>([]);
     const [showResults, setShowResults] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
 
-    // Filter search results
+    // Filter search results including tickets
     useEffect(() => {
         if (searchValue.trim()) {
+            const query = searchValue.toLowerCase();
+            
+            // Filter static items (pages, devices)
             const filtered = SEARCHABLE_ITEMS.filter((item) =>
-                item.label.toLowerCase().includes(searchValue.toLowerCase())
+                item.label.toLowerCase().includes(query)
             );
             setSearchResults(filtered);
+            
+            // Search tickets dynamically
+            const searchTickets = async () => {
+                try {
+                    const tickets = await ticketDataService.getTickets();
+                    const matchingTickets = tickets
+                        .filter(ticket => 
+                            ticket.title.toLowerCase().includes(query) ||
+                            ticket.ticketNumber.toLowerCase().includes(query) ||
+                            ticket.deviceName.toLowerCase().includes(query)
+                        )
+                        .slice(0, 5) // Limit to 5 ticket results
+                        .map(ticket => ({
+                            label: `${ticket.ticketNumber}: ${ticket.title}`,
+                            path: `/tickets/${ticket.id}`,
+                            type: 'ticket' as const,
+                        }));
+                    setTicketResults(matchingTickets);
+                } catch (error) {
+                    console.error('Failed to search tickets:', error);
+                    setTicketResults([]);
+                }
+            };
+            searchTickets();
+            
             setShowResults(true);
         } else {
             setSearchResults([]);
+            setTicketResults([]);
             setShowResults(false);
         }
     }, [searchValue]);
+
+    // Combine all results
+    const allResults = [...searchResults, ...ticketResults];
 
     // Click outside to close
     useEffect(() => {
@@ -158,9 +320,9 @@ function HeaderSearch() {
                     </button>
 
                     {/* Search Results Dropdown */}
-                    {showResults && searchResults.length > 0 && (
+                    {showResults && allResults.length > 0 && (
                         <div className="header-search-results" id="header-search-results" role="listbox" aria-label="Search results">
-                            {searchResults.map((result, index) => (
+                            {allResults.map((result, index) => (
                                 <button
                                     key={result.path || index}
                                     className="header-search-result-item"
@@ -174,7 +336,7 @@ function HeaderSearch() {
                             ))}
                         </div>
                     )}
-                    {showResults && searchValue.trim() && searchResults.length === 0 && (
+                    {showResults && searchValue.trim() && allResults.length === 0 && (
                         <div className="header-search-results">
                             <div className="header-search-no-results">
                                 No results found for "{searchValue}"
@@ -191,17 +353,30 @@ export function AppHeader() {
     const location = useLocation();
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [alertCount, setAlertCount] = useState(0);
+    const [criticalTicketCount, setCriticalTicketCount] = useState(0);
     const userMenuRef = useRef<HTMLDivElement>(null);
 
     // Fetch alert count on mount and periodically
     useEffect(() => {
-        const fetchCount = async () => {
-            const count = await alertDataService.getActiveAlertCount();
-            setAlertCount(count);
+        const fetchCounts = async () => {
+            const alertsCount = await alertDataService.getActiveAlertCount();
+            setAlertCount(alertsCount);
+            
+            // Get critical/high priority open tickets count
+            try {
+                const tickets = await ticketDataService.getTickets();
+                const criticalCount = tickets.filter(
+                    t => (t.priority === 'critical' || t.priority === 'high') && 
+                         (t.status === 'open' || t.status === 'in-progress')
+                ).length;
+                setCriticalTicketCount(criticalCount);
+            } catch (error) {
+                console.error('Failed to fetch ticket count:', error);
+            }
         };
-        fetchCount();
+        fetchCounts();
         // Refresh every 30 seconds
-        const interval = setInterval(fetchCount, 30000);
+        const interval = setInterval(fetchCounts, 30000);
         return () => clearInterval(interval);
     }, []);
 
@@ -242,13 +417,8 @@ export function AppHeader() {
                         {/* Isolated Search Component */}
                         <HeaderSearch />
 
-                        {/* Notifications */}
-                        <HeaderGlobalAction
-                            aria-label="Notifications"
-                            tooltipAlignment="end"
-                        >
-                            <Notification size={20} />
-                        </HeaderGlobalAction>
+                        {/* Notifications Dropdown */}
+                        <NotificationDropdown />
                     </HeaderGlobalBar>
 
                     <SideNav
@@ -295,6 +465,26 @@ export function AppHeader() {
                                 Trends & Insights
                             </SideNavLink>
 
+                            {/* Tickets with critical count badge */}
+                            <SideNavLink
+                                as={Link}
+                                to="/tickets"
+                                renderIcon={Ticket}
+                                isActive={isActive('/tickets')}
+                                className={criticalTicketCount > 0 ? 'sidenav-link-with-badge' : ''}
+                            >
+                                {criticalTicketCount > 0 ? (
+                                    <>
+                                        <span className="sidenav-link-text">Tickets</span>
+                                        <Tag type="magenta" size="sm" className="sidenav-alert-badge">
+                                            {criticalTicketCount}
+                                        </Tag>
+                                    </>
+                                ) : (
+                                    'Tickets'
+                                )}
+                            </SideNavLink>
+
                             {/* Device Explorer */}
                             <SideNavLink
                                 as={Link}
@@ -324,7 +514,7 @@ export function AppHeader() {
                                     className="sidenav-user-menu-item"
                                     onClick={() => {
                                         // Handle logout
-                                        console.log('Logout clicked');
+                                        authService.logout();
                                         setUserMenuOpen(false);
                                     }}
                                 >
@@ -342,11 +532,11 @@ export function AppHeader() {
                                 onKeyDown={(e) => e.key === 'Enter' && setUserMenuOpen(!userMenuOpen)}
                             >
                                 <div className="sidenav-user-avatar">
-                                    {MOCK_USER.initials}
+                                    {getInitials(authService.currentUser?.username)}
                                 </div>
                                 <div className="sidenav-user-info">
-                                    <span className="sidenav-user-name">{MOCK_USER.name}</span>
-                                    <span className="sidenav-user-role">{MOCK_USER.role}</span>
+                                    <span className="sidenav-user-name">{authService.currentUser?.username || 'User'}</span>
+                                    <span className="sidenav-user-role">{authService.currentUser?.role?.text || 'Viewer'}</span>
                                 </div>
                                 <ChevronUp
                                     size={16}

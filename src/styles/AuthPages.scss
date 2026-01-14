@@ -35,47 +35,16 @@
 .auth-title {
     @include react.type-style('heading-04');
     text-align: center;
-    margin: 0 0 $spacing-05 0;
+    margin: 0 0 $spacing-07 0; // Increased bottom margin
     color: $text-primary;
 }
 
-.auth-description {
-    @include react.type-style('body-compact-01');
-    color: $text-secondary;
-    text-align: center;
-    margin-bottom: $spacing-05;
-}
-
-.auth-error {
-    @include react.type-style('body-compact-01');
-    color: $support-error;
-    background: rgba(218, 30, 40, 0.1);
-    padding: $spacing-03;
-    border-radius: 4px;
-    margin-bottom: $spacing-04;
-    text-align: center;
-}
-
-.auth-success {
-    text-align: center;
-
-    p {
-        @include react.type-style('body-compact-01');
-        color: $text-secondary;
-        margin-bottom: $spacing-05;
-    }
-
-    .auth-link {
-        display: inline-flex;
-        align-items: center;
-        gap: $spacing-02;
-    }
-}
+// ...
 
 .auth-form {
     display: flex;
     flex-direction: column;
-    gap: $spacing-05;
+    gap: $spacing-06; // Increased from spacing-05
 }
 
 .auth-password-row {

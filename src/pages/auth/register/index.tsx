@@ -8,6 +8,7 @@ import {
     InlineLoading,
 } from '@carbon/react';
 import { UserFollow, ArrowRight } from '@carbon/icons-react';
+import { authService } from '@/services/AuthService';
 import '@/styles/AuthPages.scss';
 
 export function RegisterPage() {
@@ -24,7 +25,7 @@ export function RegisterPage() {
         setFormData({ ...formData, [field]: e.target.value });
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
 
@@ -39,11 +40,29 @@ export function RegisterPage() {
         }
 
         setIsLoading(true);
-        // Simulate registration
-        setTimeout(() => {
-            setIsLoading(false);
+
+        try {
+            // Split full name into first and last name
+            const names = formData.fullName.split(' ');
+            const firstName = names[0];
+            const lastName = names.slice(1).join(' ') || 'User';
+
+            await authService.register({
+                firstName,
+                lastName,
+                email: formData.email,
+                password: formData.password,
+                role: { id: 'operator', text: 'Operator' } // Default role
+            });
+
+            // Redirect to login on success
             window.location.href = '/login';
-        }, 1500);
+        } catch (err: any) {
+            console.error('Registration failed:', err);
+            setError(err.message || 'Registration failed. Please try again.');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     return (

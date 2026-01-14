@@ -8,6 +8,46 @@
 
 .dashboard-page {
 
+    // KPI Card Skeleton
+    .kpi-card-skeleton {
+        padding: $spacing-05;
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-03;
+    }
+
+    // KPI Row
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: $spacing-05;
+        margin-bottom: $spacing-05;
+
+        @media (max-width: 1056px) {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media (max-width: 672px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    // Charts Row for skeleton
+    .charts-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: $spacing-05;
+        margin-bottom: $spacing-05;
+
+        @media (max-width: 1056px) {
+            grid-template-columns: 1fr;
+        }
+
+        .chart-tile {
+            padding: $spacing-05;
+        }
+    }
+
     // Dashboard Header
     .dashboard-header {
         display: flex;
@@ -100,98 +140,8 @@
     }
 
     // KPI Stats Row - Native CSS Grid
-    .kpi-stats-row {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: $spacing-05;
-        margin-bottom: $spacing-05;
+    // Replaced by shared .kpi-row in KPICard.scss
 
-        @media (max-width: 1056px) {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
-        @media (max-width: 672px) {
-            grid-template-columns: 1fr;
-        }
-
-        .kpi-stat-tile {
-            display: flex;
-            align-items: flex-start;
-            gap: $spacing-04;
-            padding: $spacing-05;
-
-            .kpi-icon {
-                width: 48px;
-                height: 48px;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                flex-shrink: 0;
-
-                &.blue {
-                    background: rgba($blue-60, 0.2);
-                    color: $blue-60;
-                }
-
-                &.red {
-                    background: rgba($red-60, 0.2);
-                    color: $red-60;
-                }
-
-                &.orange {
-                    background: rgba($orange-40, 0.2);
-                    color: $orange-40;
-                }
-
-                &.green {
-                    background: rgba($green-50, 0.2);
-                    color: $green-50;
-                }
-            }
-
-            .kpi-info {
-                display: flex;
-                flex-direction: column;
-
-                .kpi-label {
-                    @include react.type-style('label-01');
-                    color: $text-secondary;
-                    text-transform: uppercase;
-                }
-
-                .kpi-value {
-                    @include react.type-style('heading-04');
-                    margin: $spacing-01 0;
-                }
-
-                .kpi-title {
-                    @include react.type-style('body-compact-01');
-                    color: $text-secondary;
-                }
-
-                .kpi-trend {
-                    @include react.type-style('label-01');
-                    display: flex;
-                    align-items: center;
-                    gap: $spacing-02;
-                    margin-top: $spacing-02;
-
-                    &.positive {
-                        color: $green-50;
-                    }
-
-                    &.negative {
-                        color: $red-60;
-                    }
-
-                    &.neutral {
-                        color: $gray-50;
-                    }
-                }
-            }
-        }
-    }
 
     // Charts Row - Native CSS Grid (matches KPI row alignment)
     .charts-row {
@@ -413,15 +363,34 @@
 
                     .metric-name {
                         @include react.type-style('body-compact-01');
-                        margin-bottom: $spacing-02;
+                        margin-bottom: $spacing-03;
                     }
 
                     // Progress bar styling for visibility in dark mode
                     .cds--progress-bar {
+                        height: 4px;
+                        border-radius: 2px;
                         background-color: $layer-02;
+                        position: relative;
+                        overflow: visible;
+
+                        &::after {
+                            content: '';
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 0;
+                            background: $border-subtle-01;
+                            border-radius: 2px;
+                        }
 
                         .cds--progress-bar__bar {
-                            background-color: $blue-60;
+                            background: $blue-60;
+                            border-radius: 2px;
+                            position: relative;
+                            z-index: 1;
+                            height: 100%;
                         }
                     }
                 }

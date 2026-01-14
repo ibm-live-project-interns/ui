@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Tile,
     DataTable,
@@ -9,97 +10,192 @@ import {
     TableHeader,
     TableBody,
     TableCell,
+    TableToolbar,
+    TableToolbarContent,
+    TableToolbarSearch,
     Button,
     ProgressBar,
+    SkeletonText,
+    SkeletonPlaceholder,
+    DataTableSkeleton,
 } from '@carbon/react';
 import {
     Notification,
-    ArrowUp,
-    ArrowDown,
     CheckmarkFilled,
-    Filter,
     Export,
     View,
     Checkmark,
+    IbmWatsonxCodeAssistant,
 } from '@carbon/icons-react';
+import { ChartWrapper } from '@/components/shared/ChartWrapper';
 import { StackedAreaChart, DonutChart } from '@carbon/charts-react';
 import '@carbon/charts-react/styles.css';
 import '@/styles/DashboardPage.scss';
+import '@/styles/KPICard.scss';
 
-// All from consolidated constants
+// Consolidated constants and services
 import {
     SEVERITY_CONFIG,
     getSeverityTag,
     getStatusTag,
     getDeviceIcon,
-    getSeverityBackgroundClass,
     createAreaChartOptions,
     createDonutChartOptions,
 } from '@/constants';
+import { alertDataService } from '@/services';
+import type { SummaryAlert, NoisyDevice, AIMetric } from '@/constants';
 
-// Mock data
-import {
-    MOCK_NOC_ALERTS,
-    MOCK_SEVERITY_DISTRIBUTION,
-    MOCK_TOP_NOISY_DEVICES,
-    MOCK_AI_IMPACT_METRICS,
-    ALERTS_OVER_TIME,
-} from '@/__mocks__/alerts.mock';
+// Reusable components
+import { NoisyDevicesCard, KPICard } from '@/components';
+import type { KPICardData } from '@/components';
 
 export function DashboardPage() {
+    const navigate = useNavigate();
     const [selectedTimePeriod, setSelectedTimePeriod] = useState<'24h' | '7d' | '30d'>('24h');
     const [currentTheme, setCurrentTheme] = useState('g100');
+    const [isLoading, setIsLoading] = useState(true);
 
-    // Detect theme from document root
+    // Data State
+    const [kpiData, setKpiData] = useState<KPICardData[]>([]);
+    const [alertsOverTimeData, setAlertsOverTimeData] = useState<any[]>([]);
+    const [severityDist, setSeverityDist] = useState<any[]>([]);
+    const [recentAlerts, setRecentAlerts] = useState<SummaryAlert[]>([]);
+    const [noisyDevices, setNoisyDevices] = useState<NoisyDevice[]>([]);
+    const [aiMetrics, setAiMetrics] = useState<AIMetric[]>([]);
+
+    // Action Handlers
+    const handleViewAlert = (alertId: string) => {
+        navigate(`/alerts/${alertId}`);
+    };
+
+    const handleAcknowledgeAlert = async (alertId: string) => {
+        try {
+            await alertDataService.acknowledgeAlert(alertId);
+            // Refresh alerts after acknowledging
+            const updatedAlerts = await alertDataService.getNocAlerts();
+            setRecentAlerts(updatedAlerts);
+        } catch (error) {
+            console.error('Failed to acknowledge alert:', error);
+        }
+    };
+
+    const handleExport = async () => {
+        try {
+            await alertDataService.exportReport('csv');
+            console.log('Export completed successfully');
+        } catch (error) {
+            console.error('Failed to export report:', error);
+        }
+    };
+
+    // Theme detection
     useEffect(() => {
         const detectTheme = () => {
             const themeSetting = document.documentElement.getAttribute('data-theme-setting');
-            if (themeSetting === 'light') {
-                setCurrentTheme('white');
-            } else if (themeSetting === 'dark') {
-                setCurrentTheme('g100');
-            } else {
+            if (themeSetting === 'light') setCurrentTheme('white');
+            else if (themeSetting === 'dark') setCurrentTheme('g100');
+            else {
                 const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
                 setCurrentTheme(prefersDark ? 'g100' : 'white');
             }
         };
-
         detectTheme();
         const observer = new MutationObserver(detectTheme);
-        observer.observe(document.documentElement, {
-            attributes: true,
-            attributeFilter: ['data-theme-setting']
-        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme-setting'] });
         return () => observer.disconnect();
     }, []);
 
+    // Fetch All Data
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                setIsLoading(true);
+                const [summary, overTime, severity, alerts, devices, metrics] = await Promise.all([
+                    alertDataService.getAlertsSummary(),
+                    alertDataService.getAlertsOverTime(selectedTimePeriod),
+                    alertDataService.getSeverityDistribution(),
+                    alertDataService.getNocAlerts(), // This is the list for table
+                    alertDataService.getNoisyDevices(),
+                    alertDataService.getAIMetrics()
+                ]);
 
-    // Get alerts data based on selected time period
-    const alertsOverTimeData = useMemo(
-        () => ALERTS_OVER_TIME[selectedTimePeriod],
-        [selectedTimePeriod]
-    );
+                // Transform Summary to KPIs
+                const kpis: KPICardData[] = [
+                    {
+                        id: 'total-alerts',
+                        label: 'Last 24h',
+                        value: summary.activeCount.toString(), // Approximating active as total for now
+                        subtitle: 'Total Alerts',
+                        footnote: 'Active alerts currently in system',
+                        IconComponent: Notification,
+                        color: 'blue',
+                        borderColor: 'blue',
+                        trend: { sentiment: 'neutral', direction: 'flat', value: 'Stable' }
+                    },
+                    {
+                        id: 'critical-alerts',
+                        label: 'Critical',
+                        value: summary.criticalCount,
+                        subtitle: 'Critical Alerts',
+                        footnote: 'Requires immediate attention',
+                        IconComponent: SEVERITY_CONFIG.critical.icon,
+                        color: 'red',
+                        borderColor: 'red',
+                        trend: { sentiment: 'negative', direction: 'up', value: 'High' }
+                    },
+                    {
+                        id: 'major-alerts',
+                        label: 'Major',
+                        value: summary.majorCount,
+                        subtitle: 'Major Alerts',
+                        footnote: 'Service impacting',
+                        IconComponent: SEVERITY_CONFIG.major.icon,
+                        color: 'orange',
+                        borderColor: 'orange',
+                        trend: { sentiment: 'neutral', direction: 'flat', value: 'Stable' }
+                    },
+                    {
+                        id: 'ai-insights',
+                        label: 'AI Insights',
+                        value: '98%',
+                        subtitle: 'Accuracy',
+                        footnote: 'Based on recent correlations',
+                        IconComponent: IbmWatsonxCodeAssistant,
+                        color: 'purple',
+                        borderColor: 'purple',
+                        trend: { sentiment: 'positive', direction: 'up', value: '+2%' }
+                    }
+                ];
+
+                setKpiData(kpis);
+                setAlertsOverTimeData(overTime);
+                setSeverityDist(severity);
+                setRecentAlerts(alerts);
+                setNoisyDevices(devices);
+                setAiMetrics(metrics);
+
+            } catch (error) {
+                console.error("Failed to fetch dashboard data:", error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        fetchData();
+        // Poll every 30s
+        const interval = setInterval(fetchData, 30000);
+        return () => clearInterval(interval);
+    }, [selectedTimePeriod]);
+
 
     // Chart options
-    const areaChartOptions = useMemo(
-        () => createAreaChartOptions({
-            title: 'Alerts Over Time',
-            height: '320px',
-            theme: currentTheme,
-            showTitle: false,
-        }),
-        [currentTheme]
-    );
+    const areaChartOptions = useMemo(() => createAreaChartOptions({
+        title: 'Alerts Over Time', height: '320px', theme: currentTheme, showTitle: false,
+    }), [currentTheme]);
 
-    const donutChartOptions = useMemo(
-        () => createDonutChartOptions({
-            title: 'Severity Distribution',
-            height: '300px',
-            theme: currentTheme,
-            showTitle: false,
-        }),
-        [currentTheme]
-    );
+    const donutChartOptions = useMemo(() => createDonutChartOptions({
+        title: 'Severity Distribution', height: '300px', theme: currentTheme, showTitle: false,
+    }), [currentTheme]);
 
     // Table headers
     const headers = [
@@ -111,9 +207,59 @@ export function DashboardPage() {
         { key: 'actions', header: 'Actions' },
     ];
 
-    // Get icon components from config
     const CriticalIcon = SEVERITY_CONFIG.critical.icon;
-    const MajorIcon = SEVERITY_CONFIG.major.icon;
+
+    // Skeleton loading state using Carbon skeleton components
+    if (isLoading && kpiData.length === 0) {
+        return (
+            <div className="dashboard-page">
+                {/* Header Skeleton */}
+                <div className="dashboard-header">
+                    <div className="header-left">
+                        <SkeletonText heading width="300px" />
+                        <SkeletonText width="400px" />
+                    </div>
+                    <div className="header-right">
+                        <SkeletonPlaceholder style={{ width: '150px', height: '32px' }} />
+                    </div>
+                </div>
+
+                {/* KPI Row Skeleton */}
+                <div className="kpi-row">
+                    {[1, 2, 3, 4].map((i) => (
+                        <Tile key={i} className="kpi-card-skeleton">
+                            <SkeletonText width="60%" />
+                            <SkeletonText heading width="40%" />
+                            <SkeletonText width="80%" />
+                        </Tile>
+                    ))}
+                </div>
+
+                {/* Charts Row Skeleton */}
+                <div className="charts-row">
+                    <Tile className="chart-tile">
+                        <SkeletonText heading width="200px" />
+                        <SkeletonPlaceholder style={{ width: '100%', height: '300px', marginTop: '1rem' }} />
+                    </Tile>
+                    <Tile className="chart-tile">
+                        <SkeletonText heading width="200px" />
+                        <SkeletonPlaceholder style={{ width: '100%', height: '300px', marginTop: '1rem' }} />
+                    </Tile>
+                </div>
+
+                {/* Table Skeleton */}
+                <DataTableSkeleton
+                    columnCount={headers.length}
+                    rowCount={5}
+                    showHeader
+                    showToolbar
+                />
+            </div>
+        );
+    }
+
+    // Filter for Critical Ticker (Active Critical Alerts)
+    const tickerAlerts = recentAlerts.filter(a => a.severity === 'critical').slice(0, 3);
 
     return (
         <div className="dashboard-page">
@@ -141,75 +287,24 @@ export function DashboardPage() {
                     </div>
                 </div>
                 <div className="ticker-alerts">
-                    <span className="alert-item">
-                        <CriticalIcon size={14} className="critical" />
-                        Core-SW-01: Interface Down
-                    </span>
-                    <span className="alert-item">
-                        <CriticalIcon size={14} className="critical" />
-                        FW-DMZ-03: High CPU Usage
-                    </span>
+                    {tickerAlerts.length > 0 ? (
+                        tickerAlerts.map(alert => (
+                            <span className="alert-item" key={alert.id}>
+                                <CriticalIcon size={14} className="critical" />
+                                {alert.device.name}: {alert.aiSummary || 'Critical Issue Detected'}
+                            </span>
+                        ))
+                    ) : (
+                        <span className="alert-item">No active critical alerts</span>
+                    )}
                 </div>
             </div>
 
             {/* KPI Stats Row */}
-            <div className="kpi-stats-row">
-                <Tile className="kpi-stat-tile">
-                    <div className="kpi-icon blue">
-                        <Notification size={24} />
-                    </div>
-                    <div className="kpi-info">
-                        <span className="kpi-label">Last 24h</span>
-                        <h2 className="kpi-value">1,247</h2>
-                        <span className="kpi-title">Total Alerts</span>
-                        <span className="kpi-trend positive">
-                            <ArrowDown size={14} />
-                            12% from yesterday
-                        </span>
-                    </div>
-                </Tile>
-
-                <Tile className="kpi-stat-tile">
-                    <div className="kpi-icon red">
-                        <CriticalIcon size={24} />
-                    </div>
-                    <div className="kpi-info">
-                        <span className="kpi-label">Critical</span>
-                        <h2 className="kpi-value">12</h2>
-                        <span className="kpi-title">Critical Alerts</span>
-                        <span className="kpi-trend negative">
-                            <ArrowUp size={14} />
-                            3 new in last hour
-                        </span>
-                    </div>
-                </Tile>
-
-                <Tile className="kpi-stat-tile">
-                    <div className="kpi-icon orange">
-                        <MajorIcon size={24} />
-                    </div>
-                    <div className="kpi-info">
-                        <span className="kpi-label">Major</span>
-                        <h2 className="kpi-value">47</h2>
-                        <span className="kpi-title">Major Alerts</span>
-                        <span className="kpi-trend neutral">— Stable</span>
-                    </div>
-                </Tile>
-
-                <Tile className="kpi-stat-tile">
-                    <div className="kpi-icon green">
-                        <CheckmarkFilled size={24} />
-                    </div>
-                    <div className="kpi-info">
-                        <span className="kpi-label">MTTR</span>
-                        <h2 className="kpi-value">14m</h2>
-                        <span className="kpi-title">Mean Time to Resolve</span>
-                        <span className="kpi-trend positive">
-                            <ArrowDown size={14} />
-                            8% improvement
-                        </span>
-                    </div>
-                </Tile>
+            <div className="kpi-row">
+                {kpiData.map((kpi) => (
+                    <KPICard key={kpi.id} {...kpi} />
+                ))}
             </div>
 
             {/* Charts Row */}
@@ -231,9 +326,11 @@ export function DashboardPage() {
                         </div>
                     </div>
                     <div className="chart-container">
-                        <StackedAreaChart
+                        <ChartWrapper
+                            ChartComponent={StackedAreaChart}
                             data={alertsOverTimeData}
                             options={areaChartOptions}
+                            height="320px"
                         />
                     </div>
                 </Tile>
@@ -242,9 +339,11 @@ export function DashboardPage() {
                         <h3>Severity Distribution</h3>
                     </div>
                     <div className="chart-container">
-                        <DonutChart
-                            data={MOCK_SEVERITY_DISTRIBUTION}
+                        <ChartWrapper
+                            ChartComponent={DonutChart}
+                            data={severityDist}
                             options={donutChartOptions}
+                            height="300px"
                         />
                     </div>
                 </Tile>
@@ -252,20 +351,25 @@ export function DashboardPage() {
 
             {/* Priority Alerts Table */}
             <Tile className="table-tile">
-                <div className="table-header">
-                    <h3>Priority Alerts</h3>
-                    <div className="table-actions">
-                        <Button kind="tertiary" size="sm" renderIcon={Filter}>
-                            Filter
-                        </Button>
-                        <Button kind="tertiary" size="sm" renderIcon={Export}>
-                            Export
-                        </Button>
-                    </div>
-                </div>
-                <DataTable rows={MOCK_NOC_ALERTS} headers={headers}>
-                    {({ rows, headers, getTableProps, getHeaderProps, getRowProps }) => (
-                        <TableContainer>
+                <DataTable rows={recentAlerts} headers={headers}>
+                    {({ rows, headers, getTableProps, getHeaderProps, getRowProps, onInputChange }) => (
+                        <TableContainer title="Priority Alerts">
+                            <TableToolbar>
+                                <TableToolbarContent>
+                                    <TableToolbarSearch
+                                        onChange={(e) => onInputChange(e as React.ChangeEvent<HTMLInputElement>)}
+                                        placeholder="Search alerts..."
+                                    />
+                                    <Button
+                                        kind="tertiary"
+                                        size="sm"
+                                        renderIcon={Export}
+                                        onClick={handleExport}
+                                    >
+                                        Export
+                                    </Button>
+                                </TableToolbarContent>
+                            </TableToolbar>
                             <Table {...getTableProps()}>
                                 <TableHead>
                                     <TableRow>
@@ -278,23 +382,24 @@ export function DashboardPage() {
                                 </TableHead>
                                 <TableBody>
                                     {rows.map((row) => {
-                                        const alert = MOCK_NOC_ALERTS.find((a) => a.id === row.id);
+                                        const alert = recentAlerts.find((a) => a.id === row.id);
+                                        if (!alert) return null;
                                         return (
                                             <TableRow {...getRowProps({ row })} key={row.id}>
-                                                <TableCell>{alert?.timestamp.absolute}</TableCell>
+                                                <TableCell>{typeof alert.timestamp === 'string' ? alert.timestamp : alert.timestamp.absolute}</TableCell>
                                                 <TableCell>
                                                     <div className="device-cell">
-                                                        {alert && getDeviceIcon(alert.device.icon)}
-                                                        <span>{alert?.device.name}</span>
+                                                        {getDeviceIcon(alert.device?.icon || 'server')}
+                                                        <span>{alert.device?.name || 'Unknown'}</span>
                                                     </div>
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="severity-cell">
-                                                        {alert && getSeverityTag(alert.severity)}
+                                                        {getSeverityTag(alert.severity)}
                                                     </div>
                                                 </TableCell>
-                                                <TableCell>{alert?.aiSummary}</TableCell>
-                                                <TableCell>{alert && getStatusTag(alert.status)}</TableCell>
+                                                <TableCell>{alert.aiSummary}</TableCell>
+                                                <TableCell>{getStatusTag(alert.status)}</TableCell>
                                                 <TableCell>
                                                     <div className="action-btns">
                                                         <Button
@@ -303,6 +408,7 @@ export function DashboardPage() {
                                                             renderIcon={View}
                                                             hasIconOnly
                                                             iconDescription="View"
+                                                            onClick={() => handleViewAlert(alert.id)}
                                                         />
                                                         <Button
                                                             kind="ghost"
@@ -310,6 +416,7 @@ export function DashboardPage() {
                                                             renderIcon={Checkmark}
                                                             hasIconOnly
                                                             iconDescription="Acknowledge"
+                                                            onClick={() => handleAcknowledgeAlert(alert.id)}
                                                         />
                                                     </div>
                                                 </TableCell>
@@ -325,33 +432,16 @@ export function DashboardPage() {
 
             {/* Bottom Row */}
             <div className="bottom-row">
-                <Tile className="bottom-tile">
-                    <h3>Top Noisy Devices</h3>
-                    <div className="devices-list">
-                        {MOCK_TOP_NOISY_DEVICES.map((item, idx) => (
-                            <div key={idx} className="device-row">
-                                <div className="device-left">
-                                    <div className={getSeverityBackgroundClass(item.severity)}>
-                                        {getDeviceIcon(item.device.icon)}
-                                    </div>
-                                    <div className="device-details">
-                                        <div className="device-name">{item.device.name}</div>
-                                        <div className="device-model">{item.model}</div>
-                                    </div>
-                                </div>
-                                <div className="device-right">
-                                    <div className="alerts-count">{item.alertCount}</div>
-                                    <div className="alerts-label">alerts/day</div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </Tile>
+                <NoisyDevicesCard
+                    title="Top Noisy Devices"
+                    devices={noisyDevices}
+                    variant="simple"
+                />
 
                 <Tile className="bottom-tile">
                     <h3>AI Impact Metrics</h3>
                     <div className="metrics-list">
-                        {MOCK_AI_IMPACT_METRICS.map((metric, idx) => (
+                        {aiMetrics.map((metric, idx) => (
                             <div key={idx} className="metric-row">
                                 <div className="metric-left">
                                     <div className="metric-name">{metric.name}</div>

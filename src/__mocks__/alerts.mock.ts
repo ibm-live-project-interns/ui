@@ -38,7 +38,7 @@ export interface MockUser {
 export interface SearchableItem {
     label: string;
     path: string;
-    type: 'page' | 'device' | 'alert';
+    type: 'page' | 'device' | 'alert' | 'ticket';
 }
 
 export const MOCK_USER: MockUser = {
@@ -52,6 +52,7 @@ export const SEARCHABLE_ITEMS: SearchableItem[] = [
     { label: 'Dashboard', path: '/dashboard', type: 'page' },
     { label: 'Priority Alerts', path: '/priority-alerts', type: 'page' },
     { label: 'Trends & Insights', path: '/trends', type: 'page' },
+    { label: 'Tickets', path: '/tickets', type: 'page' },
     { label: 'Device Explorer', path: '/devices', type: 'page' },
     { label: 'Settings', path: '/settings', type: 'page' },
     { label: 'Core-SW-01', path: '/devices/core-sw-01', type: 'device' },
@@ -374,6 +375,16 @@ const TIME_SERIES_CONFIG: Record<TimePeriod, TimeSeriesConfig> = {
             info: [850, 920, 1050, 980, 880, 800],
         },
     },
+    '90d': {
+        intervals: 6,
+        intervalMs: 15 * 24 * 60 * 60 * 1000,
+        baseValues: {
+            critical: [1200, 1350, 1500, 1400, 1250, 1100],
+            major: [2800, 3200, 3600, 3400, 3000, 2600],
+            minor: [5200, 6000, 6800, 6400, 5600, 5000],
+            info: [2400, 2800, 3200, 3000, 2600, 2200],
+        },
+    },
 };
 
 function generateAlertsOverTime(period: TimePeriod): ChartDataPoint[] {
@@ -396,6 +407,7 @@ export const ALERTS_OVER_TIME: Record<TimePeriod, ChartDataPoint[]> = {
     '24h': generateAlertsOverTime('24h'),
     '7d': generateAlertsOverTime('7d'),
     '30d': generateAlertsOverTime('30d'),
+    '90d': generateAlertsOverTime('90d'),
 };
 
 // ==========================================
@@ -428,6 +440,98 @@ export const MOCK_AI_IMPACT_METRICS: AIMetric[] = [
     { name: 'False Positive Rate', value: 68, change: '-68%', trend: 'positive' },
     { name: 'Escalation Reduction', value: 65, change: '+65%', trend: 'positive' },
     { name: 'Operator Confidence', value: 89, change: '+89%', trend: 'positive' },
+];
+
+// ==========================================
+// Trends & Insights Mock Data
+// ==========================================
+
+export const MOCK_TRENDS_KPI = [
+    {
+        id: 'alert-volume',
+        label: 'Alert Volume',
+        value: '-12%',
+        subtitle: 'Compared to last period',
+        trend: 'down' as const,
+        tag: { text: 'Improving', type: 'green' },
+    },
+    {
+        id: 'mttr',
+        label: 'MTTR',
+        value: '8.5m',
+        subtitle: 'Mean Time To Resolution',
+        trend: 'down' as const,
+    },
+    {
+        id: 'recurring-alerts',
+        label: 'Recurring Alerts',
+        value: '23%',
+        subtitle: 'Of total volume',
+        trend: 'up' as const,
+        tag: { text: 'Needs Attention', type: 'red' },
+    },
+    {
+        id: 'escalation-rate',
+        label: 'Escalation Rate',
+        value: '4.2%',
+        subtitle: 'L1 to L2/L3 handoff',
+        trend: 'stable' as const,
+    },
+];
+
+export const MOCK_TOP_RECURRING_ALERT_TYPES = [
+    {
+        id: 'rec-001',
+        name: 'Interface Flapping',
+        count: 247,
+        severity: 'major',
+        avgResolution: '12m',
+        percentage: 100,
+    },
+    {
+        id: 'rec-002',
+        name: 'High CPU Utilization',
+        count: 189,
+        severity: 'minor',
+        avgResolution: '8m',
+        percentage: 76,
+    },
+    {
+        id: 'rec-003',
+        name: 'Memory Threshold Exceeded',
+        count: 156,
+        severity: 'minor',
+        avgResolution: '15m',
+        percentage: 63,
+    },
+];
+
+export const MOCK_ALERT_DISTRIBUTION_TIME = [
+    { group: 'Morning (6am-12pm)', value: 145 },
+    { group: 'Afternoon (12pm-6pm)', value: 210 },
+    { group: 'Evening (6pm-12am)', value: 98 },
+    { group: 'Night (12am-6am)', value: 42 },
+];
+
+export const MOCK_AI_INSIGHTS = [
+    {
+        id: 'insight-001',
+        type: 'pattern' as const,
+        description: 'Recurring BGP flaps detected on RTR-EDGE-05 every Tuesday between 2-3 PM, coinciding with scheduled backups.',
+        action: 'Adjust Backup Schedule',
+    },
+    {
+        id: 'insight-002',
+        type: 'optimization' as const,
+        description: 'Alert noise reduced by 45% after implementing AI-based correlation rules on Core-SW cluster.',
+        action: 'Apply to Other Clusters',
+    },
+    {
+        id: 'insight-003',
+        type: 'recommendation' as const,
+        description: 'Consider upgrading firmware on FW-DMZ-03 to address known CPU spike issues under heavy load.',
+        action: 'Schedule Maintenance',
+    },
 ];
 
 // ==========================================

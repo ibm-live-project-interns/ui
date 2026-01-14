@@ -6,6 +6,8 @@
  */
 
 export { alertDataService, type IAlertDataService } from './AlertDataService';
+export { ticketDataService, type ITicketDataService, type TicketInfo, type CreateTicketData } from './TicketDataService';
+export { authService } from './AuthService';
 export { HttpService } from './HttpService';
 export { webSocketService } from './WebSocketService';
 export * from './utils';

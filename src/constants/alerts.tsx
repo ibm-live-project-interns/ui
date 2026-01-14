@@ -37,7 +37,7 @@ export type AlertStatus = 'new' | 'acknowledged' | 'in-progress' | 'resolved' | 
 export type DeviceIcon = 'switch' | 'firewall' | 'router' | 'server' | 'wireless';
 
 /** Time period options */
-export type TimePeriod = '24h' | '7d' | '30d';
+export type TimePeriod = '24h' | '7d' | '30d' | '90d';
 
 /** Display versions (capitalized) */
 export type SeverityDisplay = 'Critical' | 'Major' | 'Minor' | 'Info';
@@ -127,6 +127,14 @@ export interface AIMetric {
     value: number;
     change: string;
     trend: 'positive' | 'negative' | 'neutral';
+}
+
+export interface AlertSummary {
+    activeCount: number;
+    criticalCount: number;
+    majorCount: number;
+    minorCount: number;
+    infoCount: number;
 }
 
 // ==========================================

@@ -20,12 +20,12 @@
         }
     }
 
-    // Page Header
+    // Page Header - Consistent with other pages
     .settings-header {
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        margin-bottom: $spacing-06;
+        margin-bottom: $spacing-05;
         flex-wrap: wrap;
         gap: $spacing-04;
 
