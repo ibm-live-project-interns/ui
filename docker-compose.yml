@@ -42,7 +42,7 @@ services:
   # ===========================================================================
   # DATABASE LAYER
   # ===========================================================================
-  
+
   postgres:
     image: postgres:15-alpine
     container_name: noc-postgres
@@ -172,7 +172,8 @@ services:
 
   ingestor-core:
     build:
-      context: ../ingestor/ingestor_core
+      context: ../ingestor
+      dockerfile: ingestor_core/Dockerfile
     container_name: noc-ingestor-core
     ports:
       - "8001:8001"
@@ -187,7 +188,8 @@ services:
 
   event-router:
     build:
-      context: ../ingestor/event_router
+      context: ../ingestor
+      dockerfile: event_router/Dockerfile
     container_name: noc-event-router
     ports:
       - "8082:8082"

@@ -59,7 +59,7 @@ src/
 ## Key Features
 
 - **Dashboard** - Real-time overview with KPIs and charts
-- **Priority Alerts** - Filter and manage critical alerts
+- **Priority Alerts** - Filter and manage critical alerts with advanced search and bulk actions
 - **Alert Details** - AI analysis with root causes and recommendations
 - **Tickets** - Issue tracking system
 - **Trends & Insights** - Historical analysis and patterns

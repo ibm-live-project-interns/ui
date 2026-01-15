@@ -105,6 +105,7 @@
             align-items: center;
             gap: $spacing-03;
             color: $red-60;
+            flex-shrink: 0;
 
             .ticker-text-group {
                 display: flex;
@@ -124,18 +125,120 @@
 
         .ticker-alerts {
             display: flex;
-            gap: $spacing-05;
+            flex: 1;
+            min-width: 0;
+            justify-content: flex-end;
 
-            .alert-item {
+            .alert-item-animated {
+                display: flex;
+                align-items: center;
+                gap: $spacing-04;
+                cursor: pointer;
+                padding: $spacing-02 $spacing-04;
+                border-radius: 4px;
+                transition: all 0.3s ease;
+                background: rgba($red-60, 0.05);
+                border: 1px solid transparent;
+                min-width: 0;
+                flex: 1;
+                max-width: 600px;
+                animation: slideIn 0.5s ease-out;
+
+                &:hover {
+                    background: rgba($red-60, 0.1);
+                    border-color: rgba($red-60, 0.4);
+                    transform: translateY(-1px);
+                }
+
+                &:focus {
+                    outline: 2px solid $focus;
+                    outline-offset: 2px;
+                }
+
+                .alert-content {
+                    display: flex;
+                    align-items: center;
+                    gap: $spacing-03;
+                    flex: 1;
+                    min-width: 0;
+
+                    .critical-icon {
+                        color: $red-60;
+                        flex-shrink: 0;
+                    }
+
+                    .alert-text {
+                        display: flex;
+                        align-items: baseline;
+                        gap: $spacing-02;
+                        @include react.type-style('body-compact-01');
+                        min-width: 0;
+                        flex: 1;
+
+                        .alert-device {
+                            font-weight: 600;
+                            color: $text-primary;
+                            flex-shrink: 0;
+                        }
+
+                        .alert-separator {
+                            color: $text-secondary;
+                            flex-shrink: 0;
+                        }
+
+                        .alert-message {
+                            color: $text-secondary;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                        }
+                    }
+                }
+
+                .ticker-indicator {
+                    display: flex;
+                    align-items: center;
+                    gap: $spacing-02;
+                    flex-shrink: 0;
+
+                    .indicator-dot {
+                        width: 6px;
+                        height: 6px;
+                        border-radius: 50%;
+                        background: rgba($red-60, 0.3);
+                        transition: all 0.3s ease;
+
+                        &.active {
+                            background: $red-60;
+                            transform: scale(1.2);
+                        }
+                    }
+                }
+            }
+
+            .alert-item-no-alerts {
                 display: flex;
                 align-items: center;
                 gap: $spacing-02;
                 @include react.type-style('body-compact-01');
+                color: $text-secondary;
+                padding: $spacing-02 $spacing-04;
 
-                .critical {
-                    color: $red-60;
+                .check-icon {
+                    color: $green-50;
                 }
             }
+        }
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateX(0);
         }
     }
 
