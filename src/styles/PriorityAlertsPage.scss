@@ -1,0 +1,179 @@
+@use '@carbon/colors' as *;
+// Priority Alerts Page Styles
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react' as react;
+
+.priority-alerts-page {
+
+    // Page Header
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: $spacing-05;
+        flex-wrap: wrap;
+        gap: $spacing-04;
+
+        .page-header-left {
+            .page-title {
+                @include react.type-style('productive-heading-05');
+                margin: 0 0 $spacing-02 0;
+            }
+
+            .page-description {
+                @include react.type-style('body-compact-01');
+                color: $text-secondary;
+                margin: 0;
+            }
+        }
+
+        .page-header-actions {
+            display: flex;
+            gap: $spacing-03;
+        }
+    }
+
+    // KPI Row
+    // Replaced by shared .kpi-row in KPICard.scss
+
+
+    // Filters Row
+    .filters-row {
+        display: flex;
+        align-items: flex-end;
+        gap: $spacing-04;
+        margin-bottom: $spacing-04;
+        flex-wrap: wrap;
+
+        .filters-search {
+            flex: 1;
+            min-width: 200px;
+            max-width: 300px;
+        }
+
+        .cds--dropdown {
+            min-width: 150px;
+        }
+    }
+
+    // Quick Filters
+    .quick-filters {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+        margin-bottom: $spacing-04;
+        flex-wrap: wrap;
+
+        .quick-filters-label {
+            @include react.type-style('label-01');
+            color: $text-secondary;
+        }
+
+        .quick-filter-tag {
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+
+            &:hover {
+                opacity: 0.85;
+            }
+        }
+    }
+
+    // Filter Results Summary
+    .filter-results-summary {
+        @include react.type-style('body-compact-01');
+        color: $text-secondary;
+        margin-bottom: $spacing-04;
+        padding: $spacing-03;
+        background: $layer-01;
+        border-radius: 4px;
+        border-left: 3px solid $blue-60;
+    }
+
+    // Alerts Table
+    .alerts-table-container {
+        margin-bottom: $spacing-05;
+
+        .cds--data-table {
+            width: 100%;
+        }
+    }
+
+    // Table Cell Styles
+    .timestamp-cell {
+        .timestamp-relative {
+            @include react.type-style('body-compact-01');
+            color: $text-primary;
+        }
+
+        .timestamp-absolute {
+            @include react.type-style('label-01');
+            color: $text-secondary;
+        }
+    }
+
+    .device-cell {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+
+        .device-icon-svg {
+            color: $icon-secondary;
+        }
+
+        .device-info {
+            .device-name {
+                @include react.type-style('body-compact-01');
+                font-weight: 600;
+            }
+
+            .device-ip {
+                @include react.type-style('label-01');
+                color: $text-secondary;
+            }
+        }
+    }
+
+    .summary-cell {
+        max-width: 300px;
+
+        .summary-title {
+            @include react.type-style('body-compact-01');
+            font-weight: 600;
+            margin-bottom: $spacing-01;
+        }
+
+        .summary-text {
+            @include react.type-style('label-01');
+            color: $text-secondary;
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    }
+
+    .confidence-cell {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+        min-width: 100px;
+
+        .cds--progress-bar {
+            flex: 1;
+        }
+
+        .confidence-value {
+            @include react.type-style('label-01');
+            color: $text-secondary;
+            min-width: 35px;
+        }
+    }
+
+    .actions-cell {
+        display: flex;
+        gap: $spacing-02;
+    }
+}

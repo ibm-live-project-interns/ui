@@ -1,0 +1,234 @@
+# =============================================================================
+# NOC Dashboard - Docker Compose Configuration
+# =============================================================================
+# Full-stack deployment for the Network Operations Center Dashboard
+#
+# IMPORTANT: This docker-compose expects the 'ingestor' repository to be
+# cloned alongside the 'ui' repository:
+#
+#   parent-folder/
+#   ├── ui/              (this repo)
+#   └── ingestor/        (backend services)
+#
+# Clone both repos:
+#   git clone https://github.com/ibm-live-project-interns/ui.git
+#   git clone https://github.com/ibm-live-project-interns/ingestor.git
+#
+# Usage:
+#   docker compose up -d --build    # Start all services
+#   docker compose down             # Stop all services
+#   docker compose down -v          # Stop and remove volumes (reset data)
+#   docker compose logs -f          # View logs
+#
+# Access Points:
+#   - UI:        http://localhost:3000
+#   - API:       http://localhost:8080/api/v1
+#   - PgAdmin:   http://localhost:5050 (admin@admin.com / root)
+#   - Kafka UI:  http://localhost:8090
+#   - Kafka:     localhost:9094 (external access)
+#
+# =============================================================================
+
+networks:
+  noc-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  kafka_data:
+  zookeeper_data:
+
+services:
+  # ===========================================================================
+  # DATABASE LAYER
+  # ===========================================================================
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: noc-postgres
+    ports:
+      - "5432:5432"
+    networks:
+      - noc-network
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: noc_alerts
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    restart: always
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d noc_alerts"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: noc-pgadmin
+    ports:
+      - "5050:80"
+    networks:
+      - noc-network
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: root
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_SERVER_JSON_FILE: /pgadmin4/servers.json
+    volumes:
+      - ./pgadmin-servers.json:/pgadmin4/servers.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ===========================================================================
+  # MESSAGE QUEUE LAYER
+  # ===========================================================================
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: noc-zookeeper
+    networks:
+      - noc-network
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+    restart: unless-stopped
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: noc-kafka
+    ports:
+      - "9094:9092"
+    networks:
+      - noc-network
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9094
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    depends_on:
+      - zookeeper
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: noc-kafka-ui
+    ports:
+      - "8090:8080"
+    networks:
+      - noc-network
+    environment:
+      KAFKA_CLUSTERS_0_NAME: noc-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    depends_on:
+      - kafka
+    restart: unless-stopped
+
+  # ===========================================================================
+  # BACKEND SERVICES
+  # ===========================================================================
+
+  api-gateway:
+    build:
+      context: ../ingestor/api_gateway
+    container_name: noc-api-gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - noc-network
+    environment:
+      API_GATEWAY_PORT: "8080"
+      GIN_MODE: release
+      CORS_ALLOWED_ORIGINS: "http://localhost:5173,http://localhost:3000,http://localhost:5174"
+      JWT_SECRET: "${JWT_SECRET:-change-this-in-production}"
+      JWT_EXPIRY_HOURS: "24"
+      RATE_LIMIT_ENABLED: "true"
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: "5432"
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: secret
+      POSTGRES_DB: noc_alerts
+      KAFKA_BROKERS: kafka:29092
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: on-failure
+
+  ingestor-core:
+    build:
+      context: ../ingestor
+      dockerfile: ingestor_core/Dockerfile
+    container_name: noc-ingestor-core
+    ports:
+      - "8001:8001"
+    networks:
+      - noc-network
+    environment:
+      INGESTOR_CORE_PORT: "8001"
+      EVENT_ROUTER_URL: "http://event-router:8082"
+    depends_on:
+      - event-router
+    restart: on-failure
+
+  event-router:
+    build:
+      context: ../ingestor
+      dockerfile: event_router/Dockerfile
+    container_name: noc-event-router
+    ports:
+      - "8082:8082"
+    networks:
+      - noc-network
+    environment:
+      EVENT_ROUTER_PORT: "8082"
+      EVENT_ROUTER_CONFIG_PATH: "/root/config.json"
+      API_GATEWAY_URL: "http://api-gateway:8080"
+    restart: on-failure
+
+  agents-api:
+    build:
+      context: ../ingestor/agents_api
+    container_name: noc-agents-api
+    ports:
+      - "9000:9000"
+    networks:
+      - noc-network
+    environment:
+      AGENTS_API_PORT: "9000"
+      WATSON_API_KEY: "${WATSON_API_KEY:-}"
+      WATSON_PROJECT_ID: "${WATSON_PROJECT_ID:-}"
+      WATSON_URL: "${WATSON_URL:-https://us-south.ml.cloud.ibm.com}"
+    restart: on-failure
+
+  # ===========================================================================
+  # FRONTEND
+  # ===========================================================================
+
+  ui:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: noc-ui
+    ports:
+      - "3000:3000"
+    networks:
+      - noc-network
+    depends_on:
+      - api-gateway
+    restart: always

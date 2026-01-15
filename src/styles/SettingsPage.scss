@@ -1,0 +1,242 @@
+// Settings Page Styles
+// Uses Carbon Design System spacing tokens and theme variables
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react' as react;
+@use '@carbon/colors' as *;
+
+.settings-page {
+    position: relative;
+
+    // Toast Container - Fixed position top right (professional pattern)
+    .settings-toast-container {
+        position: fixed;
+        top: 64px; // Below header
+        right: $spacing-05;
+        z-index: 9999;
+
+        .cds--toast-notification {
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        }
+    }
+
+    // Page Header - Consistent with other pages
+    .settings-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: $spacing-05;
+        flex-wrap: wrap;
+        gap: $spacing-04;
+
+        .settings-header-left {
+            .settings-title {
+                @include react.type-style('productive-heading-05');
+                margin: 0 0 $spacing-02 0;
+            }
+
+            .settings-subtitle {
+                @include react.type-style('body-compact-01');
+                color: $text-secondary;
+                margin: 0;
+            }
+        }
+
+        .settings-header-actions {
+            display: flex;
+            gap: $spacing-03;
+        }
+    }
+
+    // Settings Grid
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: $spacing-05;
+
+        @media (max-width: 1056px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    // Settings Tile - Equal height for first row
+    .settings-tile {
+        padding: $spacing-05;
+        display: flex;
+        flex-direction: column;
+
+        // First row tiles (Appearance and Notifications) should match height
+        &:nth-child(1),
+        &:nth-child(2) {
+            min-height: 320px;
+        }
+
+        &--wide {
+            grid-column: 1 / -1;
+        }
+    }
+
+    .settings-tile-header {
+        display: flex;
+        align-items: flex-start;
+        gap: $spacing-04;
+        margin-bottom: $spacing-05;
+        padding-bottom: $spacing-04;
+        border-bottom: 1px solid $border-subtle-01;
+    }
+
+    .settings-tile-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        background: rgba($blue-60, 0.15);
+        color: $blue-60;
+
+        &.notification-icon {
+            background: rgba($purple-60, 0.15);
+            color: $purple-60;
+        }
+
+        &.general-icon {
+            background: rgba($teal-50, 0.15);
+            color: $teal-50;
+        }
+    }
+
+    .settings-tile-title-group {
+        flex: 1;
+    }
+
+    .settings-tile-title {
+        @include react.type-style('heading-compact-02');
+        margin: 0 0 $spacing-02 0;
+    }
+
+    .settings-tile-description {
+        @include react.type-style('body-compact-01');
+        color: $text-secondary;
+        margin: 0;
+    }
+
+    .settings-tile-content {
+        flex: 1;
+
+        // Carbon FormGroup styling
+        .cds--form-group {
+            margin-bottom: 0;
+        }
+
+        .cds--radio-button-group {
+            gap: $spacing-04;
+        }
+
+        .cds--radio-button-wrapper {
+            margin-bottom: $spacing-03;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
+
+        &--general {
+            display: flex;
+            flex-direction: column;
+            gap: $spacing-05;
+        }
+    }
+
+    // Toggle Group
+    .settings-toggle-group {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-04;
+    }
+
+    .settings-toggle-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: $spacing-03 0;
+        border-bottom: 1px solid $border-subtle-01;
+
+        &:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        &:first-child {
+            padding-top: 0;
+        }
+    }
+
+    .settings-toggle-info {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+        flex: 1;
+    }
+
+    .settings-toggle-icon {
+        color: $icon-secondary;
+        flex-shrink: 0;
+    }
+
+    .critical-badge {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: $red-60;
+    }
+
+    .settings-toggle-text {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .settings-toggle-label {
+        @include react.type-style('body-compact-01');
+        color: $text-primary;
+    }
+
+    .settings-toggle-description {
+        @include react.type-style('helper-text-01');
+        color: $text-secondary;
+    }
+
+    // Select Row - Side by side dropdowns
+    .settings-select-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: $spacing-05;
+
+        @media (max-width: 672px) {
+            grid-template-columns: 1fr;
+        }
+
+        .cds--select {
+            width: 100%;
+        }
+
+        // Override Carbon select wrapper width
+        .cds--select-input__wrapper {
+            width: 100%;
+        }
+    }
+
+    // Refresh Group
+    .settings-refresh-group {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-04;
+        padding-top: $spacing-04;
+        border-top: 1px solid $border-subtle-01;
+    }
+
+    .settings-refresh-interval {
+        max-width: 300px;
+    }
+}

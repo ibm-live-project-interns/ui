@@ -1,0 +1,443 @@
+// Trends & Insights Page Styles
+// Uses Carbon Design System spacing tokens and native CSS Grid for layout
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as *;
+@use '@carbon/react' as react;
+@use '@carbon/colors' as *;
+
+.trends-insights-page {
+
+    // Page Header
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: $spacing-05;
+        flex-wrap: wrap;
+        gap: $spacing-04;
+
+        .header-left {
+            .page-title {
+                @include react.type-style('productive-heading-05');
+                margin: 0 0 $spacing-02 0;
+            }
+
+            .page-subtitle {
+                @include react.type-style('body-compact-01');
+                color: $text-secondary;
+                margin: 0;
+            }
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: $spacing-04;
+        }
+    }
+
+    // ==========================================
+    // Section Common Styles
+    // ==========================================
+
+    .section-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: $spacing-05;
+        gap: $spacing-03;
+        flex-wrap: wrap;
+
+        h3 {
+            @include react.type-style('heading-compact-02');
+            margin: 0;
+        }
+
+        .section-subtitle {
+            @include react.type-style('body-compact-01');
+            color: $text-secondary;
+            margin: $spacing-02 0 0 0;
+        }
+
+        .section-title-group {
+            display: flex;
+            flex-direction: column;
+            gap: $spacing-02;
+        }
+    }
+
+    // ==========================================
+    // Mobile Responsive - Hide severity filters
+    // ==========================================
+
+    .hide-on-mobile {
+        @media (max-width: 672px) {
+            display: none !important;
+        }
+    }
+
+    // ==========================================
+    // Charts Section
+    // ==========================================
+
+    .chart-section {
+        padding: $spacing-05;
+        margin-bottom: $spacing-05;
+
+        .section-controls {
+            display: flex;
+            gap: $spacing-03;
+        }
+
+        .severity-filters {
+            display: flex;
+            gap: $spacing-02;
+
+            .severity-filter-btn {
+                min-width: 70px;
+
+                &--critical.cds--btn--primary {
+                    background-color: $red-60;
+                    border-color: $red-60;
+                }
+
+                &--major.cds--btn--primary {
+                    background-color: $orange-40;
+                    border-color: $orange-40;
+                }
+
+                &--minor.cds--btn--primary {
+                    background-color: $yellow-30;
+                    border-color: $yellow-30;
+                    color: $gray-100;
+                }
+
+                &--info.cds--btn--primary {
+                    background-color: $blue-60;
+                    border-color: $blue-60;
+                }
+            }
+        }
+
+        .chart-container {
+            margin-top: $spacing-04;
+            min-height: 320px;
+        }
+    }
+
+    // ==========================================
+    // Middle Row - Two Column Layout
+    // ==========================================
+
+    .middle-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: $spacing-05;
+        margin-bottom: $spacing-05;
+
+        @media (max-width: 1056px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    // ==========================================
+    // Recurring Alert Types - Full Layout (Reference Image 2)
+    // ==========================================
+
+    .recurring-alerts-tile {
+        padding: $spacing-05;
+
+        .alert-types-list {
+            display: flex;
+            flex-direction: column;
+            gap: $spacing-05;
+        }
+
+        .alert-type-item {
+            display: flex;
+            flex-direction: column;
+            gap: $spacing-02;
+
+            // Row 1: Icon + Name on left, Occurrences on right
+            .alert-type-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: $spacing-04;
+
+                .alert-type-left {
+                    display: flex;
+                    align-items: center;
+                    gap: $spacing-03;
+                }
+
+                .alert-type-icon {
+                    width: 32px;
+                    height: 32px;
+                    border-radius: 6px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                }
+
+                .alert-type-name {
+                    @include react.type-style('body-compact-01');
+                    font-weight: 600;
+                }
+
+                .alert-type-occurrences {
+                    @include react.type-style('body-compact-01');
+                    font-weight: 600;
+                    white-space: nowrap;
+                }
+            }
+
+            // Row 2: Progress bar under the header
+            .alert-type-bar-container {
+                height: 8px;
+                background: $layer-02;
+                border-radius: 4px;
+                overflow: hidden;
+                margin-top: $spacing-02;
+
+                .alert-type-bar {
+                    height: 100%;
+                    border-radius: 4px;
+                    transition: width 0.3s ease;
+                }
+            }
+
+            // Row 3: Avg resolution time
+            .alert-type-meta {
+                @include react.type-style('label-01');
+                color: $text-secondary;
+            }
+        }
+    }
+
+    // ==========================================
+    // Time Distribution Tile
+    // ==========================================
+
+    .time-distribution-tile {
+        padding: $spacing-05;
+
+        .pie-chart-container {
+            min-height: 220px;
+        }
+
+        .peak-hours-info {
+            display: flex;
+            gap: $spacing-04;
+            margin-top: $spacing-04;
+            padding-top: $spacing-04;
+            border-top: 1px solid $border-subtle-01;
+
+            .peak-hour-item {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                gap: $spacing-01;
+
+                .peak-label {
+                    @include react.type-style('label-01');
+                    color: $text-secondary;
+                }
+
+                .peak-value {
+                    @include react.type-style('body-compact-01');
+                    font-weight: 600;
+                }
+            }
+        }
+    }
+
+    // ==========================================
+    // AI Impact Row
+    // ==========================================
+
+    .ai-impact-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: $spacing-05;
+        margin-bottom: $spacing-05;
+
+        @media (max-width: 1056px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .ai-impact-tile {
+        padding: $spacing-05;
+
+        .area-chart-container {
+            min-height: 240px;
+            margin-bottom: $spacing-04;
+        }
+
+        .ai-impact-summary {
+            display: flex;
+            gap: $spacing-03;
+
+            @media (max-width: 672px) {
+                flex-direction: column;
+            }
+
+            .summary-item {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                padding: $spacing-03;
+                border-radius: 4px;
+
+                &--blue {
+                    background: rgba($blue-60, 0.1);
+                }
+
+                &--purple {
+                    background: rgba($purple-60, 0.1);
+                }
+
+                &--green {
+                    background: rgba($green-50, 0.1);
+                }
+
+                .summary-label {
+                    @include react.type-style('label-01');
+                    color: $text-secondary;
+                    margin-bottom: $spacing-01;
+                }
+
+                .summary-value {
+                    @include react.type-style('heading-compact-02');
+                    font-weight: 600;
+
+                    &.positive {
+                        color: $green-50;
+                    }
+
+                    &.negative {
+                        color: $red-60;
+                    }
+                }
+            }
+        }
+    }
+
+    // ==========================================
+    // AI Generated Insights - Side by Side Cards (Reference Image 3)
+    // ==========================================
+
+    .ai-insights-section {
+        padding: $spacing-05;
+
+        .ai-insights-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: $spacing-05;
+            padding-bottom: $spacing-04;
+            border-bottom: 1px solid $border-subtle-01;
+            gap: $spacing-04;
+
+            .ai-insights-title-group {
+                display: flex;
+                align-items: flex-start;
+                gap: $spacing-04;
+            }
+
+            .ai-insights-icon {
+                width: 48px;
+                height: 48px;
+                border-radius: 50%;
+                background: linear-gradient(135deg, $purple-60 0%, $blue-60 100%);
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: $white-0;
+                flex-shrink: 0;
+            }
+
+            .ai-insights-title-content {
+                h3 {
+                    @include react.type-style('productive-heading-03');
+                    margin: 0 0 $spacing-02 0;
+                }
+            }
+
+            .ai-insights-subtitle {
+                @include react.type-style('body-compact-01');
+                color: $text-secondary;
+                margin: 0;
+            }
+        }
+
+        // 3-column grid for insight cards
+        .ai-insights-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: $spacing-05;
+
+            @media (max-width: 1056px) {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            @media (max-width: 672px) {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        // Individual insight card
+        .ai-insight-card {
+            background: $layer-02;
+            border-radius: 8px;
+            padding: $spacing-05;
+            display: flex;
+            flex-direction: column;
+            gap: $spacing-04;
+            border: 1px solid $border-subtle-01;
+            transition: background-color 0.15s ease, border-color 0.15s ease;
+
+            &:hover {
+                background: $layer-hover-02;
+                border-color: $border-strong-01;
+            }
+
+            .ai-insight-card-header {
+                display: flex;
+                align-items: center;
+                gap: $spacing-03;
+            }
+
+            .ai-insight-card-icon {
+                width: 28px;
+                height: 28px;
+                border-radius: 50%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+            }
+
+            .ai-insight-card-label {
+                @include react.type-style('body-compact-01');
+                font-weight: 600;
+            }
+
+            .ai-insight-card-description {
+                @include react.type-style('body-compact-01');
+                color: $text-secondary;
+                margin: 0;
+                flex: 1;
+                line-height: 1.5;
+            }
+
+            .ai-insight-card-action {
+                align-self: flex-start;
+                padding-left: 0;
+            }
+        }
+    }
+}

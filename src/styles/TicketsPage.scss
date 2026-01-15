@@ -1,0 +1,144 @@
+// Tickets Page Styles
+// Uses Carbon Design System spacing tokens and theme variables
+// Matches structure of PriorityAlertsPage.scss
+@use '@carbon/colors' as *;
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react' as react;
+
+.tickets-page {
+    // Page Header - Consistent with other pages
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: $spacing-05;
+        flex-wrap: wrap;
+        gap: $spacing-04;
+
+        .page-header-left {
+            .page-title {
+                @include react.type-style('productive-heading-05');
+                margin: 0 0 $spacing-02 0;
+            }
+
+            .page-description {
+                @include react.type-style('body-compact-01');
+                color: $text-secondary;
+                margin: 0;
+            }
+        }
+
+        .page-header-actions {
+            display: flex;
+            gap: $spacing-03;
+        }
+    }
+
+    // KPI Row - Uses shared .kpi-row from KPICard.scss
+
+    // Filters Row - Following Carbon filtering pattern
+    .filters-row {
+        display: flex;
+        align-items: flex-end;
+        gap: $spacing-04;
+        margin-bottom: $spacing-04;
+        flex-wrap: wrap;
+
+        .filters-search {
+            flex: 1;
+            min-width: 200px;
+            max-width: 400px;
+        }
+
+        .cds--dropdown {
+            min-width: 160px;
+        }
+    }
+
+    // Quick Filters - Instant update pattern
+    .quick-filters {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+        margin-bottom: $spacing-05;
+        flex-wrap: wrap;
+
+        .quick-filters-label {
+            @include react.type-style('label-01');
+            color: $text-secondary;
+        }
+
+        .quick-filter-tag {
+            cursor: pointer;
+            transition: background-color 0.15s ease;
+
+            &:hover {
+                opacity: 0.85;
+            }
+        }
+    }
+
+    // Filter Results Summary
+    .filter-results-summary {
+        @include react.type-style('body-compact-01');
+        color: $text-secondary;
+        margin-bottom: $spacing-04;
+        padding: $spacing-03;
+        background: $layer-01;
+        border-radius: 4px;
+        border-left: 3px solid $blue-60;
+    }
+
+    // Tickets Table - Matches .alerts-table-container from PriorityAlertsPage
+    .tickets-table-container {
+        margin-bottom: $spacing-05;
+
+        .cds--data-table {
+            width: 100%;
+        }
+    }
+
+    // Table Cell Styles - Consistent with Priority Alerts
+    .ticket-number {
+        @include react.type-style('body-compact-01');
+        color: $link-primary;
+        font-weight: 600;
+        cursor: pointer;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .ticket-title-cell {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-02;
+        max-width: 300px;
+
+        .ticket-title {
+            @include react.type-style('body-compact-01');
+            font-weight: 600;
+        }
+
+        .ticket-description {
+            @include react.type-style('label-01');
+            color: $text-secondary;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+    }
+
+    .timestamp {
+        @include react.type-style('label-01');
+        color: $text-secondary;
+    }
+
+    .action-btns {
+        display: flex;
+        gap: $spacing-02;
+    }
+}
