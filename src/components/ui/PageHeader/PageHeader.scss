@@ -1,0 +1,276 @@
+// PageHeader Styles
+// Consistent header pattern for all pages - matches ui-revamp-idea reference design
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/type' as *;
+@use '@carbon/react/scss/theme' as *;
+
+.page-header {
+    // No background - blends with page background
+    // Vertical padding only - horizontal comes from content wrapper
+    padding: $spacing-05 0;
+    border-bottom: 1px solid $border-subtle-01;
+    margin-bottom: $spacing-05; // Add gap between border and content below
+
+    // Bottom border variant (adds more emphasis)
+    &--bordered {
+        border-bottom: 1px solid $border-subtle-01;
+    }
+
+    // Compact variant
+    &--compact {
+        padding: $spacing-04 0;
+
+        .page-header__title {
+            font-size: 1.125rem;
+        }
+
+        .page-header__breadcrumbs {
+            margin-bottom: $spacing-02;
+        }
+    }
+
+    // Breadcrumbs - text-[10px] uppercase tracking-wider
+    &__breadcrumbs {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-bottom: $spacing-02; // small gap between breadcrumb and title
+    }
+
+    &__breadcrumb-link {
+        font-size: 10px;
+        font-weight: 400;
+        color: $text-secondary;
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        transition: color 0.15s ease;
+
+        &:hover {
+            color: $link-primary;
+        }
+    }
+
+    &__breadcrumb-text {
+        font-size: 10px;
+        font-weight: 400;
+        color: $text-secondary;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+
+        &--active {
+            color: $text-primary;
+        }
+    }
+
+    &__breadcrumb-separator {
+        color: $text-secondary;
+        flex-shrink: 0;
+        font-size: 10px;
+    }
+
+    // Main header row - title and actions side by side
+    &__main {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: $spacing-05;
+        flex-wrap: wrap;
+    }
+
+    &__title-section {
+        flex: 1;
+        min-width: 0;
+    }
+
+    // Title row with badges - flex items-center gap-3
+    &__title-row {
+        display: flex;
+        align-items: center;
+        gap: 12px; // gap-3 = 12px
+        flex-wrap: wrap;
+    }
+
+    // Title - text-xl font-medium
+    &__title {
+        font-size: 1.25rem; // 20px = text-xl
+        font-weight: 500; // font-medium
+        color: $text-primary;
+        margin: 0;
+        line-height: 1.4;
+    }
+
+    // Status badges - px-2 py-0.5 text-[10px] font-bold uppercase
+    &__badges {
+        display: flex;
+        align-items: center;
+        gap: 8px; // gap-2
+        flex-wrap: wrap;
+    }
+
+    &__badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px; // py-0.5 px-2
+        font-size: 10px;
+        font-weight: 700; // font-bold
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border: 1px solid transparent;
+        line-height: 1.4;
+
+        &--filled {
+            border-radius: 0;
+            color: #ffffff;
+        }
+
+        &--outline {
+            background-color: transparent !important;
+            border-width: 1px;
+            border-style: solid;
+        }
+    }
+
+    // Subtitle
+    &__subtitle {
+        font-size: 13px;
+        color: $text-secondary;
+        margin: $spacing-02 0 0 0;
+        max-width: 700px;
+    }
+
+    // Right section - actions aligned with title
+    &__right {
+        display: flex;
+        align-items: center;
+        gap: 12px; // gap-3
+        flex-shrink: 0;
+    }
+
+    &__right-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
+
+    // Action buttons container - gap-3
+    &__actions {
+        display: flex;
+        align-items: center;
+        gap: 12px; // gap-3
+        flex-shrink: 0;
+
+        // Make buttons consistent height
+        .cds--btn {
+            height: 32px; // h-8 = 32px
+            min-height: 32px;
+        }
+    }
+
+    // Bottom content
+    &__bottom-content {
+        margin-top: $spacing-04;
+    }
+
+    // Tabs section - Custom styling ("App Tabs")
+    &__tabs {
+        margin-top: $spacing-05;
+        // Move border to the tab list itself to ensure full width
+        padding-top: 0;
+        margin-bottom: -$spacing-05; // Counteract header padding-bottom
+    }
+
+    &__tab-list {
+        display: flex;
+        flex-direction: row;
+        border-bottom: 1px solid $border-subtle-01;
+        width: 100%;
+        position: relative;
+        z-index: 1;
+        overflow-x: auto;
+        scrollbar-width: none; // Hide scrollbar for cleaner look
+
+        &::-webkit-scrollbar {
+            display: none;
+        }
+    }
+
+    &__tab {
+        appearance: none;
+        background: transparent;
+        border: none;
+        border-bottom: 3px solid transparent;
+        cursor: pointer;
+        padding: 0 $spacing-04; // Slightly tighter padding than original config
+        height: 48px;
+        color: $text-secondary;
+        font-size: 0.875rem;
+        font-weight: 400;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        outline: none;
+        text-decoration: none;
+        transition: color 70ms ease, border-bottom-color 70ms ease;
+        white-space: nowrap;
+
+        &:first-child {
+            margin-left: -1rem; // Pull first tab slightly left to align with text if desired, or keep 0
+            margin-left: 0;
+        }
+
+        &:hover {
+            color: $text-primary;
+        }
+
+        // Selected state
+        &--selected {
+            color: $link-primary;
+            border-bottom-color: $link-primary;
+            font-weight: 500;
+        }
+
+        // Focus state
+        &:focus-visible {
+            outline: 2px solid $focus;
+            outline-offset: -2px;
+        }
+    }
+}
+
+// Responsive adjustments
+@media (max-width: 672px) {
+    .page-header {
+        padding: $spacing-04 0;
+
+        &__main {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        &__title {
+            font-size: 1.125rem;
+        }
+
+        &__right {
+            width: 100%;
+            flex-wrap: wrap;
+            justify-content: flex-start;
+            margin-top: $spacing-03;
+        }
+
+        &__actions {
+            flex-wrap: wrap;
+            width: 100%;
+
+            .cds--btn {
+                flex: 1;
+            }
+        }
+
+        &__tabs {
+            margin-bottom: -$spacing-04;
+        }
+    }
+}

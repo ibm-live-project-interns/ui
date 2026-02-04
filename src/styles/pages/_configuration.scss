@@ -1,0 +1,461 @@
+// Alert Configuration Page Styles
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as *;
+@use '@carbon/react' as react;
+@use '@carbon/colors' as *;
+@use '@carbon/react/scss/components/tabs';
+
+.configuration-page {
+    width: 100%;
+
+    // Page header area
+    .configuration-header {
+        background: $layer-01;
+        border-bottom: 1px solid $border-subtle-01;
+        padding: $spacing-05 $spacing-06;
+
+        .configuration-header__breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: $spacing-02;
+            font-size: 0.75rem;
+            color: $text-secondary;
+
+            .breadcrumb-separator {
+                color: $text-helper;
+            }
+
+            .breadcrumb-current {
+                color: $text-primary;
+            }
+        }
+    }
+
+    // Custom Tabs Implementation
+    .app-tabs {
+        font-family: 'IBM Plex Sans', sans-serif;
+        background: $layer-01;
+        width: 100%;
+
+        .app-tab-list {
+            display: flex;
+            flex-direction: row;
+            border-bottom: 1px solid $border-subtle-01;
+            background: $layer-01;
+            padding-left: 0;
+            margin: 0;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+            min-height: 48px;
+        }
+
+        .app-tab {
+            appearance: none;
+            background: transparent;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            padding: 0 $spacing-05;
+            height: 48px;
+            color: $text-secondary; // Fallback
+            font-size: 0.875rem;
+            line-height: normal;
+            font-weight: 400;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            outline: none;
+            text-decoration: none;
+            transition: color 70ms ease, border-bottom-color 70ms ease, background 70ms ease;
+
+            // Standard Carbon colors
+            color: $text-secondary !important;
+
+            &:hover {
+                color: $text-primary !important;
+                background: $layer-hover-01;
+            }
+
+            // Selected state
+            &.app-tab--selected {
+                color: $text-primary !important;
+                border-bottom-color: $link-primary;
+                font-weight: 600;
+            }
+
+            // Focus state
+            &:focus-visible {
+                outline: 2px solid $focus;
+                outline-offset: -2px;
+            }
+
+            .app-tab-content {
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        .app-tab-panels {
+            width: 100%;
+        }
+    }
+
+    // Tab content area - global padding is applied in index.scss
+    .configuration-content {
+        padding: 0;
+        display: grid;
+        grid-template-columns: 1fr 340px;
+        gap: $spacing-06;
+
+        @media (max-width: 1056px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    // Left column - rules list
+    .rules-section {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-05;
+
+        .rules-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+
+            .rules-search {
+                position: relative;
+
+                .cds--search {
+                    min-width: 260px;
+                }
+            }
+
+            .rules-actions {
+                display: flex;
+                gap: $spacing-03;
+            }
+        }
+
+        .rules-header {
+            display: grid;
+            grid-template-columns: 60px 2fr 1.5fr 100px 100px;
+            gap: $spacing-04;
+            padding: $spacing-03 $spacing-04;
+            font-size: 0.625rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: $text-secondary;
+        }
+    }
+
+    // Rule item card
+    .rule-item {
+        background: $layer-01;
+        border: 1px solid transparent;
+        position: relative;
+        overflow: hidden;
+        transition: border-color 0.15s ease;
+
+        &:hover {
+            border-color: $border-strong-01;
+        }
+
+        &.rule-item--editing {
+            border-color: $focus;
+        }
+
+        &.rule-item--disabled {
+            opacity: 0.6;
+        }
+
+        .rule-item__border {
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+
+            &.border--critical {
+                background: $support-error;
+            }
+
+            &.border--major {
+                background: $support-warning;
+            }
+
+            &.border--warning {
+                background: #f1c21b;
+            }
+
+            &.border--info {
+                background: $support-info;
+            }
+        }
+
+        .rule-item__content {
+            display: grid;
+            grid-template-columns: 60px 2fr 1.5fr 100px 100px;
+            gap: $spacing-04;
+            padding: $spacing-04;
+            align-items: center;
+        }
+
+        .rule-item__toggle {
+            display: flex;
+            justify-content: center;
+        }
+
+        .rule-item__name {
+            h4 {
+                @include react.type-style('body-compact-01');
+                font-weight: 500;
+                color: $text-primary;
+                margin-bottom: $spacing-01;
+            }
+
+            p {
+                font-size: 0.6875rem;
+                color: $text-secondary;
+            }
+        }
+
+        .rule-item__condition {
+            display: flex;
+            align-items: center;
+            gap: $spacing-03;
+
+            .condition-code {
+                font-family: 'IBM Plex Mono', monospace;
+                font-size: 0.75rem;
+                background: $layer-02;
+                padding: $spacing-01 $spacing-02;
+                color: $text-primary;
+            }
+
+            .condition-duration {
+                font-size: 0.625rem;
+                color: $text-secondary;
+            }
+        }
+
+        .rule-item__severity {
+            .severity-badge {
+                display: inline-flex;
+                align-items: center;
+                gap: $spacing-02;
+                padding: $spacing-01 $spacing-03;
+                font-size: 0.6875rem;
+                font-weight: 500;
+                border-radius: 0;
+
+                .severity-dot {
+                    width: 6px;
+                    height: 6px;
+                }
+
+                &.severity--critical {
+                    background: rgba($support-error, 0.15);
+                    color: $support-error;
+                    border: 1px solid rgba($support-error, 0.5);
+
+                    .severity-dot {
+                        background: $support-error;
+                    }
+                }
+
+                &.severity--major {
+                    background: rgba($support-warning, 0.15);
+                    color: $support-warning;
+                    border: 1px solid rgba($support-warning, 0.5);
+
+                    .severity-dot {
+                        background: $support-warning;
+                    }
+                }
+
+                &.severity--warning {
+                    background: rgba(#f1c21b, 0.15);
+                    color: #f1c21b;
+                    border: 1px solid rgba(#f1c21b, 0.5);
+
+                    .severity-dot {
+                        background: #f1c21b;
+                    }
+                }
+
+                &.severity--info {
+                    background: rgba($support-info, 0.15);
+                    color: $support-info;
+                    border: 1px solid rgba($support-info, 0.5);
+
+                    .severity-dot {
+                        background: $support-info;
+                    }
+                }
+            }
+        }
+
+        .rule-item__actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: $spacing-02;
+        }
+    }
+
+    // Right column - settings panels
+    .settings-section {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-05;
+    }
+
+    .settings-panel {
+        background: $layer-01;
+        border: 1px solid $border-subtle-01;
+        padding: $spacing-05;
+
+        .settings-panel__header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: $spacing-05;
+
+            h3 {
+                @include react.type-style('heading-compact-01');
+                display: flex;
+                align-items: center;
+                gap: $spacing-03;
+
+                svg {
+                    color: $support-info;
+                }
+            }
+
+            .panel-action {
+                font-size: 0.75rem;
+                color: $link-primary;
+                cursor: pointer;
+                background: transparent;
+                border: 1px solid $border-subtle-01;
+                padding: $spacing-02 $spacing-03;
+                border-radius: 4px;
+                transition: all 0.15s ease;
+                font-weight: 500;
+
+                &:hover {
+                    background-color: $layer-hover-01;
+                    border-color: $link-primary;
+                }
+
+                &:focus {
+                    outline: 2px solid $focus;
+                    outline-offset: 2px;
+                }
+            }
+        }
+
+        .settings-panel__content {
+            display: flex;
+            flex-direction: column;
+            gap: $spacing-04;
+        }
+
+        .setting-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: $spacing-04;
+            border-bottom: 1px solid $border-subtle-01;
+
+            &:last-child {
+                border-bottom: none;
+                padding-bottom: 0;
+            }
+
+            .setting-info {
+                .setting-name {
+                    @include react.type-style('body-compact-01');
+                    color: $text-primary;
+                }
+
+                .setting-description {
+                    font-size: 0.625rem;
+                    color: $text-secondary;
+                    margin-top: $spacing-01;
+                }
+            }
+        }
+    }
+
+    // Notification channel item
+    .channel-item {
+        background: $layer-02;
+        padding: $spacing-04;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-left: 4px solid $support-success;
+
+        &.channel--inactive {
+            border-left-color: $text-helper;
+            opacity: 0.7;
+        }
+
+        .channel-info {
+            display: flex;
+            align-items: center;
+            gap: $spacing-04;
+
+            svg {
+                color: $text-primary;
+                font-size: 1.125rem;
+            }
+
+            .channel-details {
+                .channel-name {
+                    @include react.type-style('body-compact-01');
+                    font-weight: 500;
+                    color: $text-primary;
+                }
+
+                .channel-meta {
+                    font-size: 0.625rem;
+                    color: $text-secondary;
+                }
+            }
+        }
+
+        .channel-status {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: $support-success;
+
+            &.status--inactive {
+                background: $text-helper;
+            }
+        }
+    }
+
+    // Test configuration panel
+    .test-panel {
+        background: rgba($support-info, 0.05);
+        border-color: $support-info;
+
+        .test-panel__description {
+            font-size: 0.75rem;
+            color: $text-secondary;
+            margin-bottom: $spacing-04;
+        }
+
+        .test-panel__controls {
+            display: flex;
+            gap: $spacing-03;
+        }
+    }
+}

@@ -1,6 +1,9 @@
+/**
+ * Components Index
+ */
+
+export * from './ui';
+export * from './feedback';
 export * from './auth';
-export * from './common';
 export * from './layout';
-export * from './shared';
-export * from './alerts';
-export * from './dashboard';
+

@@ -1,0 +1,194 @@
+/**
+ * Authentication Pages Styles
+ *
+ * Clean, minimal design following IBM Carbon Design System.
+ * Optimized for single-screen display without scrolling.
+ */
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react' as react;
+
+/* ============================================
+   Page Container
+   ============================================ */
+.auth-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: $spacing-05;
+    background: $background;
+}
+
+/* ============================================
+   Auth Card - Main Container
+   ============================================ */
+.auth-card {
+    width: 100%;
+    max-width: 400px;
+    padding: $spacing-06;
+    background: $layer-01;
+    border: 1px solid $border-subtle-01;
+}
+
+/* ============================================
+   Logo and Branding
+   ============================================ */
+.auth-logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-03;
+    margin-bottom: $spacing-05;
+    @include react.type-style('heading-compact-02');
+    color: $text-primary;
+
+    svg {
+        color: $link-primary;
+    }
+}
+
+/* ============================================
+   Typography
+   ============================================ */
+.auth-title {
+    @include react.type-style('heading-03');
+    text-align: center;
+    margin: 0 0 $spacing-02 0;
+    color: $text-primary;
+}
+
+.auth-subtitle {
+    @include react.type-style('body-compact-01');
+    text-align: center;
+    margin: 0 0 $spacing-05 0;
+    color: $text-secondary;
+}
+
+/* ============================================
+   Form Layout
+   ============================================ */
+.auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-05;
+}
+
+.auth-name-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-04;
+}
+
+.auth-password-row {
+    display: flex;
+    flex-direction: column;
+
+    .auth-forgot-link {
+        align-self: flex-end;
+        margin-top: $spacing-02;
+        @include react.type-style('label-01');
+        color: $link-primary;
+        text-decoration: none;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+}
+
+/* ============================================
+   Buttons
+   ============================================ */
+.auth-submit-btn {
+    width: 100%;
+    justify-content: center;
+    margin-top: $spacing-04;
+    min-height: 48px;
+}
+
+.auth-google-btn {
+    width: 100%;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-03;
+}
+
+/* ============================================
+   Notifications
+   ============================================ */
+.auth-notification {
+    margin-bottom: $spacing-04;
+}
+
+/* ============================================
+   Divider
+   ============================================ */
+.auth-divider {
+    display: flex;
+    align-items: center;
+    margin: $spacing-05 0;
+    gap: $spacing-04;
+
+    &::before,
+    &::after {
+        content: '';
+        flex: 1;
+        height: 1px;
+        background: $border-subtle-01;
+    }
+
+    span {
+        color: $text-secondary;
+        @include react.type-style('label-01');
+    }
+}
+
+/* ============================================
+   Footer Links
+   ============================================ */
+.auth-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: $spacing-02;
+    margin-top: $spacing-05;
+    padding-top: $spacing-05;
+    border-top: 1px solid $border-subtle-01;
+    @include react.type-style('body-compact-01');
+    color: $text-secondary;
+}
+
+.auth-link {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-02;
+    color: $link-primary;
+    text-decoration: none;
+    font-weight: 600;
+
+    &:hover {
+        text-decoration: underline;
+    }
+}
+
+/* ============================================
+   Responsive - Mobile
+   ============================================ */
+@media (max-width: 480px) {
+    .auth-page {
+        padding: $spacing-04;
+    }
+
+    .auth-card {
+        padding: $spacing-05;
+    }
+
+    .auth-name-row {
+        grid-template-columns: 1fr;
+        gap: $spacing-05;
+    }
+}

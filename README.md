@@ -26,51 +26,109 @@ npm run build
 
 | Mode | URL | Data Source | Login |
 |------|-----|-------------|-------|
-| Development | http://localhost:5173 | Mock data | Any credentials |
-| Production | http://localhost:3000 | Real API | `admin` / `admin123` (any works) |
+| Development | http://localhost:5173 | Mock data | See credentials below |
+| Production | http://localhost:3000 | Real API | See credentials below |
 
-**Demo Login:** The application accepts any non-empty username and password for demonstration. Try `admin` / `admin123`.
+## User Credentials (Role-Based Dashboards)
+
+The application features **role-based dashboards** - each user role sees a customized dashboard with relevant KPIs and features.
+
+| Role | Username | Password | Dashboard Features |
+|------|----------|----------|-------------------|
+| **Network Operations** | `netops` | `netops123` | Alert monitoring, severity distribution, recent alerts, noisy devices |
+| **Site Reliability Engineer** | `sre` | `sre123` | MTTR metrics, availability, incident trends, service health |
+| **Network Administrator** | `netadmin` | `netadmin123` | Device inventory, health status, CPU/memory usage, config changes |
+| **Senior Engineer** | `senior` | `senior123` | Advanced analytics, AI insights, pattern analysis, correlation matrix |
+
+**Demo Mode:** For quick testing, any credentials work, and you'll default to Network Operations dashboard. The role persists in localStorage and can be changed in Settings.
+
+### Role Permissions
+
+| Permission | Network Ops | SRE | Network Admin | Senior Eng |
+|------------|-------------|-----|---------------|------------|
+| View Alerts | ✅ | ✅ | ✅ | ✅ |
+| Acknowledge Alerts | ✅ | ✅ | ❌ | ✅ |
+| Create Tickets | ✅ | ✅ | ❌ | ✅ |
+| View Devices | ✅ | ✅ | ✅ | ✅ |
+| Manage Devices | ❌ | ❌ | ✅ | ✅ |
+| View Analytics | ❌ | ✅ | ❌ | ✅ |
+| Export Reports | ❌ | ✅ | ✅ | ✅ |
 
 ## Project Structure
 
 ```
 src/
-├── __mocks__/          # Mock data for development
+├── app/                # App-wide providers and routing
+│   ├── providers/      # Context providers
+│   └── routes/         # Route definitions
 ├── components/         # React components
-│   ├── alerts/         # Alert-specific components
-│   ├── auth/           # Authentication
-│   ├── common/         # Common UI elements
-│   ├── dashboard/      # Dashboard components
+│   ├── auth/           # Authentication components
+│   ├── feedback/       # Loading, error states
 │   ├── layout/         # App layout (Header, Sidebar)
-│   └── shared/         # Reusable components (KPICard, etc.)
-├── config/             # Environment configuration
-├── constants/          # Types, constants, helpers
-├── hooks/              # Custom React hooks
-├── pages/              # Page components
-│   ├── dashboard/
-│   ├── priority-alerts/
-│   ├── tickets/
-│   ├── ticket-details/
-│   └── trends-insights/
-├── services/           # Data services (API/Mock)
-└── styles/             # SCSS styles
+│   ├── ui/             # Reusable UI (KPICard, ChartWrapper, etc.)
+│   └── widgets/        # Dashboard widgets
+├── features/           # Feature-specific logic
+│   ├── alerts/         # Alert services, hooks, types
+│   ├── auth/           # Authentication logic
+│   ├── devices/        # Device management logic
+│   ├── roles/          # Role-based access control
+│   └── tickets/        # Ticket management logic
+├── pages/              # Page views
+│   ├── alerts/         # Priority Alerts & Details
+│   ├── auth/           # Login, Register
+│   ├── configuration/  # App configuration
+│   ├── dashboard/      # Role-based dashboards
+│   ├── devices/        # Device Explorer & Details
+│   ├── not-found/      # 404 Page
+│   ├── settings/       # User settings
+│   ├── tickets/        # Ticket list & details
+│   ├── trends/         # Trends & Insights
+│   └── welcome/        # Landing page
+├── shared/             # Shared utilities
+│   ├── api/            # HTTP client
+│   ├── config/         # App configuration
+│   ├── constants/      # App constants
+│   ├── services/       # Shared services
+│   ├── types/          # Shared types
+│   └── utils/          # Helper functions
+└── styles/             # Global styles ("_*.scss")
 ```
 
 ## Key Features
 
-- **Dashboard** - Real-time overview with KPIs and charts
-- **Priority Alerts** - Filter and manage critical alerts with advanced search and bulk actions
-- **Alert Details** - AI analysis with root causes and recommendations
-- **Tickets** - Issue tracking system
-- **Trends & Insights** - Historical analysis and patterns
-
-## Data Layer
-
-The app uses `AlertDataService` which automatically switches between mock and real API:
+- **Role-Based Dashboards** - Customized dashboards for each user role (Network Ops, SRE, Network Admin, Senior Engineer)
+- **Real-Time Monitoring** - Live alert updates with severity-based KPIs
+- **Priority Alerts** - Advanced filtering, search, and bulk actions
+- **Alert Details** - AI-powered analysis with root causes and recommendations
+- **Tickets** - Integrated issue tracking system
+- **Trends & Insights** - Historical analysis, patterns, and AI insights
+- **Device Management** - Health monitoring and configuration tracking (Network Admin role)
+- **Analytics Dashboard** - Pattern detection and correlation analysis (Senior Engineer role)
+feature-based services that automatically switch between mock and real API:
 
 ```typescript
-import { alertDataService } from '@/services';
+import { alertDataService } from '@/features/alerts/services/alertService';
 
+// Works with API (mock removed in cleanup)
+const alerts = await alertDataService.getAlerts();
+const summary = await alertDataService.getAlertsSummary();
+```
+
+**Role System:**
+```typescript
+import { useRole } from '@/features/roles/hooks';
+
+function MyComponent() {
+  const { currentRole, hasPermission } = useRole();
+
+  // Check permissions
+  if (hasPermission('manage-devices')) {
+    // Show device management UI
+  }
+
+  // Access role config
+  console.log(currentRole.displayName); // "Network Operations"
+}
 // Works with mock OR API based on VITE_USE_MOCK
 const alerts = await alertDataService.getAlerts();
 const summary = await alertDataService.getAlertsSummary();
@@ -80,13 +138,13 @@ const summary = await alertDataService.getAlertsSummary();
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VITE_USE_MOCK` | `true` (dev) | Use mock data |
-| `VITE_API_BASE_URL` | `http://localhost:8080` | API base URL |
+| `VITE_USE_MOCK_DATA` | `true` (dev) | Use mock data |
+| `VITE_API_URL` | `http://localhost:8080` | API base URL |
 | `VITE_ENABLE_WEBSOCKET` | `false` | Enable WebSocket |
 
 ## Docker
 
-### Full Stack Deployment
+### Full Stack DeploymentSee role-based credentials above
 
 ```bash
 # Start all services (requires ingestor repo cloned alongside)

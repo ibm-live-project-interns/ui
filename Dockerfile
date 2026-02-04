@@ -4,6 +4,8 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+# Increase Node.js heap size for build
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN npm run build
 
 # Production stage - serve with nginx

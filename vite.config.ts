@@ -24,6 +24,10 @@ export default defineConfig({
     exclude: [],
   },
   build: {
+    // Enable source maps for debugging
+    sourcemap: true,
+    // Disable minification to see actual code
+    minify: false,
     // Split chunks for better caching
     rollupOptions: {
       output: {
@@ -47,11 +51,12 @@ export default defineConfig({
       },
     },
   },
+  assetsInclude: ['**/*.woff', '**/*.woff2', '**/*.ttf'],
   server: {
     warmup: {
       clientFiles: [
         './src/components/layout/index.ts',
-        './src/pages/welcome/index.tsx',
+        './src/pages/welcome/index.ts',
         './src/pages/auth/login/index.tsx',
       ],
     },

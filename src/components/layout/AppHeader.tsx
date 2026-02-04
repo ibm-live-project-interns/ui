@@ -18,6 +18,7 @@ import {
     ChartLine,
     Devices,
     Settings,
+    SettingsAdjust,
     Ticket,
     ChevronUp,
     Logout,
@@ -30,31 +31,57 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 
 /**
  * AppHeader Component - Carbon UI Shell
- * 
+ *
  * Implements the Carbon UI Shell pattern with responsive SideNav:
  * - Sidebar expanded by default on desktop
  * - Collapses to hamburger menu overlay on mobile
  * - Uses React Router Link for seamless client-side navigation
  * - User profile at bottom with logout option sliding up
  * - Expandable search that takes full width
- * 
+ *
  * @see https://carbondesignsystem.com/components/UI-shell-header/usage/
  */
 
-// User and navigation data from centralized mocks
-// User and navigation data from centralized mocks
-import { SEARCHABLE_ITEMS, MOCK_PRIORITY_ALERTS, type SearchableItem } from '@/__mocks__/alerts.mock';
-// Alert count and auth services
-import { alertDataService, authService, ticketDataService } from '@/services';
+// Search items type
+type SearchableItem = {
+    id: string;
+    title: string;
+    subtitle: string;
+    type: 'alert' | 'ticket' | 'device' | 'page';
+    url: string;
+    severity?: string;
+};
 
-// Helper to get initials from username or name
-function getInitials(name?: string): string {
-    if (!name) return '??';
-    const parts = name.split(' ');
-    if (parts.length >= 2) {
-        return (parts[0][0] + parts[1][0]).toUpperCase();
+// Alert count and auth services
+import { alertDataService, authService, ticketDataService } from '@/shared/services';
+import { useRole } from '@/features/roles/hooks';
+import { ROLE_NAMES } from '@/shared/types';
+import { SEVERITY_COLORS } from '@/shared/constants/colors';
+
+// Helper to get initials from username, email, or name
+function getInitials(name?: string, email?: string): string {
+    if (name && name.length > 0) {
+        const parts = name.split(' ');
+        if (parts.length >= 2) {
+            return (parts[0][0] + parts[1][0]).toUpperCase();
+        }
+        return name.slice(0, 2).toUpperCase();
     }
-    return name.slice(0, 2).toUpperCase();
+    if (email) {
+        return email.slice(0, 2).toUpperCase();
+    }
+    return '??';
+}
+
+// Helper to get display name
+function getDisplayName(user: any): string {
+    if (!user) return 'User';
+    if (user.first_name && user.last_name) {
+        return `${user.first_name} ${user.last_name}`;
+    }
+    if (user.username) return user.username;
+    if (user.email) return user.email.split('@')[0];
+    return 'User';
 }
 
 /**
@@ -63,7 +90,7 @@ function getInitials(name?: string): string {
 function NotificationDropdown() {
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
-    const [notifications, setNotifications] = useState<typeof MOCK_PRIORITY_ALERTS>([]);
+    const [notifications, setNotifications] = useState<any[]>([]);
     const dropdownRef = useRef<HTMLDivElement>(null);
 
     // Load recent alerts as notifications
@@ -78,7 +105,7 @@ function NotificationDropdown() {
             }
         };
         loadNotifications();
-        
+
         // Refresh every 30 seconds
         const interval = setInterval(loadNotifications, 30000);
         return () => clearInterval(interval);
@@ -106,13 +133,7 @@ function NotificationDropdown() {
     };
 
     const getSeverityColor = (severity: string) => {
-        const colors: Record<string, string> = {
-            critical: '#da1e28',
-            major: '#ff832b',
-            minor: '#f1c21b',
-            info: '#0043ce',
-        };
-        return colors[severity] || colors.info;
+        return SEVERITY_COLORS[severity as keyof typeof SEVERITY_COLORS] || SEVERITY_COLORS.info;
     };
 
     return (
@@ -135,7 +156,7 @@ function NotificationDropdown() {
                         <span className="notification-dropdown-title">Notifications</span>
                         <span className="notification-dropdown-count">{notifications.length} new</span>
                     </div>
-                    
+
                     <div className="notification-dropdown-list">
                         {notifications.length === 0 ? (
                             <div className="notification-dropdown-empty">
@@ -149,14 +170,14 @@ function NotificationDropdown() {
                                     className="notification-dropdown-item"
                                     onClick={() => handleNotificationClick(alert.id)}
                                 >
-                                    <div 
+                                    <div
                                         className="notification-severity-indicator"
                                         style={{ backgroundColor: getSeverityColor(alert.severity) }}
                                     />
                                     <div className="notification-content">
-                                        <span className="notification-title">{alert.aiTitle}</span>
-                                        <span className="notification-device">{alert.device.name}</span>
-                                        <span className="notification-time">{alert.timestamp.relative}</span>
+                                        <span className="notification-title">{alert.aiTitle || 'Alert'}</span>
+                                        <span className="notification-device">{alert.device?.name || 'Unknown Device'}</span>
+                                        <span className="notification-time">{typeof alert.timestamp === 'string' ? alert.timestamp : alert.timestamp?.relative || 'Now'}</span>
                                     </div>
                                 </button>
                             ))
@@ -180,57 +201,102 @@ function HeaderSearch() {
     const navigate = useNavigate();
     const [isExpanded, setIsExpanded] = useState(false);
     const [searchValue, setSearchValue] = useState('');
-    const [searchResults, setSearchResults] = useState<typeof SEARCHABLE_ITEMS>([]);
-    const [ticketResults, setTicketResults] = useState<SearchableItem[]>([]);
+    const [searchResults, setSearchResults] = useState<SearchableItem[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
     const [showResults, setShowResults] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const containerRef = useRef<HTMLDivElement>(null);
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-    // Filter search results including tickets
+    // Searchable pages
+    const searchablePages: SearchableItem[] = [
+        { id: 'dashboard', title: 'Dashboard', subtitle: 'Main dashboard', type: 'page', url: '/dashboard' },
+        { id: 'priority-alerts', title: 'Priority Alerts', subtitle: 'View all alerts', type: 'page', url: '/priority-alerts' },
+        { id: 'trends', title: 'Trends & Insights', subtitle: 'Analytics and trends', type: 'page', url: '/trends' },
+        { id: 'tickets', title: 'Tickets', subtitle: 'Ticket management', type: 'page', url: '/tickets' },
+        { id: 'devices', title: 'Devices', subtitle: 'Device inventory', type: 'page', url: '/devices' },
+        { id: 'configuration', title: 'Configuration', subtitle: 'Alert rules and settings', type: 'page', url: '/configuration' },
+        { id: 'settings', title: 'Settings', subtitle: 'User settings', type: 'page', url: '/settings' },
+    ];
+
+    // Comprehensive search across all entities
     useEffect(() => {
         if (searchValue.trim()) {
-            const query = searchValue.toLowerCase();
-            
-            // Filter static items (pages, devices)
-            const filtered = SEARCHABLE_ITEMS.filter((item) =>
-                item.label.toLowerCase().includes(query)
-            );
-            setSearchResults(filtered);
-            
-            // Search tickets dynamically
-            const searchTickets = async () => {
+            // Debounce search
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+
+            debounceRef.current = setTimeout(async () => {
+                setIsSearching(true);
+                const query = searchValue.toLowerCase();
+                const results: SearchableItem[] = [];
+
+                // Search pages first (instant)
+                const matchingPages = searchablePages.filter(page =>
+                    page.title.toLowerCase().includes(query) ||
+                    page.subtitle.toLowerCase().includes(query)
+                );
+                results.push(...matchingPages);
+
                 try {
+                    // Search alerts
+                    const alerts = await alertDataService.getAlerts();
+                    const matchingAlerts = alerts
+                        .filter(alert =>
+                            alert.id?.toLowerCase().includes(query) ||
+                            alert.aiTitle?.toLowerCase().includes(query) ||
+                            alert.aiSummary?.toLowerCase().includes(query) ||
+                            alert.device?.name?.toLowerCase().includes(query) ||
+                            alert.severity?.toLowerCase().includes(query)
+                        )
+                        .slice(0, 5)
+                        .map(alert => ({
+                            id: alert.id,
+                            title: alert.aiTitle || alert.id,
+                            subtitle: alert.device?.name || 'Unknown Device',
+                            type: 'alert' as const,
+                            url: `/alerts/${alert.id}`,
+                            severity: alert.severity
+                        }));
+                    results.push(...matchingAlerts);
+                } catch (error) {
+                    console.error('Failed to search alerts:', error);
+                }
+
+                try {
+                    // Search tickets
                     const tickets = await ticketDataService.getTickets();
                     const matchingTickets = tickets
-                        .filter(ticket => 
+                        .filter(ticket =>
                             ticket.title.toLowerCase().includes(query) ||
                             ticket.ticketNumber.toLowerCase().includes(query) ||
                             ticket.deviceName.toLowerCase().includes(query)
                         )
-                        .slice(0, 5) // Limit to 5 ticket results
+                        .slice(0, 5)
                         .map(ticket => ({
-                            label: `${ticket.ticketNumber}: ${ticket.title}`,
-                            path: `/tickets/${ticket.id}`,
+                            id: ticket.id,
+                            title: `${ticket.ticketNumber} - ${ticket.title}`,
+                            subtitle: ticket.deviceName,
                             type: 'ticket' as const,
+                            url: `/tickets/${ticket.id}`
                         }));
-                    setTicketResults(matchingTickets);
+                    results.push(...matchingTickets);
                 } catch (error) {
                     console.error('Failed to search tickets:', error);
-                    setTicketResults([]);
                 }
-            };
-            searchTickets();
-            
-            setShowResults(true);
+
+                setSearchResults(results);
+                setIsSearching(false);
+                setShowResults(true);
+            }, 300);
         } else {
             setSearchResults([]);
-            setTicketResults([]);
             setShowResults(false);
         }
-    }, [searchValue]);
 
-    // Combine all results
-    const allResults = [...searchResults, ...ticketResults];
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
+    }, [searchValue]);
 
     // Click outside to close
     useEffect(() => {
@@ -320,27 +386,30 @@ function HeaderSearch() {
                     </button>
 
                     {/* Search Results Dropdown */}
-                    {showResults && allResults.length > 0 && (
+                    {showResults && (
                         <div className="header-search-results" id="header-search-results" role="listbox" aria-label="Search results">
-                            {allResults.map((result, index) => (
-                                <button
-                                    key={result.path || index}
-                                    className="header-search-result-item"
-                                    onClick={() => handleResultClick(result.path)}
-                                    role="option"
-                                    aria-label={`Navigate to ${result.label}`}
-                                >
-                                    <span className="header-search-result-label">{result.label}</span>
-                                    <span className="header-search-result-type">{result.type}</span>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                    {showResults && searchValue.trim() && allResults.length === 0 && (
-                        <div className="header-search-results">
-                            <div className="header-search-no-results">
-                                No results found for "{searchValue}"
-                            </div>
+                            {isSearching ? (
+                                <div className="header-search-loading" style={{ padding: '1rem', textAlign: 'center', color: 'var(--cds-text-secondary)' }}>
+                                    Searching...
+                                </div>
+                            ) : searchResults.length > 0 ? (
+                                searchResults.map((result, index) => (
+                                    <button
+                                        key={result.url || index}
+                                        className="header-search-result-item"
+                                        onClick={() => handleResultClick(result.url)}
+                                        role="option"
+                                        aria-label={`Navigate to ${result.title}`}
+                                    >
+                                        <span className="header-search-result-label">{result.title}</span>
+                                        <span className="header-search-result-type">{result.type}</span>
+                                    </button>
+                                ))
+                            ) : searchValue.trim() ? (
+                                <div className="header-search-no-results">
+                                    No results found for "{searchValue}"
+                                </div>
+                            ) : null}
                         </div>
                     )}
                 </div>
@@ -355,23 +424,29 @@ export function AppHeader() {
     const [alertCount, setAlertCount] = useState(0);
     const [criticalTicketCount, setCriticalTicketCount] = useState(0);
     const userMenuRef = useRef<HTMLDivElement>(null);
+    const { hasPermission } = useRole();
 
     // Fetch alert count on mount and periodically
     useEffect(() => {
         const fetchCounts = async () => {
-            const alertsCount = await alertDataService.getActiveAlertCount();
-            setAlertCount(alertsCount);
-            
+            try {
+                const alertsCount = await alertDataService.getActiveAlertCount();
+                setAlertCount(alertsCount);
+            } catch (error) {
+                console.debug('Alert count fetch skipped:', error);
+                // Keep previous count or 0
+            }
+
             // Get critical/high priority open tickets count
             try {
                 const tickets = await ticketDataService.getTickets();
                 const criticalCount = tickets.filter(
-                    t => (t.priority === 'critical' || t.priority === 'high') && 
-                         (t.status === 'open' || t.status === 'in-progress')
+                    t => (t.priority === 'critical' || t.priority === 'high') &&
+                        (t.status === 'open' || t.status === 'in-progress')
                 ).length;
                 setCriticalTicketCount(criticalCount);
             } catch (error) {
-                console.error('Failed to fetch ticket count:', error);
+                console.debug('Ticket count fetch skipped:', error);
             }
         };
         fetchCounts();
@@ -440,59 +515,77 @@ export function AppHeader() {
                             </SideNavLink>
 
                             {/* Priority Alerts with dynamic badge */}
-                            <SideNavLink
-                                as={Link}
-                                to="/priority-alerts"
-                                renderIcon={WarningAlt}
-                                isActive={isActive('/priority-alerts')}
-                                className="sidenav-link-with-badge"
-                            >
-                                <span className="sidenav-link-text">Priority Alerts</span>
-                                <Tag type="red" size="sm" className="sidenav-alert-badge">
-                                    {alertCount}
-                                </Tag>
-                            </SideNavLink>
+                            {hasPermission('view-alerts') && (
+                                <SideNavLink
+                                    as={Link}
+                                    to="/priority-alerts"
+                                    renderIcon={WarningAlt}
+                                    isActive={isActive('/priority-alerts')}
+                                    className="sidenav-link-with-badge"
+                                >
+                                    <span className="sidenav-link-text">Priority Alerts</span>
+                                    <Tag type="red" size="sm" className="sidenav-alert-badge">
+                                        {alertCount}
+                                    </Tag>
+                                </SideNavLink>
+                            )}
 
 
 
                             {/* Trends & Insights */}
-                            <SideNavLink
-                                as={Link}
-                                to="/trends"
-                                renderIcon={ChartLine}
-                                isActive={isActive('/trends')}
-                            >
-                                Trends & Insights
-                            </SideNavLink>
+                            {hasPermission('view-analytics') && (
+                                <SideNavLink
+                                    as={Link}
+                                    to="/trends"
+                                    renderIcon={ChartLine}
+                                    isActive={isActive('/trends')}
+                                >
+                                    Trends & Insights
+                                </SideNavLink>
+                            )}
 
                             {/* Tickets with critical count badge */}
-                            <SideNavLink
-                                as={Link}
-                                to="/tickets"
-                                renderIcon={Ticket}
-                                isActive={isActive('/tickets')}
-                                className={criticalTicketCount > 0 ? 'sidenav-link-with-badge' : ''}
-                            >
-                                {criticalTicketCount > 0 ? (
-                                    <>
-                                        <span className="sidenav-link-text">Tickets</span>
-                                        <Tag type="magenta" size="sm" className="sidenav-alert-badge">
-                                            {criticalTicketCount}
-                                        </Tag>
-                                    </>
-                                ) : (
-                                    'Tickets'
-                                )}
-                            </SideNavLink>
+                            {hasPermission('view-tickets') && (
+                                <SideNavLink
+                                    as={Link}
+                                    to="/tickets"
+                                    renderIcon={Ticket}
+                                    isActive={isActive('/tickets')}
+                                    className={criticalTicketCount > 0 ? 'sidenav-link-with-badge' : ''}
+                                >
+                                    {criticalTicketCount > 0 ? (
+                                        <>
+                                            <span className="sidenav-link-text">Tickets</span>
+                                            <Tag type="magenta" size="sm" className="sidenav-alert-badge">
+                                                {criticalTicketCount}
+                                            </Tag>
+                                        </>
+                                    ) : (
+                                        'Tickets'
+                                    )}
+                                </SideNavLink>
+                            )}
 
                             {/* Device Explorer */}
+                            {hasPermission('view-devices') && (
+                                <SideNavLink
+                                    as={Link}
+                                    to="/devices"
+                                    renderIcon={Devices}
+                                    isActive={isActive('/devices')}
+                                >
+                                    Devices
+                                </SideNavLink>
+                            )}
+
+                            {/* Configuration */}
                             <SideNavLink
                                 as={Link}
-                                to="/devices"
-                                renderIcon={Devices}
-                                isActive={isActive('/devices')}
+                                to="/configuration"
+                                renderIcon={SettingsAdjust}
+                                isActive={isActive('/configuration')}
                             >
-                                Device Explorer
+                                Configuration
                             </SideNavLink>
 
                             {/* Settings */}
@@ -532,11 +625,11 @@ export function AppHeader() {
                                 onKeyDown={(e) => e.key === 'Enter' && setUserMenuOpen(!userMenuOpen)}
                             >
                                 <div className="sidenav-user-avatar">
-                                    {getInitials(authService.currentUser?.username)}
+                                    {getInitials(authService.currentUser?.username, authService.currentUser?.email)}
                                 </div>
                                 <div className="sidenav-user-info">
-                                    <span className="sidenav-user-name">{authService.currentUser?.username || 'User'}</span>
-                                    <span className="sidenav-user-role">{authService.currentUser?.role?.text || 'Viewer'}</span>
+                                    <span className="sidenav-user-name">{getDisplayName(authService.currentUser)}</span>
+                                    <span className="sidenav-user-role">{authService.currentUser?.role ? ROLE_NAMES[authService.currentUser.role] : 'Viewer'}</span>
                                 </div>
                                 <ChevronUp
                                     size={16}
