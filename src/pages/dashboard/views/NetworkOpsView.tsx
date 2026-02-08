@@ -555,8 +555,8 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
                     status={metric.trend === 'up' ? 'active' : 'error'}
                   />
                 </div>
-                <div className={`metric-change ${metric.trend}`}>
-                  {metric.change || '0%'}
+                <div className={`metric-change ${metric.trend || 'stable'}`}>
+                  {metric.change || `${typeof metric.value === 'number' ? Math.round(metric.value * 10) / 10 : metric.value}%`}
                 </div>
               </div>
             ))}

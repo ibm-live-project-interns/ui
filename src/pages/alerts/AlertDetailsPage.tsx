@@ -114,7 +114,7 @@ export function AlertDetailsPage() {
         setIsReanalyzing(true);
         try {
             const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8080';
-            const token = localStorage.getItem('token');
+            const token = localStorage.getItem('noc_token');
             const resp = await fetch(`${baseUrl}/api/v1/alerts/${alert.id}/reanalyze`, {
                 method: 'POST',
                 headers: {

@@ -144,6 +144,11 @@ export const API_ENDPOINTS = {
   CONFIG_MAINTENANCE_BY_ID: (id: string) => `/configuration/maintenance/${id}`,
 
   // ==========================================
+  // User Settings Endpoints
+  // ==========================================
+  SETTINGS_NOTIFICATIONS: '/settings/notifications',
+
+  // ==========================================
   // Health Check (internal)
   // ==========================================
   HEALTH: '/health',

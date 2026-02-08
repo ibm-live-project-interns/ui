@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     Tile,
     Toggle,
@@ -25,6 +25,7 @@ import { useRole } from '@/features/roles/hooks';
 import { ROLE_CONFIGS } from '@/features/roles/config/roleConfig';
 import type { RoleId } from '@/features/roles/types';
 import { PageHeader } from '@/components/ui';
+import { env, API_ENDPOINTS } from '@/shared/config';
 import '@/styles/pages/_settings.scss';
 
 // --- Configuration Constants ---
@@ -77,6 +78,31 @@ export function SettingsPage() {
         general: { language: 'en', timezone: 'UTC', autoRefresh: true, refreshInterval: '30' },
     });
 
+    // Load notification preferences from backend
+    const loadNotificationPreferences = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('noc_token');
+            if (!token) return;
+            const resp = await fetch(`${env.apiBaseUrl}/api/${env.apiVersion}${API_ENDPOINTS.SETTINGS_NOTIFICATIONS}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (resp.ok) {
+                const prefs = await resp.json();
+                setSettings(prev => ({
+                    ...prev,
+                    notifications: {
+                        emailAlerts: prefs.emailAlerts ?? prev.notifications.emailAlerts,
+                        pushNotifications: prefs.pushNotifications ?? prev.notifications.pushNotifications,
+                        soundEnabled: prefs.soundEnabled ?? prev.notifications.soundEnabled,
+                        criticalOnly: prefs.criticalOnly ?? prev.notifications.criticalOnly,
+                    },
+                }));
+            }
+        } catch {
+            // Fall back to localStorage
+        }
+    }, []);
+
     // Initial Load & Theme Effect
     useEffect(() => {
         const load = (key: string, defaultVal: any) => {
@@ -88,7 +114,8 @@ export function SettingsPage() {
             notifications: { ...prev.notifications, ...load('notification-settings', {}) },
             general: { ...prev.general, ...load('general-settings', {}) },
         }));
-    }, []);
+        loadNotificationPreferences();
+    }, [loadNotificationPreferences]);
 
     useEffect(() => {
         if (settings.theme === 'system') document.documentElement.removeAttribute('data-theme-setting');
@@ -105,10 +132,28 @@ export function SettingsPage() {
         }
     };
 
-    const save = () => {
+    const save = async () => {
         localStorage.setItem('theme-setting', settings.theme);
         localStorage.setItem('notification-settings', JSON.stringify(settings.notifications));
         localStorage.setItem('general-settings', JSON.stringify(settings.general));
+
+        // Persist notification preferences to backend
+        try {
+            const token = localStorage.getItem('noc_token');
+            if (token) {
+                await fetch(`${env.apiBaseUrl}/api/${env.apiVersion}${API_ENDPOINTS.SETTINGS_NOTIFICATIONS}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        Authorization: `Bearer ${token}`,
+                    },
+                    body: JSON.stringify(settings.notifications),
+                });
+            }
+        } catch {
+            // localStorage is still saved as fallback
+        }
+
         setShowSaveSuccess(true);
         setTimeout(() => setShowSaveSuccess(false), 3000);
     };
