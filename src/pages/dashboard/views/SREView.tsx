@@ -80,7 +80,7 @@ export function SREView({ config: _config }: SREViewProps) {
                 if (!isMounted) return;
 
                 // Calculate MTTR from trends KPI
-                const mttrKpi = trendsKpi.find(k => k.id === 'mttr' || k.label.toLowerCase().includes('mttr'));
+                const mttrKpi = trendsKpi.find(k => k.id === 'mttr' || (k.label || '').toLowerCase().includes('mttr'));
                 const mttrValue = mttrKpi ? parseInt(String(mttrKpi.value).replace(/[^0-9]/g, '')) : null;
 
                 // Calculate availability from device health scores

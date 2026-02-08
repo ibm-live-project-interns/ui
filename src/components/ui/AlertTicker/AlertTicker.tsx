@@ -14,7 +14,7 @@ export interface CriticalAlert {
     timestamp: string;
     message: string;
     deviceName?: string;
-    severity?: 'critical' | 'major';
+    severity?: 'critical' | 'high' | 'major';
 }
 
 export interface AlertTickerProps {

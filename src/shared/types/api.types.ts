@@ -164,7 +164,7 @@ export const ROLE_NAMES: Record<RoleID, string> = {
 // ==========================================
 
 /** Alert severity levels */
-export type AlertSeverity = 'critical' | 'major' | 'minor' | 'info';
+export type AlertSeverity = 'critical' | 'high' | 'major' | 'medium' | 'minor' | 'low' | 'info';
 
 /** Alert status lifecycle */
 export type AlertStatus = 'open' | 'acknowledged' | 'resolved' | 'dismissed';

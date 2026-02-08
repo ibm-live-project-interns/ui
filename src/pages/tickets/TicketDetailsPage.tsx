@@ -11,12 +11,13 @@ import {
     Select,
     SelectItem,
     ToastNotification,
+    ComboBox,
 } from '@carbon/react';
 import { Edit, View, Time, Ticket, User, Activity, ArrowLeft, Checkmark } from '@carbon/icons-react';
 import '@/styles/pages/_ticket-details.scss';
 
 // Services
-import { ticketDataService, type TicketInfo } from '@/shared/services';
+import { ticketDataService, alertDataService, type TicketInfo } from '@/shared/services';
 import { KPICard } from '@/components';
 import { PageHeader } from '@/components/ui';
 
@@ -34,12 +35,14 @@ export function TicketDetailsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [ticket, setTicket] = useState<TicketInfo | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [alertsList, setAlertsList] = useState<{ id: string; label: string }[]>([]);
     const [editForm, setEditForm] = useState({
         title: '',
         description: '',
         priority: 'medium' as TicketInfo['priority'],
         status: 'open' as TicketInfo['status'],
         assignedTo: '',
+        alertId: '',
     });
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
 
@@ -50,11 +53,18 @@ export function TicketDetailsPage() {
     };
 
     useEffect(() => {
-        const loadTicket = async () => {
+        const loadData = async () => {
             setIsLoading(true);
             try {
-                const foundTicket = await ticketDataService.getTicketById(ticketId || '');
+                const [foundTicket, alertsData] = await Promise.all([
+                    ticketDataService.getTicketById(ticketId || ''),
+                    alertDataService.getAlerts(),
+                ]);
                 setTicket(foundTicket);
+                setAlertsList(alertsData.map((a: any) => ({
+                    id: a.id,
+                    label: `${a.id} — ${a.aiTitle || a.title || 'Alert'}`,
+                })));
                 if (foundTicket) {
                     setEditForm({
                         title: foundTicket.title,
@@ -62,6 +72,7 @@ export function TicketDetailsPage() {
                         priority: foundTicket.priority,
                         status: foundTicket.status,
                         assignedTo: foundTicket.assignedTo,
+                        alertId: foundTicket.alertId || '',
                     });
                 }
             } catch (error) {
@@ -70,7 +81,7 @@ export function TicketDetailsPage() {
                 setIsLoading(false);
             }
         };
-        loadTicket();
+        loadData();
     }, [ticketId]);
 
     const handleEditTicket = async () => {
@@ -82,6 +93,7 @@ export function TicketDetailsPage() {
                 priority: editForm.priority,
                 status: editForm.status,
                 assignedTo: editForm.assignedTo,
+                alertId: editForm.alertId,
             });
             setTicket(updatedTicket);
             setIsEditModalOpen(false);
@@ -149,8 +161,8 @@ export function TicketDetailsPage() {
                     { text: ticket.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()), variant: 'outline', color: 'var(--cds-text-primary)' }
                 ]}
                 actions={[
-                    { label: 'View Alert', icon: View, variant: 'primary', onClick: () => navigate(`/alerts/${ticket.alertId}`) },
-                    { label: 'Edit Ticket', icon: Edit, variant: 'secondary', onClick: () => setIsEditModalOpen(true) }
+                    { label: ticket.alertId ? `View Alert (${ticket.alertId})` : 'No Linked Alert', icon: View, variant: 'primary' as const, onClick: () => ticket.alertId && navigate(`/alerts/${ticket.alertId}`), disabled: !ticket.alertId },
+                    { label: 'Edit Ticket', icon: Edit, variant: 'secondary' as const, onClick: () => setIsEditModalOpen(true) }
                 ]}
                 showBorder
             />
@@ -227,12 +239,14 @@ export function TicketDetailsPage() {
                                 <span className="ticket-card__label">Last Updated</span>
                                 <span className="ticket-card__value">{ticket.updatedAt}</span>
                             </div>
-                            <div className="ticket-card__row">
-                                <span className="ticket-card__label">Related Alert</span>
-                                <Link to={`/alerts/${ticket.alertId}`} className="ticket-card__value ticket-card__value--link">
-                                    {ticket.alertId}
-                                </Link>
-                            </div>
+                            {ticket.alertId && (
+                                <div className="ticket-card__row">
+                                    <span className="ticket-card__label">Related Alert</span>
+                                    <Link to={`/alerts/${ticket.alertId}`} className="ticket-card__value ticket-card__value--link">
+                                        {ticket.alertId}
+                                    </Link>
+                                </div>
+                            )}
                         </div>
                     </Tile>
 
@@ -263,7 +277,7 @@ export function TicketDetailsPage() {
                                 <div className="ticket-timeline__content">
                                     <p className="ticket-timeline__title">Ticket Created</p>
                                     <p className="ticket-timeline__description">
-                                        Created from alert {ticket.alertId}
+                                        {ticket.alertId ? `Created from alert ${ticket.alertId}` : 'Ticket created manually'}
                                     </p>
                                     <p className="ticket-timeline__timestamp">{ticket.createdAt}</p>
                                 </div>
@@ -290,6 +304,8 @@ export function TicketDetailsPage() {
                         value={editForm.title}
                         onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
                         required
+                        invalid={!editForm.title}
+                        invalidText="Ticket title is required"
                     />
 
                     <TextArea
@@ -324,11 +340,34 @@ export function TicketDetailsPage() {
                         <SelectItem value="closed" text="Closed" />
                     </Select>
 
-                    <TextInput
+                    <Select
                         id="edit-ticket-assignee"
                         labelText="Assigned To"
                         value={editForm.assignedTo}
                         onChange={(e) => setEditForm({ ...editForm, assignedTo: e.target.value })}
+                    >
+                        <SelectItem value="" text="Select assignee..." />
+                        <SelectItem value="John Smith" text="John Smith" />
+                        <SelectItem value="Jane Doe" text="Jane Doe" />
+                        <SelectItem value="Mike Johnson" text="Mike Johnson" />
+                        <SelectItem value="Sarah Williams" text="Sarah Williams" />
+                        <SelectItem value="DBA Team" text="DBA Team" />
+                        <SelectItem value="Network Team" text="Network Team" />
+                        <SelectItem value="Security Team" text="Security Team" />
+                        <SelectItem value="NOC Team" text="NOC Team" />
+                    </Select>
+
+                    <ComboBox
+                        id="edit-ticket-alert"
+                        titleText="Linked Alert"
+                        placeholder="Search or select an alert..."
+                        items={alertsList}
+                        itemToString={(item: { id: string; label: string } | null) => item?.label || ''}
+                        selectedItem={alertsList.find(a => a.id === editForm.alertId) || null}
+                        onChange={({ selectedItem }: { selectedItem: { id: string; label: string } | null | undefined }) => {
+                            setEditForm({ ...editForm, alertId: selectedItem?.id || '' });
+                        }}
+                        helperText="Select the alert this ticket is related to"
                     />
                 </div>
             </Modal>

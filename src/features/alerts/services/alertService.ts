@@ -102,18 +102,51 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
             return `${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
         };
 
-        // Parse root causes - may be string or array
+        // Parse root causes - may be string or array; extract from ai_summary when dedicated field is absent
         const parseRootCauses = (data: any): string[] => {
             if (Array.isArray(data)) return data.filter(Boolean);
             if (typeof data === 'string' && data.trim()) return [data];
+            // Extract root cause insights from Watson ai_summary when ai_root_cause field doesn't exist
+            const summary = backendAlert.ai_summary;
+            if (summary && typeof summary === 'string' && summary.trim()) {
+                const sentences = summary.split(/(?<=[.!?])\s+/).filter((s: string) => s.trim().length > 15);
+                if (sentences.length > 0) return sentences.slice(0, 3);
+            }
             return ['Analysis pending - awaiting AI processing'];
         };
 
         // Parse recommended actions - may be string or array
         const parseRecommendedActions = (data: any): string[] => {
             if (Array.isArray(data)) return data.filter(Boolean);
-            if (typeof data === 'string' && data.trim()) return [data];
+            if (typeof data === 'string' && data.trim()) {
+                // Split recommendation text into actionable items on sentence boundaries
+                const items = data.split(/(?<=[.!?])\s+/).filter((s: string) => s.trim().length > 15);
+                if (items.length > 1) return items.slice(0, 5);
+                return [data];
+            }
             return ['Review alert details and investigate according to standard procedures'];
+        };
+
+        // Derive business impact from ai_summary when ai_impact field doesn't exist
+        const deriveBusinessImpact = (data: any): string => {
+            if (typeof data === 'string' && data.trim()) return data;
+            const summary = backendAlert.ai_summary;
+            const severity = backendAlert.severity || 'info';
+            if (summary && typeof summary === 'string' && summary.trim()) {
+                const severityImpact: Record<string, string> = {
+                    critical: 'Critical impact — ',
+                    high: 'High impact — ',
+                    medium: 'Moderate impact — ',
+                    low: 'Low impact — ',
+                    info: 'Informational — ',
+                };
+                const prefix = severityImpact[severity] || '';
+                // Use the last sentence(s) of the summary as impact context
+                const sentences = summary.split(/(?<=[.!?])\s+/).filter((s: string) => s.trim().length > 10);
+                const impactSentence = sentences.length > 1 ? sentences[sentences.length - 1] : sentences[0] || summary;
+                return `${prefix}${impactSentence}`;
+            }
+            return 'Impact assessment pending. The affected system may experience degraded performance or connectivity issues.';
         };
 
         // Get device info with sensible defaults
@@ -145,7 +178,7 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
             status: backendAlert.status || 'open',
             aiTitle: backendAlert.title || backendAlert.ai_title || 'Alert Detected',
             aiSummary: backendAlert.ai_summary || backendAlert.description || 'Alert received and pending analysis.',
-            confidence: backendAlert.ai_confidence || backendAlert.confidence || 85,
+            confidence: backendAlert.ai_confidence || backendAlert.confidence || 0,
             timestamp: {
                 absolute: backendAlert.timestamp || new Date().toISOString(),
                 relative: getRelativeTime(backendAlert.timestamp || new Date().toISOString()),
@@ -161,7 +194,7 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
             aiAnalysis: {
                 summary: backendAlert.aiAnalysis?.summary || backendAlert.ai_summary || backendAlert.description || 'This alert was detected by the network monitoring system. AI analysis is processing the event data.',
                 rootCauses: parseRootCauses(backendAlert.aiAnalysis?.rootCauses || backendAlert.ai_root_cause || backendAlert.root_causes),
-                businessImpact: backendAlert.aiAnalysis?.businessImpact || backendAlert.ai_impact || backendAlert.business_impact || 'Impact assessment pending. The affected system may experience degraded performance or connectivity issues.',
+                businessImpact: deriveBusinessImpact(backendAlert.aiAnalysis?.businessImpact || backendAlert.ai_impact || backendAlert.business_impact),
                 recommendedActions: parseRecommendedActions(backendAlert.aiAnalysis?.recommendedActions || backendAlert.ai_recommendation || backendAlert.recommended_actions),
             },
             rawData: backendAlert.raw_payload || backendAlert.raw_data || JSON.stringify(backendAlert, null, 2),
@@ -212,7 +245,15 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
     }
 
     async getAlertsSummary(): Promise<AlertSummary> {
-        return this.get<AlertSummary>(API_ENDPOINTS.ALERTS_SUMMARY);
+        const response = await this.get<any>(API_ENDPOINTS.ALERTS_SUMMARY);
+        const bySeverity = response.by_severity || response.bySeverity || {};
+        return {
+            activeCount: response.total ?? response.activeCount ?? 0,
+            criticalCount: bySeverity.critical ?? response.criticalCount ?? 0,
+            majorCount: bySeverity.high ?? bySeverity.major ?? response.majorCount ?? 0,
+            minorCount: bySeverity.low ?? bySeverity.minor ?? response.minorCount ?? 0,
+            infoCount: bySeverity.info ?? response.infoCount ?? 0,
+        };
     }
 
     async getAlertById(id: string): Promise<DetailedAlert | null> {
@@ -286,9 +327,28 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
     }
 
     async getAIMetrics(): Promise<AIMetric[]> {
-        const response = await this.get<AIMetric>(API_ENDPOINTS.AI_METRICS);
-        // Backend returns single object, frontend expects array
-        return [response];
+        const response = await this.get<any>(API_ENDPOINTS.AI_METRICS);
+        // Backend returns single object like {total_processed, success_rate, alerts_enriched, ...}
+        // Transform to AIMetric[] array with {id, label, value} format
+        const successRate = response.success_rate ?? response.successRate ?? 0;
+        return [
+            {
+                id: 'ai-accuracy',
+                label: 'AI Accuracy',
+                value: Math.round(successRate * 10) / 10,
+                description: 'Based on recent correlations',
+            },
+            {
+                id: 'total-processed',
+                label: 'Total Processed',
+                value: response.total_processed ?? response.totalProcessed ?? 0,
+            },
+            {
+                id: 'alerts-enriched',
+                label: 'Alerts Enriched',
+                value: response.alerts_enriched ?? response.alertsEnriched ?? 0,
+            },
+        ];
     }
 
     async getTrendsKPI(): Promise<TrendKPI[]> {
@@ -330,23 +390,49 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
     }
 
     async getRecurringAlerts(): Promise<RecurringAlert[]> {
-        return this.get<RecurringAlert[]>(API_ENDPOINTS.ALERTS_RECURRING);
+        const response = await this.get<any[]>(API_ENDPOINTS.ALERTS_RECURRING);
+        return (response || []).map((r: any, idx: number) => ({
+            id: r.id || `recurring-${idx}`,
+            name: r.pattern || r.name || 'Unknown Pattern',
+            count: r.count || 0,
+            severity: r.severity || 'medium',
+            avgResolution: r.avg_resolution || r.avgResolution || 'N/A',
+            percentage: r.percentage || 0,
+            pattern: r.pattern,
+            devices: r.devices || [],
+            firstSeen: r.first_seen || r.firstSeen,
+            lastSeen: r.last_seen || r.lastSeen,
+        }));
     }
 
     async getAlertDistributionTime(): Promise<AlertDistribution[]> {
-        return this.get<AlertDistribution[]>(API_ENDPOINTS.ALERTS_DISTRIBUTION_TIME);
+        const response = await this.get<any[]>(API_ENDPOINTS.ALERTS_DISTRIBUTION_TIME);
+        return (response || []).map((point: any) => ({
+            group: point.group || point.hour || 'Unknown',
+            value: point.value ?? point.count ?? 0,
+        }));
     }
 
     async getAIInsights(): Promise<AIInsight[]> {
-        return this.get<AIInsight[]>(API_ENDPOINTS.AI_INSIGHTS);
+        const response = await this.get<any[]>(API_ENDPOINTS.AI_INSIGHTS);
+        return (response || []).map((insight: any) => ({
+            id: insight.id || 'unknown',
+            type: insight.type || 'recommendation',
+            title: insight.title || '',
+            description: insight.description || '',
+            action: Array.isArray(insight.action_items) ? insight.action_items.join('; ') : (insight.action || insight.action_items || ''),
+            severity: insight.severity,
+            confidence: insight.confidence,
+        }));
     }
 
     async getAIImpactOverTime(): Promise<ChartDataPoint[]> {
         const response = await this.get<any[]>(API_ENDPOINTS.AI_IMPACT_OVER_TIME);
-        // Transform backend format to Carbon Charts format
+        // Transform backend format {date, alerts_processed, patterns_detected, mttr_improvement_pct}
+        // to Carbon Charts format {date, value, group}
         return (response || []).map((point: any) => ({
             date: new Date(point.timestamp || point.date),
-            value: point.value || 0,
+            value: point.value ?? point.alerts_processed ?? point.mttr_improvement_pct ?? 0,
             group: point.group || point.label || 'AI Impact'
         })).filter(point => !isNaN(point.date.getTime()));
     }
@@ -364,8 +450,22 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
     }
 
     async exportReport(format: 'csv' | 'pdf'): Promise<void> {
-        // Trigger download from API
-        return this.get<void>(`${API_ENDPOINTS.REPORTS_EXPORT}?format=${format}`);
+        // Trigger browser file download - bypass JSON parsing since response is CSV
+        const token = this.getToken();
+        const url = `${this.baseUrl}${API_ENDPOINTS.REPORTS_EXPORT}?format=${format}`;
+        const response = await fetch(url, {
+            headers: token ? { Authorization: `Bearer ${token}` } : {},
+        });
+        if (!response.ok) throw new Error(`Export failed: ${response.status}`);
+        const blob = await response.blob();
+        const downloadUrl = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = downloadUrl;
+        a.download = `alerts-report-${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(downloadUrl);
     }
 }
 

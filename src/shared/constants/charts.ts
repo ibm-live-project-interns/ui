@@ -14,8 +14,11 @@ import type { SeverityDisplay } from '@/shared/types';
 
 export const CHART_COLOR_SCALE: Record<SeverityDisplay, string> = {
     Critical: SEVERITY_CONFIG.critical.color,
+    High: SEVERITY_CONFIG.high.color,
     Major: SEVERITY_CONFIG.major.color,
+    Medium: SEVERITY_CONFIG.medium.color,
     Minor: SEVERITY_CONFIG.minor.color,
+    Low: SEVERITY_CONFIG.low.color,
     Info: SEVERITY_CONFIG.info.color,
 };
 

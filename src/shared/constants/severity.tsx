@@ -26,7 +26,7 @@ export interface SeverityConfig {
     label: SeverityDisplay;
     color: string;
     backgroundColor: string;
-    tagType: 'red' | 'magenta' | 'purple' | 'blue';
+    tagType: 'red' | 'magenta' | 'purple' | 'blue' | 'teal';
     icon: typeof ErrorFilled;
     description: string;
     priority: number;
@@ -42,6 +42,15 @@ export const SEVERITY_CONFIG: Record<Severity, SeverityConfig> = {
         description: 'Requires immediate action',
         priority: 1,
     },
+    high: {
+        label: 'High',
+        color: SEVERITY_COLORS.high,
+        backgroundColor: SEVERITY_BG_COLORS.high,
+        tagType: 'magenta',
+        icon: WarningFilled,
+        description: 'High priority issues',
+        priority: 2,
+    },
     major: {
         label: 'Major',
         color: SEVERITY_COLORS.major,
@@ -50,6 +59,15 @@ export const SEVERITY_CONFIG: Record<Severity, SeverityConfig> = {
         icon: WarningFilled,
         description: 'High priority issues',
         priority: 2,
+    },
+    medium: {
+        label: 'Medium',
+        color: SEVERITY_COLORS.medium,
+        backgroundColor: SEVERITY_BG_COLORS.medium,
+        tagType: 'purple',
+        icon: WarningAlt,
+        description: 'Monitor closely',
+        priority: 3,
     },
     minor: {
         label: 'Minor',
@@ -60,6 +78,15 @@ export const SEVERITY_CONFIG: Record<Severity, SeverityConfig> = {
         description: 'Monitor closely',
         priority: 3,
     },
+    low: {
+        label: 'Low',
+        color: SEVERITY_COLORS.low,
+        backgroundColor: SEVERITY_BG_COLORS.low,
+        tagType: 'teal',
+        icon: InformationFilled,
+        description: 'Low priority',
+        priority: 4,
+    },
     info: {
         label: 'Info',
         color: SEVERITY_COLORS.info,
@@ -67,11 +94,11 @@ export const SEVERITY_CONFIG: Record<Severity, SeverityConfig> = {
         tagType: 'blue',
         icon: InformationFilled,
         description: 'Informational only',
-        priority: 4,
+        priority: 5,
     },
 };
 
-export const SEVERITY_ORDER: Severity[] = ['critical', 'major', 'minor', 'info'];
+export const SEVERITY_ORDER: Severity[] = ['critical', 'high', 'major', 'medium', 'minor', 'low', 'info'];
 
 /** Filter option type */
 export interface FilterOption {
@@ -83,8 +110,9 @@ export interface FilterOption {
 export const SEVERITY_FILTER_OPTIONS: FilterOption[] = [
     { id: 'all', text: 'All Severities' },
     { id: 'critical', text: 'Critical' },
-    { id: 'major', text: 'Major' },
-    { id: 'minor', text: 'Minor' },
+    { id: 'high', text: 'High' },
+    { id: 'medium', text: 'Medium' },
+    { id: 'low', text: 'Low' },
     { id: 'info', text: 'Info' },
 ];
 
@@ -102,7 +130,7 @@ export const TIME_PERIOD_OPTIONS: FilterOption[] = [
 
 export function normalizeSeverity(severity: string): Severity {
     const lower = severity.toLowerCase();
-    if (['critical', 'major', 'minor', 'info'].includes(lower)) {
+    if (['critical', 'high', 'major', 'medium', 'minor', 'low', 'info'].includes(lower)) {
         return lower as Severity;
     }
     return 'info';

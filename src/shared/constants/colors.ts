@@ -47,16 +47,22 @@ export const CARBON_COLORS = {
 /** Severity color mapping - use these for consistency */
 export const SEVERITY_COLORS = {
     critical: '#da1e28',
+    high: '#ff832b',
     major: '#ff832b',
+    medium: '#f1c21b',
     minor: '#f1c21b',
+    low: '#0f62fe',
     info: '#0043ce',
 } as const;
 
 /** Severity background colors (with opacity) */
 export const SEVERITY_BG_COLORS = {
     critical: 'rgba(218, 30, 40, 0.2)',
+    high: 'rgba(255, 131, 43, 0.2)',
     major: 'rgba(255, 131, 43, 0.2)',
+    medium: 'rgba(241, 194, 27, 0.2)',
     minor: 'rgba(241, 194, 27, 0.2)',
+    low: 'rgba(15, 98, 254, 0.2)',
     info: 'rgba(69, 137, 255, 0.2)',
 } as const;
 
@@ -104,8 +110,11 @@ export const CHART_COLORS = {
     quaternary: '#ee538b',
     // For severity-based charts
     critical: '#da1e28',
+    high: '#ff832b',
     major: '#ff832b',
+    medium: '#f1c21b',
     minor: '#f1c21b',
+    low: '#0f62fe',
     info: '#4589ff',
 } as const;
 

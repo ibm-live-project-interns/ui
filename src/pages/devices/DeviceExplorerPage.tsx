@@ -110,8 +110,8 @@ export function DeviceExplorerPage() {
         return devices.filter(device => {
             // Search filter - match name or IP
             if (searchTerm &&
-                !device.name.toLowerCase().includes(searchTerm.toLowerCase()) &&
-                !device.ip.includes(searchTerm)) {
+                !(device.name || '').toLowerCase().includes(searchTerm.toLowerCase()) &&
+                !(device.ip || '').includes(searchTerm)) {
                 return false;
             }
             // Type filter
@@ -123,7 +123,7 @@ export function DeviceExplorerPage() {
                 return false;
             }
             // Location filter (partial match)
-            if (locationFilter !== 'all' && !device.location.toLowerCase().includes(locationFilter)) {
+            if (locationFilter !== 'all' && !(device.location || '').toLowerCase().includes(locationFilter)) {
                 return false;
             }
             return true;

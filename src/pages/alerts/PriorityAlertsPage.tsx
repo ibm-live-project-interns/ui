@@ -48,8 +48,11 @@ import type { KPICardProps, KPISeverity } from '@/components/ui/KPICard';
 const generateKPIData = (alerts: PriorityAlert[]): KPICardProps[] => {
     const counts: Record<Severity, number> = {
         critical: 0,
+        high: 0,
         major: 0,
+        medium: 0,
         minor: 0,
+        low: 0,
         info: 0,
     };
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
     DataTable,
     TableContainer,
@@ -23,6 +23,7 @@ import {
     Search,
     SkeletonText,
     Tile,
+    ComboBox,
 } from '@carbon/react';
 import {
     Add,
@@ -40,7 +41,7 @@ import '@/styles/components/_kpi-card.scss';
 import { KPICard, PageHeader, DataTableWrapper } from '@/components';
 
 // Services
-import { ticketDataService, authService, type TicketInfo } from '@/shared/services';
+import { ticketDataService, alertDataService, authService, type TicketInfo } from '@/shared/services';
 
 // Import shared constants - no need to redefine
 import {
@@ -54,7 +55,9 @@ const QUICK_FILTERS = ['Critical', 'Open Only', 'My Tickets', 'Unassigned'];
 
 export function TicketsPage() {
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [tickets, setTickets] = useState<TicketInfo[]>([]);
+    const [alertsList, setAlertsList] = useState<{ id: string; label: string }[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
@@ -71,6 +74,7 @@ export function TicketsPage() {
         title: '',
         description: '',
         priority: 'medium' as 'critical' | 'high' | 'medium' | 'low',
+        alertId: '',
         deviceName: '',
         assignee: '',
     });
@@ -82,21 +86,40 @@ export function TicketsPage() {
         setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
     };
 
-    // Fetch tickets from service
+    // Fetch tickets and alerts from service
     useEffect(() => {
-        const fetchTickets = async () => {
+        const fetchData = async () => {
             setIsLoading(true);
             try {
-                const data = await ticketDataService.getTickets();
-                setTickets(data);
+                const [ticketsData, alertsData] = await Promise.all([
+                    ticketDataService.getTickets(),
+                    alertDataService.getAlerts(),
+                ]);
+                setTickets(ticketsData);
+                setAlertsList(alertsData.map((a: any) => ({
+                    id: a.id,
+                    label: `${a.id} — ${a.aiTitle || a.title || 'Alert'}`,
+                })));
             } catch (error) {
-                console.error('Failed to fetch tickets:', error);
+                console.error('Failed to fetch data:', error);
             } finally {
                 setIsLoading(false);
             }
         };
-        fetchTickets();
+        fetchData();
     }, []);
+
+    // Handle ?alertId query param for pre-selection from alert page
+    useEffect(() => {
+        const alertIdParam = searchParams.get('alertId');
+        if (alertIdParam) {
+            setCreateForm(prev => ({ ...prev, alertId: alertIdParam }));
+            setIsCreateModalOpen(true);
+            // Clear the param so it doesn't persist on refresh
+            searchParams.delete('alertId');
+            setSearchParams(searchParams, { replace: true });
+        }
+    }, [searchParams, setSearchParams]);
 
     const handleCreateTicket = async () => {
         if (!createForm.title) return;
@@ -104,7 +127,7 @@ export function TicketsPage() {
         setIsCreating(true);
         try {
             const newTicket = await ticketDataService.createTicket({
-                alertId: 'manual-' + Date.now(),
+                alertId: createForm.alertId || 'manual-' + Date.now(),
                 title: createForm.title,
                 description: createForm.description,
                 priority: createForm.priority,
@@ -117,7 +140,7 @@ export function TicketsPage() {
             setTickets(updatedTickets);
 
             setIsCreateModalOpen(false);
-            setCreateForm({ title: '', description: '', priority: 'medium', deviceName: '', assignee: '' });
+            setCreateForm({ title: '', description: '', priority: 'medium', alertId: '', deviceName: '', assignee: '' });
             addToast('success', 'Ticket Created', `${newTicket.ticketNumber} has been created`);
         } catch (error) {
             console.error('Failed to create ticket:', error);
@@ -183,10 +206,10 @@ export function TicketsPage() {
             const query = searchQuery.toLowerCase();
             result = result.filter(
                 (ticket) =>
-                    ticket.title.toLowerCase().includes(query) ||
-                    ticket.ticketNumber.toLowerCase().includes(query) ||
-                    ticket.deviceName.toLowerCase().includes(query) ||
-                    ticket.description?.toLowerCase().includes(query)
+                    (ticket.title || '').toLowerCase().includes(query) ||
+                    (ticket.ticketNumber || '').toLowerCase().includes(query) ||
+                    (ticket.deviceName || '').toLowerCase().includes(query) ||
+                    (ticket.description || '').toLowerCase().includes(query)
             );
         }
 
@@ -524,6 +547,19 @@ export function TicketsPage() {
                 primaryButtonDisabled={isCreating || !createForm.title}
             >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <ComboBox
+                        id="create-ticket-alert"
+                        titleText="Linked Alert"
+                        placeholder="Search or select an alert..."
+                        items={alertsList}
+                        itemToString={(item: { id: string; label: string } | null) => item?.label || ''}
+                        selectedItem={alertsList.find(a => a.id === createForm.alertId) || null}
+                        onChange={({ selectedItem }: { selectedItem: { id: string; label: string } | null | undefined }) => {
+                            setCreateForm({ ...createForm, alertId: selectedItem?.id || '' });
+                        }}
+                        helperText="Select the alert this ticket is related to"
+                    />
+
                     <TextInput
                         id="create-ticket-title"
                         labelText="Title"
@@ -531,6 +567,8 @@ export function TicketsPage() {
                         value={createForm.title}
                         onChange={(e) => setCreateForm({ ...createForm, title: e.target.value })}
                         required
+                        invalid={!createForm.title}
+                        invalidText="Ticket title is required"
                     />
 
                     <TextArea
@@ -562,13 +600,22 @@ export function TicketsPage() {
                         onChange={(e) => setCreateForm({ ...createForm, deviceName: e.target.value })}
                     />
 
-                    <TextInput
+                    <Select
                         id="create-ticket-assignee"
                         labelText="Assignee (optional)"
-                        placeholder="Enter assignee name"
                         value={createForm.assignee}
                         onChange={(e) => setCreateForm({ ...createForm, assignee: e.target.value })}
-                    />
+                    >
+                        <SelectItem value="" text="Select assignee..." />
+                        <SelectItem value="John Smith" text="John Smith" />
+                        <SelectItem value="Jane Doe" text="Jane Doe" />
+                        <SelectItem value="Mike Johnson" text="Mike Johnson" />
+                        <SelectItem value="Sarah Williams" text="Sarah Williams" />
+                        <SelectItem value="DBA Team" text="DBA Team" />
+                        <SelectItem value="Network Team" text="Network Team" />
+                        <SelectItem value="Security Team" text="Security Team" />
+                        <SelectItem value="NOC Team" text="NOC Team" />
+                    </Select>
                 </div>
             </Modal>
         </div>

@@ -81,8 +81,7 @@ class AuthService extends HttpService {
     }
 
     /**
-     * Login with email/username and password
-     * Backend expects { username, password } - we use email as username
+     * Login with email and password
      */
     async login(email: string, password: string): Promise<LoginResponse> {
         if (env.useMockData) {
@@ -109,9 +108,8 @@ class AuthService extends HttpService {
         }
 
         try {
-            // Backend expects { username, password } - use email as username
             const response = await this.post<any>(API_ENDPOINTS.AUTH.LOGIN, {
-                username: email,
+                email,
                 password
             });
 

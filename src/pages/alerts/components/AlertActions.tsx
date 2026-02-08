@@ -148,6 +148,8 @@ export function AlertActions({
                         value={ticketForm.title}
                         onChange={(e) => setTicketForm({ ...ticketForm, title: e.target.value })}
                         required
+                        invalid={!ticketForm.title}
+                        invalidText="Ticket title is required"
                     />
 
                     <TextArea
@@ -171,13 +173,22 @@ export function AlertActions({
                         <SelectItem value="low" text="Low" />
                     </Select>
 
-                    <TextInput
+                    <Select
                         id="ticket-assignee"
                         labelText="Assignee (optional)"
-                        placeholder="Enter assignee email or name"
                         value={ticketForm.assignee || ''}
                         onChange={(e) => setTicketForm({ ...ticketForm, assignee: e.target.value })}
-                    />
+                    >
+                        <SelectItem value="" text="Select assignee..." />
+                        <SelectItem value="John Smith" text="John Smith" />
+                        <SelectItem value="Jane Doe" text="Jane Doe" />
+                        <SelectItem value="Mike Johnson" text="Mike Johnson" />
+                        <SelectItem value="Sarah Williams" text="Sarah Williams" />
+                        <SelectItem value="DBA Team" text="DBA Team" />
+                        <SelectItem value="Network Team" text="Network Team" />
+                        <SelectItem value="Security Team" text="Security Team" />
+                        <SelectItem value="NOC Team" text="NOC Team" />
+                    </Select>
                 </div>
             </Modal>
         </>

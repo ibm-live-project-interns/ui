@@ -104,12 +104,10 @@ src/
 - **Trends & Insights** - Historical analysis, patterns, and AI insights
 - **Device Management** - Health monitoring and configuration tracking (Network Admin role)
 - **Analytics Dashboard** - Pattern detection and correlation analysis (Senior Engineer role)
-feature-based services that automatically switch between mock and real API:
-
+**Data Service:**
 ```typescript
 import { alertDataService } from '@/features/alerts/services/alertService';
 
-// Works with API (mock removed in cleanup)
 const alerts = await alertDataService.getAlerts();
 const summary = await alertDataService.getAlertsSummary();
 ```
@@ -121,17 +119,12 @@ import { useRole } from '@/features/roles/hooks';
 function MyComponent() {
   const { currentRole, hasPermission } = useRole();
 
-  // Check permissions
   if (hasPermission('manage-devices')) {
     // Show device management UI
   }
 
-  // Access role config
   console.log(currentRole.displayName); // "Network Operations"
 }
-// Works with mock OR API based on VITE_USE_MOCK
-const alerts = await alertDataService.getAlerts();
-const summary = await alertDataService.getAlertsSummary();
 ```
 
 ## Environment Variables
@@ -144,7 +137,7 @@ const summary = await alertDataService.getAlertsSummary();
 
 ## Docker
 
-### Full Stack DeploymentSee role-based credentials above
+### Full Stack Deployment
 
 ```bash
 # Start all services (requires ingestor repo cloned alongside)
@@ -214,6 +207,37 @@ Full documentation is in the [docs repository](https://github.com/ibm-live-proje
 - React Router
 - SCSS
 
+## E2E Testing (Playwright)
+
+The project includes a comprehensive Playwright test suite for all major features.
+
+```bash
+# Run all tests against Docker (port 3000)
+npm test
+
+# Run against local dev server
+BASE_URL=http://localhost:5173 npm test
+
+# Run specific suites
+npm run test:config         # Configuration page
+npm run test:tickets        # Tickets page
+npm run test:validation     # Input validation
+
+# Run with visible browser
+npm run test:headed
+
+# View HTML test report
+npm run test:report
+```
+
+### Test Files
+
+| File | Tests | Covers |
+|------|-------|--------|
+| `tests/configuration.spec.ts` | 10 | CRUD for rules, channels, policies, maintenance windows |
+| `tests/tickets.spec.ts` | 9 | Ticket create/edit, alert linking, assignee dropdown |
+| `tests/input-validation.spec.ts` | 11 | Structured inputs, required field validation across all modals |
+
 ## Scripts
 
 ```bash
@@ -222,4 +246,6 @@ npm run build     # Production build
 npm run preview   # Preview production build
 npm run lint      # Run ESLint
 npm run format    # Format with Prettier
+npm test          # Run Playwright E2E tests
+npm run test:headed  # Run tests with visible browser
 ```

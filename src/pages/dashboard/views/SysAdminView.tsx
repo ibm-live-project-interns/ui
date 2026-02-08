@@ -590,6 +590,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                     modalLabel="User Management"
                     primaryButtonText={selectedUser ? 'Save Changes' : 'Create User'}
                     secondaryButtonText="Cancel"
+                    primaryButtonDisabled={!userForm.username || !userForm.email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userForm.email)}
                     size="md"
                 >
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem 0' }}>
@@ -599,6 +600,9 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                             value={userForm.username}
                             onChange={(e) => setUserForm(prev => ({ ...prev, username: e.target.value }))}
                             placeholder="Enter username"
+                            required
+                            invalid={!userForm.username}
+                            invalidText="Username is required"
                         />
                         <TextInput
                             id="user-email"
@@ -607,6 +611,9 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                             value={userForm.email}
                             onChange={(e) => setUserForm(prev => ({ ...prev, email: e.target.value }))}
                             placeholder="user@company.com"
+                            required
+                            invalid={userForm.email.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userForm.email)}
+                            invalidText="Please enter a valid email address"
                         />
                         <Select
                             id="user-role"

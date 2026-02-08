@@ -22,14 +22,7 @@ export const env = {
   // Mock mode (matches VITE_USE_MOCK in .env)
   useMockData: import.meta.env.VITE_USE_MOCK === 'true',
 
-  // WebSocket settings
-  wsEndpoint: import.meta.env.VITE_WS_ENDPOINT || 'ws://localhost:8081/ws',
-  enableWebSocket: import.meta.env.VITE_ENABLE_WEBSOCKET === 'true',
-
   // Feature flags
-  enableRealtimeUpdates: import.meta.env.VITE_ENABLE_REALTIME_UPDATES === 'true',
-  enableTicketing: import.meta.env.VITE_ENABLE_TICKETING === 'true',
-  enableRagInsights: import.meta.env.VITE_ENABLE_RAG_INSIGHTS === 'true',
   enableGoogleAuth: import.meta.env.VITE_ENABLE_GOOGLE_AUTH === 'true',
 
   // Polling intervals
@@ -95,6 +88,7 @@ export const API_ENDPOINTS = {
   ALERT_BY_ID: (id: string) => `/alerts/${id}`,
   ACKNOWLEDGE_ALERT: (id: string) => `/alerts/${id}/acknowledge`,
   DISMISS_ALERT: (id: string) => `/alerts/${id}/dismiss`,
+  REANALYZE_ALERT: (id: string) => `/alerts/${id}/reanalyze`,
   ALERTS_OVER_TIME: '/alerts/over-time',
   ALERTS_SEVERITY_DISTRIBUTION: '/alerts/severity-distribution',
   ALERTS_RECURRING: '/alerts/recurring',
@@ -136,6 +130,18 @@ export const API_ENDPOINTS = {
   // Reports Endpoints
   // ==========================================
   REPORTS_EXPORT: '/reports/export',
+
+  // ==========================================
+  // Configuration Endpoints
+  // ==========================================
+  CONFIG_RULES: '/configuration/rules',
+  CONFIG_RULE_BY_ID: (id: string) => `/configuration/rules/${id}`,
+  CONFIG_CHANNELS: '/configuration/channels',
+  CONFIG_CHANNEL_BY_ID: (id: string) => `/configuration/channels/${id}`,
+  CONFIG_POLICIES: '/configuration/policies',
+  CONFIG_POLICY_BY_ID: (id: string) => `/configuration/policies/${id}`,
+  CONFIG_MAINTENANCE: '/configuration/maintenance',
+  CONFIG_MAINTENANCE_BY_ID: (id: string) => `/configuration/maintenance/${id}`,
 
   // ==========================================
   // Health Check (internal)

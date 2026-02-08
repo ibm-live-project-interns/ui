@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Tile, Button, Tag, SkeletonText, InlineNotification, ToastNotification } from '@carbon/react';
-import { Time, Chip, Activity, IbmWatsonxCodeAssistant, WarningAlt, ArrowRight, ArrowLeft, Checkmark } from '@carbon/icons-react';
+import { Time, Chip, Activity, IbmWatsonxCodeAssistant, WarningAlt, ArrowRight, ArrowLeft, Checkmark, Renew } from '@carbon/icons-react';
 import { AlertActions } from './components/AlertActions';
 import { RawTrapData } from './components/RawTrapData';
 import '@/styles/pages/_alert-details.scss';
@@ -31,6 +31,7 @@ export function AlertDetailsPage() {
     const [alert, setAlert] = useState<DetailedAlert | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [toasts, setToasts] = useState<ToastMessage[]>([]);
+    const [isReanalyzing, setIsReanalyzing] = useState(false);
 
     // Helper to add a toast
     const addToast = (kind: ToastMessage['kind'], title: string, subtitle: string) => {
@@ -105,6 +106,35 @@ export function AlertDetailsPage() {
         } catch (error) {
             console.error('Failed to dismiss alert:', error);
             addToast('error', 'Action Failed', 'Could not dismiss alert');
+        }
+    };
+
+    const handleReanalyze = async () => {
+        if (!alert) return;
+        setIsReanalyzing(true);
+        try {
+            const baseUrl = (import.meta as any).env?.VITE_API_BASE_URL || 'http://localhost:8080';
+            const token = localStorage.getItem('token');
+            const resp = await fetch(`${baseUrl}/api/v1/alerts/${alert.id}/reanalyze`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+                },
+            });
+            if (!resp.ok) throw new Error(`Re-analysis failed: ${resp.status}`);
+            // Reload alert data to get fresh AI analysis
+            const freshData = await alertDataService.getAlertById(alert.id);
+            if (freshData) {
+                const normalized = normalizeAlert(freshData) as DetailedAlert;
+                setAlert(normalized);
+            }
+            addToast('success', 'AI Re-analysis Complete', 'Watson AI has re-analyzed this alert with fresh insights');
+        } catch (err) {
+            console.error('Failed to re-analyze alert:', err);
+            addToast('error', 'Re-analysis Failed', 'Could not contact AI service. Please try again.');
+        } finally {
+            setIsReanalyzing(false);
         }
     };
 
@@ -242,6 +272,16 @@ export function AlertDetailsPage() {
                                     <IbmWatsonxCodeAssistant size={24} />
                                 </div>
                                 <h3 className="alert-card__title">AI-Generated Explanation</h3>
+                                <Button
+                                    kind="ghost"
+                                    size="sm"
+                                    renderIcon={Renew}
+                                    onClick={handleReanalyze}
+                                    disabled={isReanalyzing}
+                                    style={{ marginLeft: 'auto' }}
+                                >
+                                    {isReanalyzing ? 'Analyzing...' : 'Re-analyze'}
+                                </Button>
                             </div>
 
                             <div className="alert-card__section">
@@ -330,7 +370,13 @@ export function AlertDetailsPage() {
                                 {alert.history.map((item) => {
                                     const itemConfig = SEVERITY_CONFIG[item.severity as Severity] || SEVERITY_CONFIG.info;
                                     return (
-                                        <div key={item.id} className="alert-card__historical-item" title={`Resolution: ${item.resolution}`}>
+                                        <div
+                                            key={item.id}
+                                            className="alert-card__historical-item"
+                                            title={`Resolution: ${item.resolution}`}
+                                            onClick={() => item.id && item.id.startsWith('ALT') && navigate(`/alerts/${item.id}`)}
+                                            style={{ cursor: item.id?.startsWith('ALT') ? 'pointer' : 'default' }}
+                                        >
                                             <div className="alert-card__historical-header">
                                                 <span className="alert-card__historical-timestamp">{typeof item.timestamp === 'string' ? item.timestamp : (item.timestamp as any)?.relative || 'N/A'}</span>
                                                 <Tag type={itemConfig.tagType} size="sm">

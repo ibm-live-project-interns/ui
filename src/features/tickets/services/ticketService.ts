@@ -233,18 +233,63 @@ class ApiTicketDataService extends HttpService implements ITicketDataService {
 
     async getTicketById(id: string): Promise<TicketInfo | null> {
         try {
-            return await this.get<TicketInfo>(API_ENDPOINTS.TICKET_BY_ID(id));
+            const response = await this.get<any>(API_ENDPOINTS.TICKET_BY_ID(id));
+            const ticket = response.ticket || response;
+            return this.transformTicket(ticket);
         } catch {
+            console.warn('[TicketService] Failed to fetch ticket by ID:', id);
             return null;
         }
     }
 
+    /** Transform snake_case backend ticket to camelCase frontend TicketInfo */
+    private transformTicket(t: any): TicketInfo {
+        return {
+            id: t.id,
+            ticketNumber: t.ticketNumber || t.ticket_number || t.id,
+            alertId: t.alertId || t.alert_id || '',
+            title: t.title,
+            description: t.description,
+            priority: t.priority,
+            status: t.status,
+            assignedTo: t.assignedTo || t.assigned_to || t.assignee || 'Unassigned',
+            createdAt: t.createdAt || t.created_at,
+            updatedAt: t.updatedAt || t.updated_at,
+            deviceName: t.deviceName || t.device_name || t.device_id || 'Unknown',
+        };
+    }
+
     async createTicket(data: CreateTicketData): Promise<TicketInfo> {
-        return this.post<TicketInfo>(API_ENDPOINTS.TICKETS, data);
+        // Transform camelCase frontend fields to snake_case backend contract
+        const payload = {
+            title: data.title,
+            description: data.description,
+            priority: data.priority,
+            category: data.priority, // Use priority as category fallback since UI doesn't have a category field
+            alert_id: data.alertId || undefined,
+            device_id: data.deviceName || undefined, // Backend expects device_id, UI has deviceName
+            assignee: data.assignee || undefined,
+        };
+        console.log('[TicketService] Creating ticket with payload:', payload);
+        const response = await this.post<any>(API_ENDPOINTS.TICKETS, payload);
+        // Transform response back to camelCase
+        const ticket = response.ticket || response;
+        return this.transformTicket(ticket);
     }
 
     async updateTicket(id: string, data: Partial<TicketInfo>): Promise<TicketInfo> {
-        return this.put<TicketInfo>(API_ENDPOINTS.TICKET_BY_ID(id), data);
+        // Transform camelCase update fields to snake_case
+        const payload: Record<string, unknown> = {};
+        if (data.title !== undefined) payload.title = data.title;
+        if (data.description !== undefined) payload.description = data.description;
+        if (data.priority !== undefined) payload.priority = data.priority;
+        if (data.status !== undefined) payload.status = data.status;
+        if (data.assignedTo !== undefined) payload.assignee = data.assignedTo;
+        if (data.alertId !== undefined) payload.alert_id = data.alertId;
+        console.log('[TicketService] Updating ticket %s with payload:', id, payload);
+        const response = await this.put<any>(API_ENDPOINTS.TICKET_BY_ID(id), payload);
+        const ticket = response.ticket || response;
+        return this.transformTicket(ticket);
     }
 
     async deleteTicket(id: string): Promise<void> {

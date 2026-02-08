@@ -48,7 +48,7 @@ services:
     image: postgres:15-alpine
     container_name: noc-postgres
     ports:
-      - "5432:5432"
+      - "5433:5432"
     networks:
       - noc-network
     environment:
@@ -57,7 +57,7 @@ services:
       POSTGRES_DB: noc_alerts
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./init-scripts/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+      - ../postgres-init/:/docker-entrypoint-initdb.d/:ro
     restart: always
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U admin -d noc_alerts" ]
@@ -110,6 +110,7 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092
       KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9094
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
@@ -147,7 +148,8 @@ services:
 
   api-gateway:
     build:
-      context: ../ingestor/api_gateway
+      context: ..
+      dockerfile: ingestor/api_gateway/Dockerfile
     container_name: noc-api-gateway
     ports:
       - "8080:8080"
@@ -156,20 +158,38 @@ services:
     environment:
       API_GATEWAY_PORT: "8080"
       GIN_MODE: release
-      CORS_ALLOWED_ORIGINS: "http://localhost:5173,http://localhost:3000,http://localhost:5174"
+      CORS_ALLOWED_ORIGINS: "http://localhost:5173,http://localhost:3000,http://localhost:3002,http://localhost:5174"
       JWT_SECRET: "${JWT_SECRET:-change-this-in-production}"
       JWT_EXPIRY_HOURS: "24"
       RATE_LIMIT_ENABLED: "true"
+      RATE_LIMIT_RATE: "500"
       POSTGRES_HOST: postgres
       POSTGRES_PORT: "5432"
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: secret
       POSTGRES_DB: noc_alerts
       KAFKA_BROKERS: kafka:29092
+      FRONTEND_URL: "http://localhost:3002"
+      # Google OAuth
+      GOOGLE_CLIENT_ID: "${GOOGLE_CLIENT_ID:-708452771845-kf8ao22vv35tlem7kvtq0s2dle29nv6d.apps.googleusercontent.com}"
+      GOOGLE_CLIENT_SECRET: "${GOOGLE_CLIENT_SECRET:-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}"
+      GOOGLE_REDIRECT_URL: "http://localhost:8080/api/v1/auth/google/callback"
+      # SMTP Email
+      SMTP_HOST: "${SMTP_HOST:-smtp.gmail.com}"
+      SMTP_PORT: "${SMTP_PORT:-587}"
+      SMTP_USERNAME: "${SMTP_USERNAME:-ujjwalsidhu123@gmail.com}"
+      SMTP_PASSWORD: "${SMTP_PASSWORD:-aftovybpmgmgqxor}"
+      SMTP_FROM: "${SMTP_FROM:-ujjwalsidhu123@gmail.com}"
+      SMTP_FROM_NAME: "NOC Alert System"
     depends_on:
       postgres:
         condition: service_healthy
     restart: on-failure
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/v1/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   ingestor-core:
     build:
@@ -184,8 +204,14 @@ services:
       INGESTOR_CORE_PORT: "8001"
       EVENT_ROUTER_URL: "http://event-router:8082"
     depends_on:
-      - event-router
+      event-router:
+        condition: service_healthy
     restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8001/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   event-router:
     build:
@@ -200,22 +226,38 @@ services:
       EVENT_ROUTER_PORT: "8082"
       EVENT_ROUTER_CONFIG_PATH: "/root/config.json"
       API_GATEWAY_URL: "http://api-gateway:8080"
+      KAFKA_BROKER: "kafka:29092"
+    depends_on:
+      kafka:
+        condition: service_healthy
     restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:8082/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   agents-api:
     build:
-      context: ../ingestor/agents_api
+      context: ..
+      dockerfile: ai-core/Dockerfile
     container_name: noc-agents-api
     ports:
       - "9000:9000"
     networks:
       - noc-network
+    env_file:
+      - ../ai-core/.env
     environment:
-      AGENTS_API_PORT: "9000"
-      WATSON_API_KEY: "${WATSON_API_KEY:-}"
-      WATSON_PROJECT_ID: "${WATSON_PROJECT_ID:-}"
-      WATSON_URL: "${WATSON_URL:-https://us-south.ml.cloud.ibm.com}"
+      AI_CORE_PORT: "9000"
+      API_GATEWAY_URL: "http://api-gateway:8080"
+      FORWARD_TO_GATEWAY: "true"
     restart: on-failure
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://localhost:9000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   # ===========================================================================
   # FRONTEND
@@ -227,7 +269,7 @@ services:
       dockerfile: Dockerfile
     container_name: noc-ui
     ports:
-      - "3000:3000"
+      - "3002:3000"
     networks:
       - noc-network
     depends_on:

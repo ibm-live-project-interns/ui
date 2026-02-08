@@ -31,7 +31,7 @@ export type DeviceIcon = 'switch' | 'firewall' | 'router' | 'server' | 'wireless
 // ==========================================
 
 /** Display versions (capitalized) for UI rendering - matches backend status values */
-export type SeverityDisplay = 'Critical' | 'Major' | 'Minor' | 'Info';
+export type SeverityDisplay = 'Critical' | 'High' | 'Major' | 'Medium' | 'Minor' | 'Low' | 'Info';
 export type StatusDisplay = 'Open' | 'Acknowledged' | 'Resolved' | 'Dismissed';
 export type DeviceStatusDisplay = 'Online' | 'Offline' | 'Warning' | 'Critical';
 
