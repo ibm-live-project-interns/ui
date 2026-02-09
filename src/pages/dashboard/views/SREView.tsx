@@ -19,7 +19,7 @@ import { Tile, ProgressBar, SkeletonText, SkeletonPlaceholder, InlineNotificatio
 import { ArrowDown, ArrowUp, Time, Activity, ChartLineSmooth, WarningAlt } from '@carbon/icons-react';
 import { LineChart, StackedBarChart } from '@carbon/charts-react';
 import { ScaleTypes } from '@carbon/charts';
-import { KPICard, type KPICardProps, DashboardHeader } from '@/components/ui';
+import { KPICard, type KPICardProps, PageHeader } from '@/components/ui';
 import type { RoleConfig } from '@/features/roles/types/role.types';
 import { alertDataService, deviceService } from '@/shared/services';
 import '@/styles/pages/_dashboard.scss';
@@ -252,10 +252,10 @@ export function SREView({ config: _config }: SREViewProps) {
         return (
             <div className="dashboard-page">
                 <div className="dashboard-page__content">
-                    <DashboardHeader
+                    <PageHeader
                         title="Site Reliability Engineering"
                         subtitle="System reliability metrics, incident tracking, and service health monitoring"
-                        systemStatus="operational"
+                        badges={[{ text: 'System Operational', color: '#24a148' }]}
                     />
                     <div className="kpi-row">
                         {[1, 2, 3, 4].map((i) => (
@@ -293,10 +293,10 @@ export function SREView({ config: _config }: SREViewProps) {
         <div className="dashboard-page">
             <div className="dashboard-page__content">
                 {/* Dashboard Header */}
-                <DashboardHeader
+                <PageHeader
                     title="Site Reliability Engineering"
                     subtitle="System reliability metrics, incident tracking, and service health monitoring"
-                    systemStatus="operational"
+                    badges={[{ text: 'System Operational', color: '#24a148' }]}
                 />
 
                 {/* Error notification */}

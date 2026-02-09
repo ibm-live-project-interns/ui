@@ -7,7 +7,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Tile, Button, Dropdown, Tag, ToastNotification, Popover, PopoverContent, SkeletonText, SkeletonPlaceholder } from '@carbon/react';
+import { Tile, Button, Dropdown, Tag, Popover, PopoverContent, SkeletonText, SkeletonPlaceholder } from '@carbon/react';
 import {
   Download,
   Filter,
@@ -28,7 +28,7 @@ import { ScaleTypes } from '@carbon/charts';
 import '@carbon/charts-react/styles.css';
 
 // Reusable components
-import { KPICard, NoisyDevicesCard, DashboardHeader, type NoisyDeviceItem } from '@/components/ui';
+import { KPICard, NoisyDevicesCard, PageHeader, type NoisyDeviceItem } from '@/components/ui';
 import type { KPICardProps } from '@/components/ui';
 
 // Services
@@ -48,6 +48,9 @@ import type { AIMetric } from '@/features/alerts/types';
 
 // Chart Wrapper
 import ChartWrapper from '@/components/ui/ChartWrapper';
+
+// Toast
+import { useToast } from '@/contexts';
 
 // Styles
 import '@/styles/pages/_trends.scss';
@@ -114,18 +117,11 @@ export function TrendsPage() {
   const [selectedTimePeriod, setSelectedTimePeriod] = useState(TIME_PERIOD_OPTIONS[2]);
   const [currentTheme, setCurrentTheme] = useState('g100');
   const [isLoading, setIsLoading] = useState(true);
-  const [toasts, setToasts] = useState<{ id: string; kind: 'success' | 'info'; title: string; subtitle: string }[]>([]);
+  const { addToast } = useToast();
 
   // Recurring alerts filter state
   const [recurringAlertsSeverityFilter, setRecurringAlertsSeverityFilter] = useState(SEVERITY_FILTER_OPTIONS[0]);
   const [isRecurringFilterOpen, setIsRecurringFilterOpen] = useState(false);
-
-  // Toast helper
-  const addToast = (kind: 'success' | 'info', title: string, subtitle: string) => {
-    const id = `toast-${Date.now()}`;
-    setToasts(prev => [...prev, { id, kind, title, subtitle }]);
-    setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
-  };
 
   // Handle AI insight actions
   const handleInsightAction = (insight: AIInsight) => {
@@ -350,15 +346,54 @@ export function TrendsPage() {
     return recurringAlerts.filter(alert => alert.severity === recurringAlertsSeverityFilter.id);
   }, [recurringAlerts, recurringAlertsSeverityFilter]);
 
+  // Compute peak and quietest hours from real alert data
+  const { peakHour, quietestHour } = useMemo(() => {
+    const fallback = { peakHour: '', quietestHour: '' };
+
+    // Strategy 1: Use alertsOverTime data (has actual timestamps with hour granularity)
+    if (alertsOverTime && alertsOverTime.length > 0) {
+      const hourCounts = new Map<number, number>();
+      for (const point of alertsOverTime) {
+        const d = point.date instanceof Date ? point.date : new Date(point.date);
+        if (isNaN(d.getTime())) continue;
+        const hour = d.getHours();
+        hourCounts.set(hour, (hourCounts.get(hour) || 0) + (point.value || 0));
+      }
+
+      if (hourCounts.size > 0) {
+        let maxHour = 0, maxCount = -1;
+        let minHour = 0, minCount = Infinity;
+        for (const [hour, count] of hourCounts) {
+          if (count > maxCount) { maxCount = count; maxHour = hour; }
+          if (count < minCount) { minCount = count; minHour = hour; }
+        }
+        const fmt = (h: number) => `${String(h).padStart(2, '0')}:00 - ${String((h + 1) % 24).padStart(2, '0')}:00`;
+        return { peakHour: fmt(maxHour), quietestHour: fmt(minHour) };
+      }
+    }
+
+    // Strategy 2: Fall back to detailsDistribution (time-of-day buckets)
+    if (detailsDistribution && detailsDistribution.length > 0) {
+      let peakGroup = detailsDistribution[0];
+      let quietGroup = detailsDistribution[0];
+      for (const item of detailsDistribution) {
+        if (item.value > peakGroup.value) peakGroup = item;
+        if (item.value < quietGroup.value) quietGroup = item;
+      }
+      return { peakHour: peakGroup.group, quietestHour: quietGroup.group };
+    }
+
+    return fallback;
+  }, [alertsOverTime, detailsDistribution]);
+
   // Skeleton loading state
   if (isLoading && trendsKPI.length === 0) {
     return (
       <div className="trends-insights-page">
-        <DashboardHeader
-
+        <PageHeader
           title="Trends & Insights"
           subtitle="Loading..."
-          systemStatus="operational"
+          badges={[{ text: 'System Operational', color: '#24a148' }]}
         />
         <div className="kpi-row">
           {[1, 2, 3, 4].map((i) => (
@@ -382,11 +417,10 @@ export function TrendsPage() {
   if (!isLoading && isEmptyPage) {
     return (
       <div className="trends-insights-page">
-        <DashboardHeader
-
+        <PageHeader
           title="Trends & Insights"
           subtitle="Historical analysis and pattern detection powered by AI"
-          systemStatus="operational"
+          badges={[{ text: 'System Operational', color: '#24a148' }]}
         />
         <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--cds-text-secondary)' }}>
           <h3>No trends data available</h3>
@@ -398,26 +432,11 @@ export function TrendsPage() {
 
   return (
     <div className="trends-insights-page">
-      {/* Toast Notifications */}
-      <div style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 9999 }}>
-        {toasts.map((toast) => (
-          <ToastNotification
-            key={toast.id}
-            kind={toast.kind}
-            title={toast.title}
-            subtitle={toast.subtitle}
-            timeout={5000}
-            onClose={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
-          />
-        ))}
-      </div>
-
       {/* Dashboard Header */}
-      <DashboardHeader
-
+      <PageHeader
         title="Trends & Insights"
         subtitle="Historical analysis and pattern detection powered by AI"
-        systemStatus="operational"
+        badges={[{ text: 'System Operational', color: '#24a148' }]}
         rightContent={
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <Dropdown
@@ -430,9 +449,9 @@ export function TrendsPage() {
               onChange={({ selectedItem }) =>
                 setSelectedTimePeriod(selectedItem || TIME_PERIOD_OPTIONS[2])
               }
-              size="lg"
+              size="md"
             />
-            <Button kind="primary" renderIcon={Download} onClick={() => alertDataService.exportReport('pdf')}>
+            <Button kind="primary" size="md" renderIcon={Download} onClick={() => alertDataService.exportReport('pdf')}>
               Export Report
             </Button>
           </div>
@@ -545,7 +564,16 @@ export function TrendsPage() {
                     </div>
                     <div className="alert-info">
                       <div className="alert-name-row">
-                        <span className="alert-name">{alert.name}</span>
+                        <span
+                          className="alert-name"
+                          style={{ cursor: 'pointer', color: 'var(--cds-link-primary)' }}
+                          role="link"
+                          tabIndex={0}
+                          onClick={() => navigate(`/alerts?search=${encodeURIComponent(alert.name)}`)}
+                          onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/alerts?search=${encodeURIComponent(alert.name)}`); }}
+                        >
+                          {alert.name}
+                        </span>
                         <span className="alert-count">{alert.count} occurrences</span>
                       </div>
                       <div className="alert-resolution">
@@ -584,16 +612,20 @@ export function TrendsPage() {
               height="400px"
             />
           </div>
-          {detailsDistribution && detailsDistribution.length > 0 && (
+          {(peakHour || quietestHour) && (
             <div className="time-highlights">
-              <div className="time-card">
-                <span className="time-label">Peak Hour</span>
-                <span className="time-value">14:00 - 15:00</span>
-              </div>
-              <div className="time-card">
-                <span className="time-label">Quietest Hour</span>
-                <span className="time-value">03:00 - 04:00</span>
-              </div>
+              {peakHour && (
+                <div className="time-card">
+                  <span className="time-label">Peak Hour</span>
+                  <span className="time-value">{peakHour}</span>
+                </div>
+              )}
+              {quietestHour && (
+                <div className="time-card">
+                  <span className="time-label">Quietest Hour</span>
+                  <span className="time-value">{quietestHour}</span>
+                </div>
+              )}
             </div>
           )}
         </Tile>
@@ -621,7 +653,16 @@ export function TrendsPage() {
             {aiMetrics && aiMetrics.length > 0 ? aiMetrics.map((metric) => (
               <div key={metric.label} className="metric-card positive">
                 <span className="metric-label">{metric.label}</span>
-                <span className="metric-value">{metric.change}</span>
+                <span className="metric-value">
+                  {metric.id === 'ai-accuracy'
+                    ? `${metric.value}%`
+                    : metric.value}
+                </span>
+                {metric.description && (
+                  <span className="metric-description" style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary)', display: 'block', marginTop: '0.25rem' }}>
+                    {metric.description}
+                  </span>
+                )}
               </div>
             )) : (
               <div style={{ textAlign: 'center', width: '100%', color: 'var(--cds-text-secondary)', fontSize: '0.875rem' }}>

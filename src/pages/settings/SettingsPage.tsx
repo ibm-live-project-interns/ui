@@ -6,7 +6,6 @@ import {
     RadioButton,
     Select,
     SelectItem,
-    ToastNotification,
     FormGroup,
 } from '@carbon/react';
 import {
@@ -26,6 +25,7 @@ import { ROLE_CONFIGS } from '@/features/roles/config/roleConfig';
 import type { RoleId } from '@/features/roles/types';
 import { PageHeader } from '@/components/ui';
 import { env, API_ENDPOINTS } from '@/shared/config';
+import { useToast } from '@/contexts';
 import '@/styles/pages/_settings.scss';
 
 // --- Configuration Constants ---
@@ -69,7 +69,7 @@ const NOTIFICATION_OPTS = [
 export function SettingsPage() {
     const { currentRole, setRole } = useRole();
     const [selectedTab, setSelectedTab] = useState(0);
-    const [showSaveSuccess, setShowSaveSuccess] = useState(false);
+    const { addToast } = useToast();
 
     // State
     const [settings, setSettings] = useState({
@@ -154,8 +154,7 @@ export function SettingsPage() {
             // localStorage is still saved as fallback
         }
 
-        setShowSaveSuccess(true);
-        setTimeout(() => setShowSaveSuccess(false), 3000);
+        addToast('success', 'Settings saved', 'Your preferences have been updated successfully.');
     };
 
     const TABS_CONFIG = [
@@ -286,11 +285,6 @@ export function SettingsPage() {
                 onTabChange={(val) => setSelectedTab(TABS_CONFIG.findIndex(t => t.value === val))}
                 showBorder={false}
             />
-            {showSaveSuccess && (
-                <div className="settings-toast-container">
-                    <ToastNotification kind="success" title="Settings saved" subtitle="Your preferences have been updated successfully." timeout={3000} onClose={() => setShowSaveSuccess(false)} />
-                </div>
-            )}
             <div className="settings-content" style={{ display: isGrid ? 'grid' : 'block', gridTemplateColumns: isGrid ? '1fr 1fr' : '1fr', gap: '2rem' }}>
                 {currentTab.content.map((section, idx) => (
                     <Tile key={idx} className={`settings-tile ${'fullWidth' in section && section.fullWidth ? 'settings-tile--wide' : ''}`} style={{ height: '100%' }}>

@@ -8,3 +8,4 @@ export { NetworkOpsView } from './NetworkOpsView';
 export { SREView } from './SREView';
 export { NetworkAdminView } from './NetworkAdminView';
 export { SeniorEngineerView } from './SeniorEngineerView';
+export { SysAdminView } from './SysAdminView';

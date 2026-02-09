@@ -30,8 +30,8 @@ export function LoginPage() {
     const location = useLocation();
     const [searchParams, setSearchParams] = useSearchParams();
 
-    // Check if Google OAuth is enabled
-    const isGoogleAuthEnabled = env.enableGoogleAuth && env.googleClientId;
+    // Check if Google OAuth is enabled - require both the feature flag AND a non-empty client ID
+    const isGoogleAuthEnabled = env.enableGoogleAuth && typeof env.googleClientId === 'string' && env.googleClientId.trim().length > 0;
 
     // Get the page user was trying to access before being redirected to login
     const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
@@ -80,9 +80,41 @@ export function LoginPage() {
         setError('');
         setIsGoogleLoading(true);
         try {
-            // Redirect to backend Google OAuth endpoint
+            // Preflight check: verify the backend has Google OAuth configured
+            // before redirecting. This avoids the user seeing raw JSON on a 501 page.
             const apiBaseUrl = env.apiBaseUrl || '';
-            window.location.href = `${apiBaseUrl}/api/v1/auth/google/login?redirect=${encodeURIComponent(window.location.origin + from)}`;
+            const googleLoginUrl = `${apiBaseUrl}/api/v1/auth/google/login?redirect=${encodeURIComponent(window.location.origin + from)}`;
+
+            const response = await fetch(googleLoginUrl, {
+                method: 'GET',
+                redirect: 'manual', // Don't follow redirects - we want to check the status
+            });
+
+            // A successful Google OAuth initiation returns a 307 redirect to Google.
+            // If we get 0 (opaque redirect in manual mode) or 307, proceed with navigation.
+            if (response.type === 'opaqueredirect' || response.status === 307 || response.status === 302) {
+                window.location.href = googleLoginUrl;
+                return;
+            }
+
+            // If the backend returned an error (e.g., 501 Not Implemented), show it inline
+            if (!response.ok) {
+                let errorMessage = 'Google OAuth is not configured. Contact your administrator.';
+                try {
+                    const data = await response.json();
+                    if (data.error) {
+                        errorMessage = data.error;
+                    }
+                } catch {
+                    // Response was not JSON, use default message
+                }
+                setError(errorMessage);
+                setIsGoogleLoading(false);
+                return;
+            }
+
+            // Fallback: if response is OK but not a redirect, navigate anyway
+            window.location.href = googleLoginUrl;
         } catch (err) {
             console.error('Google login failed:', err);
             setError('Google login failed. Please try again.');

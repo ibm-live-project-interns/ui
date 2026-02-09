@@ -21,7 +21,17 @@ export const ROUTES = {
     DEVICES: '/devices',
     DEVICE_DETAILS: '/devices/:id',
     TRENDS: '/trends',
+    INCIDENT_HISTORY: '/incident-history',
+    CONFIGURATION: '/configuration',
     SETTINGS: '/settings',
+    PROFILE: '/profile',
+    AUDIT_LOG: '/admin/audit-log',
+    REPORTS: '/reports',
+    SLA_REPORTS: '/reports/sla',
+    ON_CALL: '/on-call',
+    TOPOLOGY: '/topology',
+    RUNBOOKS: '/runbooks',
+    SERVICE_STATUS: '/service-status',
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;

@@ -18,7 +18,6 @@ import {
     TextArea,
     Select,
     SelectItem,
-    ToastNotification,
     Dropdown,
     Search,
     SkeletonText,
@@ -27,6 +26,7 @@ import {
 } from '@carbon/react';
 import {
     Add,
+    Download,
     View,
     Ticket,
     Time,
@@ -41,7 +41,9 @@ import '@/styles/components/_kpi-card.scss';
 import { KPICard, PageHeader, DataTableWrapper } from '@/components';
 
 // Services
-import { ticketDataService, alertDataService, authService, type TicketInfo } from '@/shared/services';
+import { ticketDataService, alertDataService, authService, userService, type TicketInfo } from '@/shared/services';
+import type { TicketStats } from '@/features/tickets/services/ticketService';
+import { API_BASE_URL } from '@/shared/config/api.config';
 
 // Import shared constants - no need to redefine
 import {
@@ -50,6 +52,7 @@ import {
     PRIORITY_FILTER_OPTIONS,
     TICKET_STATUS_FILTER_OPTIONS
 } from '@/shared/constants/tickets';
+import { useToast } from '@/contexts';
 
 const QUICK_FILTERS = ['Critical', 'Open Only', 'My Tickets', 'Unassigned'];
 
@@ -64,12 +67,16 @@ export function TicketsPage() {
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isCreating, setIsCreating] = useState(false);
 
+    // Ticket stats from backend
+    const [ticketStats, setTicketStats] = useState<TicketStats | null>(null);
+
     // Filter state
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedPriority, setSelectedPriority] = useState(PRIORITY_FILTER_OPTIONS[0]);
     const [selectedStatus, setSelectedStatus] = useState(TICKET_STATUS_FILTER_OPTIONS[0]);
     const [activeQuickFilters, setActiveQuickFilters] = useState<string[]>([]);
 
+    const { addToast } = useToast();
     const [createForm, setCreateForm] = useState({
         title: '',
         description: '',
@@ -78,13 +85,49 @@ export function TicketsPage() {
         deviceName: '',
         assignee: '',
     });
-    const [toasts, setToasts] = useState<{ id: string; kind: 'success' | 'error'; title: string; subtitle: string }[]>([]);
 
-    const addToast = (kind: 'success' | 'error', title: string, subtitle: string) => {
-        const id = `toast-${Date.now()}`;
-        setToasts(prev => [...prev, { id, kind, title, subtitle }]);
-        setTimeout(() => setToasts(prev => prev.filter(t => t.id !== id)), 5000);
+    const handleExportCSV = async () => {
+        try {
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`${API_BASE_URL}/api/v1/reports/export?type=tickets`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (!response.ok) {
+                throw new Error(`Export failed with status ${response.status}`);
+            }
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `tickets-report-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
+        } catch (error) {
+            console.error('Failed to export tickets CSV:', error);
+            addToast('error', 'Export Failed', 'Could not export tickets to CSV');
+        }
     };
+
+    // Dynamic assignee options from users API
+    const [assigneeOptions, setAssigneeOptions] = useState<{ value: string; text: string }[]>([]);
+
+    useEffect(() => {
+        userService.getUsers().then(users => {
+            const options = users.map(u => ({
+                value: u.username || `${u.first_name} ${u.last_name}`.trim(),
+                text: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.username,
+            }));
+            setAssigneeOptions(options);
+        }).catch(() => {
+            // Fallback to sensible defaults if users API is unavailable
+            setAssigneeOptions([
+                { value: 'John Smith', text: 'John Smith' },
+                { value: 'Jane Doe', text: 'Jane Doe' },
+                { value: 'NOC Team', text: 'NOC Team' },
+                { value: 'Network Team', text: 'Network Team' },
+            ]);
+        });
+    }, []);
 
     // Fetch tickets and alerts from service
     useEffect(() => {
@@ -109,6 +152,15 @@ export function TicketsPage() {
         fetchData();
     }, []);
 
+    // Fetch ticket stats (avg resolution time, etc.)
+    useEffect(() => {
+        ticketDataService.getStats()
+            .then(stats => setTicketStats(stats))
+            .catch(() => {
+                // Stats are non-critical; silent fail
+            });
+    }, []);
+
     // Handle ?alertId query param for pre-selection from alert page
     useEffect(() => {
         const alertIdParam = searchParams.get('alertId');
@@ -127,7 +179,7 @@ export function TicketsPage() {
         setIsCreating(true);
         try {
             const newTicket = await ticketDataService.createTicket({
-                alertId: createForm.alertId || 'manual-' + Date.now(),
+                alertId: createForm.alertId || '',
                 title: createForm.title,
                 description: createForm.description,
                 priority: createForm.priority,
@@ -155,7 +207,18 @@ export function TicketsPage() {
         const openCount = tickets.filter(t => t.status === 'open').length;
         const inProgressCount = tickets.filter(t => t.status === 'in-progress').length;
         const resolvedCount = tickets.filter(t => t.status === 'resolved').length;
-        const avgResolutionTime = '2.5h'; // Mock data
+        // Format avg resolution time from backend stats
+        const avgResolutionTime = (() => {
+            if (!ticketStats || ticketStats.avg_resolution_hours <= 0) return '--';
+            const hours = ticketStats.avg_resolution_hours;
+            if (hours < 1) {
+                return `${Math.round(hours * 60)}m`;
+            }
+            const wholeHours = Math.floor(hours);
+            const remainingMinutes = Math.round((hours - wholeHours) * 60);
+            if (remainingMinutes === 0) return `${wholeHours}h`;
+            return `${wholeHours}h ${remainingMinutes}m`;
+        })();
 
         return [
             {
@@ -195,7 +258,7 @@ export function TicketsPage() {
                 iconColor: 'var(--cds-text-secondary)',
             },
         ];
-    }, [tickets]);
+    }, [tickets, ticketStats]);
 
     // Filter tickets based on all filter criteria
     const filteredTickets = useMemo(() => {
@@ -293,6 +356,7 @@ export function TicketsPage() {
         { key: 'ticketNumber', header: 'Ticket #' },
         { key: 'title', header: 'Title' },
         { key: 'deviceName', header: 'Device' },
+        { key: 'alertId', header: 'Alert' },
         { key: 'priority', header: 'Priority' },
         { key: 'status', header: 'Status' },
         { key: 'assignedTo', header: 'Assigned To' },
@@ -344,6 +408,12 @@ export function TicketsPage() {
                 showBreadcrumbs={false}
                 showBorder={true}
                 actions={[
+                    {
+                        label: 'Export CSV',
+                        onClick: handleExportCSV,
+                        variant: 'ghost',
+                        icon: Download,
+                    },
                     {
                         label: 'Create Ticket',
                         onClick: () => setIsCreateModalOpen(true),
@@ -467,13 +537,11 @@ export function TicketsPage() {
                                         {rows.map((row) => {
                                             const ticket = paginatedTickets.find((t) => t.id === row.id);
                                             if (!ticket) return null;
+                                            const hasLinkableAlert = ticket.alertId && !ticket.alertId.startsWith('manual-');
                                             return (
-                                                <TableRow {...getRowProps({ row })} key={row.id}>
+                                                <TableRow {...getRowProps({ row })} key={row.id} onClick={() => handleViewTicket(ticket.id)} style={{ cursor: 'pointer' }}>
                                                     <TableCell>
-                                                        <span
-                                                            className="ticket-number"
-                                                            onClick={() => handleViewTicket(ticket.id)}
-                                                        >
+                                                        <span className="ticket-number">
                                                             {ticket.ticketNumber}
                                                         </span>
                                                     </TableCell>
@@ -484,13 +552,26 @@ export function TicketsPage() {
                                                         </div>
                                                     </TableCell>
                                                     <TableCell>{ticket.deviceName}</TableCell>
+                                                    <TableCell onClick={(e: React.MouseEvent) => e.stopPropagation()}>
+                                                        {hasLinkableAlert ? (
+                                                            <span
+                                                                className="ticket-number"
+                                                                onClick={() => navigate(`/alerts/${ticket.alertId}`)}
+                                                                title={`View alert ${ticket.alertId}`}
+                                                            >
+                                                                {ticket.alertId}
+                                                            </span>
+                                                        ) : (
+                                                            <span style={{ color: 'var(--cds-text-secondary)' }}>--</span>
+                                                        )}
+                                                    </TableCell>
                                                     <TableCell>{getPriorityTag(ticket.priority)}</TableCell>
                                                     <TableCell>{getTicketStatusTag(ticket.status as any)}</TableCell>
                                                     <TableCell>{ticket.assignedTo}</TableCell>
                                                     <TableCell>
                                                         <span className="timestamp">{ticket.createdAt}</span>
                                                     </TableCell>
-                                                    <TableCell>
+                                                    <TableCell onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                                                         <Button
                                                             kind="ghost"
                                                             size="sm"
@@ -520,20 +601,6 @@ export function TicketsPage() {
                         }}
                     />
                 </DataTableWrapper>
-            </div>
-
-            {/* Toast Notifications */}
-            <div style={{ position: 'fixed', top: '1rem', right: '1rem', zIndex: 9999 }}>
-                {toasts.map((toast) => (
-                    <ToastNotification
-                        key={toast.id}
-                        kind={toast.kind}
-                        title={toast.title}
-                        subtitle={toast.subtitle}
-                        timeout={5000}
-                        onClose={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
-                    />
-                ))}
             </div>
 
             {/* Create Ticket Modal */}
@@ -607,14 +674,9 @@ export function TicketsPage() {
                         onChange={(e) => setCreateForm({ ...createForm, assignee: e.target.value })}
                     >
                         <SelectItem value="" text="Select assignee..." />
-                        <SelectItem value="John Smith" text="John Smith" />
-                        <SelectItem value="Jane Doe" text="Jane Doe" />
-                        <SelectItem value="Mike Johnson" text="Mike Johnson" />
-                        <SelectItem value="Sarah Williams" text="Sarah Williams" />
-                        <SelectItem value="DBA Team" text="DBA Team" />
-                        <SelectItem value="Network Team" text="Network Team" />
-                        <SelectItem value="Security Team" text="Security Team" />
-                        <SelectItem value="NOC Team" text="NOC Team" />
+                        {assigneeOptions.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value} text={opt.text} />
+                        ))}
                     </Select>
                 </div>
             </Modal>

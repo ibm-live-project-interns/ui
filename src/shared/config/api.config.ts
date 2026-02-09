@@ -79,6 +79,9 @@ export const API_ENDPOINTS = {
   // User Endpoints
   // ==========================================
   ME: '/me',
+  USERS: '/users',
+  USER_BY_ID: (id: string) => `/users/${id}`,
+  USER_RESET_PASSWORD: (id: string) => `/users/${id}/reset-password`,
 
   // ==========================================
   // Alerts Endpoints
@@ -88,6 +91,7 @@ export const API_ENDPOINTS = {
   ALERT_BY_ID: (id: string) => `/alerts/${id}`,
   ACKNOWLEDGE_ALERT: (id: string) => `/alerts/${id}/acknowledge`,
   DISMISS_ALERT: (id: string) => `/alerts/${id}/dismiss`,
+  RESOLVE_ALERT: (id: string) => `/alerts/${id}/resolve`,
   REANALYZE_ALERT: (id: string) => `/alerts/${id}/reanalyze`,
   ALERTS_OVER_TIME: '/alerts/over-time',
   ALERTS_SEVERITY_DISTRIBUTION: '/alerts/severity-distribution',
@@ -106,6 +110,9 @@ export const API_ENDPOINTS = {
   // ==========================================
   TICKETS: '/tickets',
   TICKET_BY_ID: (id: string) => `/tickets/${id}`,
+  TICKET_STATS: '/tickets/stats',
+  TICKET_EXPORT: '/tickets/export',
+  TICKET_COMMENTS: (id: string) => `/tickets/${id}/comments`,
 
   // ==========================================
   // Dashboard / Metrics Endpoints
@@ -127,6 +134,12 @@ export const API_ENDPOINTS = {
   AI_IMPACT_OVER_TIME: '/ai/impact-over-time',
 
   // ==========================================
+  // Audit Log Endpoints
+  // ==========================================
+  AUDIT_LOGS: '/audit-logs',
+  AUDIT_LOG_ACTIONS: '/audit-logs/actions',
+
+  // ==========================================
   // Reports Endpoints
   // ==========================================
   REPORTS_EXPORT: '/reports/export',
@@ -142,6 +155,8 @@ export const API_ENDPOINTS = {
   CONFIG_POLICY_BY_ID: (id: string) => `/configuration/policies/${id}`,
   CONFIG_MAINTENANCE: '/configuration/maintenance',
   CONFIG_MAINTENANCE_BY_ID: (id: string) => `/configuration/maintenance/${id}`,
+  // Global settings (maintenance mode, auto-resolve, AI correlation)
+  CONFIG_GLOBAL_SETTINGS: '/configuration/global-settings',
 
   // ==========================================
   // User Settings Endpoints
@@ -152,6 +167,17 @@ export const API_ENDPOINTS = {
   // Health Check (internal)
   // ==========================================
   HEALTH: '/health',
+
+  // ==========================================
+  // Service Status
+  // ==========================================
+  SERVICE_STATUS: '/service-status',
+
+  // ==========================================
+  // Docker Container Status & Logs
+  // ==========================================
+  DOCKER_SERVICES_STATUS: '/services/status',
+  DOCKER_SERVICE_LOGS: (name: string) => `/services/${name}/logs`,
 } as const;
 
 // HTTP request timeout (ms)

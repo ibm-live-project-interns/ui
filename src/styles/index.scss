@@ -733,6 +733,14 @@ body {
   color: $text-helper;
 }
 
+// ==========================================
+// Global Tile Borders
+// Consistent subtle border on all Carbon Tiles
+// ==========================================
+.cds--tile {
+  border: 1px solid $border-subtle-01;
+}
+
 .notification-dropdown-footer {
   display: flex;
   align-items: center;

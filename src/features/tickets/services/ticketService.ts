@@ -32,12 +32,35 @@ export interface CreateTicketData {
     assignee?: string;
 }
 
+export interface TicketComment {
+    id: string;
+    ticketId: string;
+    author: string;
+    content: string;
+    createdAt: string;
+    updatedAt: string;
+}
+
+export interface TicketStats {
+    total: number;
+    open: number;
+    in_progress: number;
+    resolved: number;
+    closed: number;
+    by_priority: Record<string, number>;
+    by_category: Record<string, number>;
+    avg_resolution_hours: number;
+}
+
 export interface ITicketDataService {
     getTickets(): Promise<TicketInfo[]>;
     getTicketById(id: string): Promise<TicketInfo | null>;
     createTicket(data: CreateTicketData): Promise<TicketInfo>;
     updateTicket(id: string, data: Partial<TicketInfo>): Promise<TicketInfo>;
     deleteTicket(id: string): Promise<void>;
+    getComments(ticketId: string): Promise<TicketComment[]>;
+    addComment(ticketId: string, content: string): Promise<TicketComment>;
+    getStats(): Promise<TicketStats>;
 }
 
 // Initial mock tickets
@@ -198,6 +221,61 @@ class MockTicketDataService implements ITicketDataService {
         const filtered = tickets.filter(t => t.id !== id);
         this.saveTickets(filtered);
     }
+
+    async getComments(ticketId: string): Promise<TicketComment[]> {
+        await this.simulateDelay();
+        const now = new Date();
+        return [
+            {
+                id: `cmt-${ticketId}-1`,
+                ticketId,
+                author: 'John Smith',
+                content: 'Initial investigation started. Checking network logs for anomalies.',
+                createdAt: new Date(now.getTime() - 3600000).toISOString(),
+                updatedAt: new Date(now.getTime() - 3600000).toISOString(),
+            },
+            {
+                id: `cmt-${ticketId}-2`,
+                ticketId,
+                author: 'Jane Doe',
+                content: 'Found potential root cause. Interface flapping detected on port Gi0/1.',
+                createdAt: new Date(now.getTime() - 1800000).toISOString(),
+                updatedAt: new Date(now.getTime() - 1800000).toISOString(),
+            },
+        ];
+    }
+
+    async addComment(ticketId: string, content: string): Promise<TicketComment> {
+        await this.simulateDelay();
+        const now = new Date().toISOString();
+        return {
+            id: `cmt-${Date.now()}`,
+            ticketId,
+            author: 'Current User',
+            content,
+            createdAt: now,
+            updatedAt: now,
+        };
+    }
+
+    async getStats(): Promise<TicketStats> {
+        await this.simulateDelay();
+        const tickets = this.getStoredTickets();
+        const open = tickets.filter(t => t.status === 'open').length;
+        const inProgress = tickets.filter(t => t.status === 'in-progress').length;
+        const resolved = tickets.filter(t => t.status === 'resolved').length;
+        const closed = tickets.filter(t => t.status === 'closed').length;
+        return {
+            total: tickets.length,
+            open,
+            in_progress: inProgress,
+            resolved,
+            closed,
+            by_priority: {},
+            by_category: {},
+            avg_resolution_hours: 2.5,
+        };
+    }
 }
 
 // ==========================================
@@ -224,7 +302,7 @@ class ApiTicketDataService extends HttpService implements ITicketDataService {
             description: t.description,
             priority: t.priority,
             status: t.status,
-            assignedTo: t.assignedTo || t.assigned_to || 'Unassigned',
+            assignedTo: t.assignedTo || t.assigned_to || t.assignee || 'Unassigned',
             createdAt: t.createdAt || t.created_at,
             updatedAt: t.updatedAt || t.updated_at,
             deviceName: t.deviceName || t.device_name || 'Unknown',
@@ -294,6 +372,65 @@ class ApiTicketDataService extends HttpService implements ITicketDataService {
 
     async deleteTicket(id: string): Promise<void> {
         return this.delete<void>(API_ENDPOINTS.TICKET_BY_ID(id));
+    }
+
+    async getComments(ticketId: string): Promise<TicketComment[]> {
+        try {
+            const response = await this.get<any>(API_ENDPOINTS.TICKET_COMMENTS(ticketId));
+            const comments = Array.isArray(response) ? response : (response.comments || []);
+            return comments.map((c: any) => ({
+                id: c.id || c.ID,
+                ticketId: c.ticket_id || c.ticketId || ticketId,
+                author: c.author,
+                content: c.content,
+                createdAt: c.created_at || c.createdAt,
+                updatedAt: c.updated_at || c.updatedAt,
+            }));
+        } catch {
+            console.warn('[TicketService] Failed to fetch comments for ticket:', ticketId);
+            return [];
+        }
+    }
+
+    async addComment(ticketId: string, content: string): Promise<TicketComment> {
+        const response = await this.post<any>(API_ENDPOINTS.TICKET_COMMENTS(ticketId), { content });
+        const comment = response.comment || response;
+        return {
+            id: comment.id || comment.ID,
+            ticketId: comment.ticket_id || comment.ticketId || ticketId,
+            author: comment.author,
+            content: comment.content,
+            createdAt: comment.created_at || comment.createdAt,
+            updatedAt: comment.updated_at || comment.updatedAt,
+        };
+    }
+
+    async getStats(): Promise<TicketStats> {
+        try {
+            const response = await this.get<any>(API_ENDPOINTS.TICKET_STATS);
+            return {
+                total: response.total ?? 0,
+                open: response.open ?? 0,
+                in_progress: response.in_progress ?? 0,
+                resolved: response.resolved ?? 0,
+                closed: response.closed ?? 0,
+                by_priority: response.by_priority ?? {},
+                by_category: response.by_category ?? {},
+                avg_resolution_hours: response.avg_resolution_hours ?? 0,
+            };
+        } catch {
+            console.warn('[TicketService] Failed to fetch ticket stats');
+            return {
+                total: 0,
+                open: 0,
+                in_progress: 0,
+                resolved: 0,
+                closed: 0,
+                by_priority: {},
+                by_category: {},
+                avg_resolution_hours: 0,
+            };
+        }
     }
 }
 

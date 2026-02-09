@@ -25,11 +25,11 @@ import {
     TextInput,
     Select,
     SelectItem,
-    InlineNotification,
     TextArea,
     NumberInput,
 } from '@carbon/react';
 import React from 'react';
+import { useToast } from '@/contexts';
 import {
     Add,
     Upload,
@@ -129,9 +129,7 @@ export function ConfigurationPage() {
     const [maintenance, setMaintenance] = useState<Maintenance[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [globalSettings, setGlobalSettings] = useState({
-        maintenanceMode: false,
-        autoResolve: true,
-        aiCorrelation: true,
+        maintenanceMode: false, autoResolve: true, aiCorrelation: true,
     });
     const [selectedTab, setSelectedTab] = useState(0);
 
@@ -168,12 +166,70 @@ export function ConfigurationPage() {
     const [maintenanceForm, setMaintenanceForm] = useState({ name: '', scheduleDayOfWeek: 'Sunday', scheduleHour: 2, scheduleMinute: 0, durationValue: 2, durationUnit: 'hours', status: 'scheduled' });
     const [maintenanceIsEdit, setMaintenanceIsEdit] = useState(false);
 
-    const [notification, setNotification] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
+    const { addToast } = useToast();
 
-    const showNotification = (message: string, type: 'success' | 'error' = 'success') => {
-        setNotification({ type, message });
-        setTimeout(() => setNotification(null), 3000);
-    };
+    // Fetch global settings from backend API on mount
+    const fetchGlobalSettings = useCallback(async () => {
+        try {
+            const res = await fetch(apiUrl(API_ENDPOINTS.CONFIG_GLOBAL_SETTINGS), { headers: authHeaders() });
+            if (res.ok) {
+                const data = await res.json();
+                setGlobalSettings({
+                    maintenanceMode: data.maintenance_mode ?? false,
+                    autoResolve: data.auto_resolve_enabled ?? true,
+                    aiCorrelation: data.ai_correlation_enabled ?? true,
+                });
+                return;
+            }
+        } catch {
+            // API unreachable -- fall back to localStorage
+        }
+        // Fallback: try localStorage if API failed
+        try {
+            const stored = localStorage.getItem('global-config-settings');
+            if (stored) {
+                const parsed = JSON.parse(stored);
+                setGlobalSettings({
+                    maintenanceMode: parsed.maintenanceMode ?? false,
+                    autoResolve: parsed.autoResolve ?? true,
+                    aiCorrelation: parsed.aiCorrelation ?? true,
+                });
+            }
+        } catch {
+            // Use defaults already set in useState
+        }
+    }, []);
+
+    // Handler for global settings toggles -- persists to backend API
+    const handleToggleGlobalSetting = useCallback(async (key: keyof typeof globalSettings) => {
+        const updated = { ...globalSettings, [key]: !globalSettings[key] };
+        // Optimistic UI update
+        setGlobalSettings(updated);
+
+        const payload = {
+            maintenance_mode: updated.maintenanceMode,
+            auto_resolve_enabled: updated.autoResolve,
+            ai_correlation_enabled: updated.aiCorrelation,
+        };
+
+        try {
+            const res = await fetch(apiUrl(API_ENDPOINTS.CONFIG_GLOBAL_SETTINGS), {
+                method: 'PUT',
+                headers: authHeaders(),
+                body: JSON.stringify(payload),
+            });
+            if (!res.ok) {
+                throw new Error('API returned ' + res.status);
+            }
+        } catch {
+            // API failed -- persist to localStorage as fallback
+            try {
+                localStorage.setItem('global-config-settings', JSON.stringify(updated));
+            } catch {
+                // silent
+            }
+        }
+    }, [globalSettings]);
 
     // ==========================================
     // Fetch all data from API
@@ -221,11 +277,11 @@ export function ConfigurationPage() {
     useEffect(() => {
         const loadAll = async () => {
             setIsLoading(true);
-            await Promise.all([fetchRules(), fetchChannels(), fetchPolicies(), fetchMaintenance()]);
+            await Promise.all([fetchRules(), fetchChannels(), fetchPolicies(), fetchMaintenance(), fetchGlobalSettings()]);
             setIsLoading(false);
         };
         loadAll();
-    }, [fetchRules, fetchChannels, fetchPolicies, fetchMaintenance]);
+    }, [fetchRules, fetchChannels, fetchPolicies, fetchMaintenance, fetchGlobalSettings]);
 
     // --- RULE HANDLERS ---
     const handleOpenEditModal = (rule: Rule) => {
@@ -261,9 +317,9 @@ export function ConfigurationPage() {
             if (res.ok) {
                 await fetchRules();
                 setEditModalOpen(false);
-                showNotification(`Rule "${editForm.name}" updated successfully`);
-            } else { showNotification('Failed to update rule', 'error'); }
-        } catch { showNotification('Failed to update rule', 'error'); }
+                addToast('success', 'Success', `Rule "${editForm.name}" updated successfully`);
+            } else { addToast('error', 'Error', 'Failed to update rule'); }
+        } catch { addToast('error', 'Error', 'Failed to update rule'); }
     };
 
     const handleConfirmDelete = async () => {
@@ -275,9 +331,9 @@ export function ConfigurationPage() {
             if (res.ok) {
                 await fetchRules();
                 setDeleteModalOpen(false);
-                showNotification(`Rule "${selectedRule.name}" deleted`);
-            } else { showNotification('Failed to delete rule', 'error'); }
-        } catch { showNotification('Failed to delete rule', 'error'); }
+                addToast('success', 'Success', `Rule "${selectedRule.name}" deleted`);
+            } else { addToast('error', 'Error', 'Failed to delete rule'); }
+        } catch { addToast('error', 'Error', 'Failed to delete rule'); }
     };
 
     const handleDuplicateRule = async (rule: Rule) => {
@@ -288,9 +344,9 @@ export function ConfigurationPage() {
             });
             if (res.ok) {
                 await fetchRules();
-                showNotification('Rule duplicated successfully');
-            } else { showNotification('Failed to duplicate rule', 'error'); }
-        } catch { showNotification('Failed to duplicate rule', 'error'); }
+                addToast('success', 'Success', 'Rule duplicated successfully');
+            } else { addToast('error', 'Error', 'Failed to duplicate rule'); }
+        } catch { addToast('error', 'Error', 'Failed to duplicate rule'); }
     };
 
     const handleCreateNewRule = async () => {
@@ -315,9 +371,9 @@ export function ConfigurationPage() {
                     durationValue: 5, durationUnit: 'minutes',
                     severity: 'warning',
                 });
-                showNotification(`New rule "${editForm.name || 'New Rule'}" created`);
-            } else { showNotification('Failed to create rule', 'error'); }
-        } catch { showNotification('Failed to create rule', 'error'); }
+                addToast('success', 'Success', `New rule "${editForm.name || 'New Rule'}" created`);
+            } else { addToast('error', 'Error', 'Failed to create rule'); }
+        } catch { addToast('error', 'Error', 'Failed to create rule'); }
     };
 
     const handleToggleRule = async (id: string) => {
@@ -329,7 +385,7 @@ export function ConfigurationPage() {
                 body: JSON.stringify({ enabled: !rule.enabled }),
             });
             await fetchRules();
-        } catch { showNotification('Failed to toggle rule', 'error'); }
+        } catch { addToast('error', 'Error', 'Failed to toggle rule'); }
     };
 
     // --- CHANNEL HANDLERS ---
@@ -342,7 +398,7 @@ export function ConfigurationPage() {
                 body: JSON.stringify({ active: !channel.active }),
             });
             await fetchChannels();
-        } catch { showNotification('Failed to toggle channel', 'error'); }
+        } catch { addToast('error', 'Error', 'Failed to toggle channel'); }
     };
 
     const openChannelModal = (channel?: Channel) => {
@@ -366,8 +422,8 @@ export function ConfigurationPage() {
                 });
                 if (res.ok) {
                     await fetchChannels();
-                    showNotification(`Channel "${channelForm.name}" updated`);
-                } else { showNotification('Failed to update channel', 'error'); }
+                    addToast('success', 'Success', `Channel "${channelForm.name}" updated`);
+                } else { addToast('error', 'Error', 'Failed to update channel'); }
             } else {
                 const res = await fetch(apiUrl(API_ENDPOINTS.CONFIG_CHANNELS), {
                     method: 'POST', headers: authHeaders(),
@@ -375,11 +431,11 @@ export function ConfigurationPage() {
                 });
                 if (res.ok) {
                     await fetchChannels();
-                    showNotification(`Channel "${channelForm.name}" created`);
-                } else { showNotification('Failed to create channel', 'error'); }
+                    addToast('success', 'Success', `Channel "${channelForm.name}" created`);
+                } else { addToast('error', 'Error', 'Failed to create channel'); }
             }
             setChannelModalOpen(false);
-        } catch { showNotification('Failed to save channel', 'error'); }
+        } catch { addToast('error', 'Error', 'Failed to save channel'); }
     };
 
     const handleDeleteChannel = async () => {
@@ -391,9 +447,9 @@ export function ConfigurationPage() {
             if (res.ok) {
                 await fetchChannels();
                 setChannelDeleteOpen(false);
-                showNotification(`Channel "${selectedChannel.name}" deleted`);
-            } else { showNotification('Failed to delete channel', 'error'); }
-        } catch { showNotification('Failed to delete channel', 'error'); }
+                addToast('success', 'Success', `Channel "${selectedChannel.name}" deleted`);
+            } else { addToast('error', 'Error', 'Failed to delete channel'); }
+        } catch { addToast('error', 'Error', 'Failed to delete channel'); }
     };
 
     // --- POLICY HANDLERS ---
@@ -418,8 +474,8 @@ export function ConfigurationPage() {
                 });
                 if (res.ok) {
                     await fetchPolicies();
-                    showNotification(`Policy "${policyForm.name}" updated`);
-                } else { showNotification('Failed to update policy', 'error'); }
+                    addToast('success', 'Success', `Policy "${policyForm.name}" updated`);
+                } else { addToast('error', 'Error', 'Failed to update policy'); }
             } else {
                 const res = await fetch(apiUrl(API_ENDPOINTS.CONFIG_POLICIES), {
                     method: 'POST', headers: authHeaders(),
@@ -427,11 +483,11 @@ export function ConfigurationPage() {
                 });
                 if (res.ok) {
                     await fetchPolicies();
-                    showNotification(`Policy "${policyForm.name}" created`);
-                } else { showNotification('Failed to create policy', 'error'); }
+                    addToast('success', 'Success', `Policy "${policyForm.name}" created`);
+                } else { addToast('error', 'Error', 'Failed to create policy'); }
             }
             setPolicyModalOpen(false);
-        } catch { showNotification('Failed to save policy', 'error'); }
+        } catch { addToast('error', 'Error', 'Failed to save policy'); }
     };
 
     const handleDeletePolicy = async () => {
@@ -443,9 +499,9 @@ export function ConfigurationPage() {
             if (res.ok) {
                 await fetchPolicies();
                 setPolicyDeleteOpen(false);
-                showNotification(`Policy "${selectedPolicy.name}" deleted`);
-            } else { showNotification('Failed to delete policy', 'error'); }
-        } catch { showNotification('Failed to delete policy', 'error'); }
+                addToast('success', 'Success', `Policy "${selectedPolicy.name}" deleted`);
+            } else { addToast('error', 'Error', 'Failed to delete policy'); }
+        } catch { addToast('error', 'Error', 'Failed to delete policy'); }
     };
 
     const handleDuplicatePolicy = async (policy: Policy) => {
@@ -456,9 +512,9 @@ export function ConfigurationPage() {
             });
             if (res.ok) {
                 await fetchPolicies();
-                showNotification('Policy duplicated');
-            } else { showNotification('Failed to duplicate policy', 'error'); }
-        } catch { showNotification('Failed to duplicate policy', 'error'); }
+                addToast('success', 'Success', 'Policy duplicated');
+            } else { addToast('error', 'Error', 'Failed to duplicate policy'); }
+        } catch { addToast('error', 'Error', 'Failed to duplicate policy'); }
     };
 
     // --- MAINTENANCE HANDLERS ---
@@ -515,8 +571,8 @@ export function ConfigurationPage() {
                 });
                 if (res.ok) {
                     await fetchMaintenance();
-                    showNotification(`Window "${maintenanceForm.name}" updated`);
-                } else { showNotification('Failed to update window', 'error'); }
+                    addToast('success', 'Success', `Window "${maintenanceForm.name}" updated`);
+                } else { addToast('error', 'Error', 'Failed to update window'); }
             } else {
                 const res = await fetch(apiUrl(API_ENDPOINTS.CONFIG_MAINTENANCE), {
                     method: 'POST', headers: authHeaders(),
@@ -524,11 +580,11 @@ export function ConfigurationPage() {
                 });
                 if (res.ok) {
                     await fetchMaintenance();
-                    showNotification(`Window "${maintenanceForm.name}" created`);
-                } else { showNotification('Failed to create window', 'error'); }
+                    addToast('success', 'Success', `Window "${maintenanceForm.name}" created`);
+                } else { addToast('error', 'Error', 'Failed to create window'); }
             }
             setMaintenanceModalOpen(false);
-        } catch { showNotification('Failed to save window', 'error'); }
+        } catch { addToast('error', 'Error', 'Failed to save window'); }
     };
 
     const handleDeleteMaintenance = async () => {
@@ -540,9 +596,9 @@ export function ConfigurationPage() {
             if (res.ok) {
                 await fetchMaintenance();
                 setMaintenanceDeleteOpen(false);
-                showNotification(`Window "${selectedMaintenance.name}" deleted`);
-            } else { showNotification('Failed to delete window', 'error'); }
-        } catch { showNotification('Failed to delete window', 'error'); }
+                addToast('success', 'Success', `Window "${selectedMaintenance.name}" deleted`);
+            } else { addToast('error', 'Error', 'Failed to delete window'); }
+        } catch { addToast('error', 'Error', 'Failed to delete window'); }
     };
 
     const handleDuplicateMaintenance = async (maint: Maintenance) => {
@@ -553,9 +609,9 @@ export function ConfigurationPage() {
             });
             if (res.ok) {
                 await fetchMaintenance();
-                showNotification('Window duplicated');
-            } else { showNotification('Failed to duplicate window', 'error'); }
-        } catch { showNotification('Failed to duplicate window', 'error'); }
+                addToast('success', 'Success', 'Window duplicated');
+            } else { addToast('error', 'Error', 'Failed to duplicate window'); }
+        } catch { addToast('error', 'Error', 'Failed to duplicate window'); }
     };
 
     const getSeverityTag = (severity: string) => {
@@ -713,7 +769,7 @@ export function ConfigurationPage() {
                                                     id={setting.key}
                                                     size="sm"
                                                     toggled={globalSettings[setting.key as keyof typeof globalSettings]}
-                                                    onToggle={() => setGlobalSettings(prev => ({ ...prev, [setting.key]: !prev[setting.key as keyof typeof globalSettings] }))}
+                                                    onToggle={() => handleToggleGlobalSetting(setting.key as keyof typeof globalSettings)}
                                                     labelA="" labelB="" hideLabel
                                                 />
                                             </div>
@@ -899,18 +955,6 @@ export function ConfigurationPage() {
                     </div>
                 )}
             </div>
-
-            {/* ==================== NOTIFICATIONS ==================== */}
-            {notification && (
-                <div style={{ position: 'fixed', bottom: '1rem', right: '1rem', zIndex: 9999 }}>
-                    <InlineNotification
-                        kind={notification.type}
-                        title={notification.type === 'success' ? 'Success' : 'Error'}
-                        subtitle={notification.message}
-                        onCloseButtonClick={() => setNotification(null)}
-                    />
-                </div>
-            )}
 
             {/* ==================== RULE MODALS ==================== */}
             <Modal

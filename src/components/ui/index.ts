@@ -32,7 +32,11 @@ export {
 } from './DataTableWrapper';
 
 export {
-    DashboardHeader,
-    type DashboardHeaderProps,
-    type SystemStatus
-} from './DashboardHeader';
+    EmptyState,
+    type EmptyStateProps,
+    type EmptyStateAction,
+    type EmptyStateSize
+} from './EmptyState';
+
+export { WidgetErrorBoundary } from './WidgetErrorBoundary';
+

@@ -102,6 +102,19 @@
         }
     }
 
+    // Chart container centering - ensures donut/pie charts are centered in all tiles
+    .chart-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        // Carbon charts wrapper
+        > div {
+            width: 100%;
+        }
+    }
+
     // Global Tile Borders
     // Apply colored left borders to tiles for visual emphasis
     .cds--tile,

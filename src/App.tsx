@@ -4,6 +4,7 @@ import { Loading } from '@carbon/react';
 
 // Providers
 import { RoleProvider } from '@/features/roles/hooks';
+import { ToastProvider } from '@/contexts';
 
 // Layouts - keep these eager as they're needed immediately
 import { AppLayout, AuthLayout, PublicLayout } from './components/layout';
@@ -25,7 +26,15 @@ const AlertDetailsPage = lazy(() => import('./pages/alerts').then(m => ({ defaul
 const DeviceExplorerPage = lazy(() => import('./pages/devices').then(m => ({ default: m.DeviceExplorerPage })));
 const DeviceDetailsPage = lazy(() => import('./pages/devices').then(m => ({ default: m.DeviceDetailsPage })));
 const ConfigurationPage = lazy(() => import('./pages/configuration').then(m => ({ default: m.ConfigurationPage })));
-
+const IncidentHistoryPage = lazy(() => import('./pages/incidents').then(m => ({ default: m.IncidentHistoryPage })));
+const AuditLogPage = lazy(() => import('./pages/admin/AuditLogPage'));
+const ProfilePage = lazy(() => import('./pages/profile/ProfilePage'));
+const ReportsHubPage = lazy(() => import('./pages/reports').then(m => ({ default: m.ReportsHubPage })));
+const SLAReportsPage = lazy(() => import('./pages/reports/SLAReportsPage'));
+const OnCallPage = lazy(() => import('./pages/oncall/OnCallPage'));
+const TopologyPage = lazy(() => import('./pages/topology/TopologyPage'));
+const RunbooksPage = lazy(() => import('./pages/runbooks/RunbooksPage'));
+const ServiceStatusPage = lazy(() => import('./pages/service-status').then(m => ({ default: m.ServiceStatusPage })));
 
 // Loading fallback component
 const PageLoader = () => (
@@ -111,6 +120,10 @@ const router = createBrowserRouter([
         element: withSuspense(TrendsPage),
       },
       {
+        path: 'incident-history',
+        element: withSuspense(IncidentHistoryPage),
+      },
+      {
         path: 'tickets',
         element: withSuspense(TicketsPage),
       },
@@ -127,6 +140,38 @@ const router = createBrowserRouter([
         element: withSuspense(ConfigurationPage),
       },
       {
+        path: 'profile',
+        element: withSuspense(ProfilePage),
+      },
+      {
+        path: 'admin/audit-log',
+        element: withSuspense(AuditLogPage),
+      },
+      {
+        path: 'reports',
+        element: withSuspense(ReportsHubPage),
+      },
+      {
+        path: 'reports/sla',
+        element: withSuspense(SLAReportsPage),
+      },
+      {
+        path: 'on-call',
+        element: withSuspense(OnCallPage),
+      },
+      {
+        path: 'topology',
+        element: withSuspense(TopologyPage),
+      },
+      {
+        path: 'runbooks',
+        element: withSuspense(RunbooksPage),
+      },
+      {
+        path: 'service-status',
+        element: withSuspense(ServiceStatusPage),
+      },
+      {
         path: '*',
         element: withSuspense(NotFoundPage),
       },
@@ -137,7 +182,9 @@ const router = createBrowserRouter([
 function App() {
   return (
     <RoleProvider defaultRole="network-ops">
-      <RouterProvider router={router} />
+      <ToastProvider>
+        <RouterProvider router={router} />
+      </ToastProvider>
     </RoleProvider>
   );
 }

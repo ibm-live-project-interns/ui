@@ -9,6 +9,7 @@ import {
     SideNav,
     SideNavItems,
     SideNavLink,
+    SideNavMenu,
     Tag,
 } from '@carbon/react';
 import {
@@ -19,12 +20,15 @@ import {
     Devices,
     Settings,
     SettingsAdjust,
-    Ticket,
     ChevronUp,
     Logout,
     Search as SearchIcon,
     Close,
     CheckmarkOutline,
+    UserAvatar,
+    Security,
+    Activity,
+    Report,
 } from '@carbon/icons-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -213,10 +217,16 @@ function HeaderSearch() {
         { id: 'dashboard', title: 'Dashboard', subtitle: 'Main dashboard', type: 'page', url: '/dashboard' },
         { id: 'priority-alerts', title: 'Priority Alerts', subtitle: 'View all alerts', type: 'page', url: '/priority-alerts' },
         { id: 'trends', title: 'Trends & Insights', subtitle: 'Analytics and trends', type: 'page', url: '/trends' },
+        { id: 'incident-history', title: 'Incident History', subtitle: 'Resolved incidents and root causes', type: 'page', url: '/incident-history' },
+        { id: 'sla-reports', title: 'SLA Reports', subtitle: 'Service level agreement reports', type: 'page', url: '/reports/sla' },
+        { id: 'reports', title: 'Reports', subtitle: 'Reports hub and data exports', type: 'page', url: '/reports' },
+        { id: 'service-status', title: 'Service Status', subtitle: 'Service health and availability', type: 'page', url: '/service-status' },
         { id: 'tickets', title: 'Tickets', subtitle: 'Ticket management', type: 'page', url: '/tickets' },
         { id: 'devices', title: 'Devices', subtitle: 'Device inventory', type: 'page', url: '/devices' },
-        { id: 'configuration', title: 'Configuration', subtitle: 'Alert rules and settings', type: 'page', url: '/configuration' },
+        { id: 'configuration', title: 'Alert Configuration', subtitle: 'Alert rules and settings', type: 'page', url: '/configuration' },
         { id: 'settings', title: 'Settings', subtitle: 'User settings', type: 'page', url: '/settings' },
+        { id: 'profile', title: 'Profile', subtitle: 'User profile management', type: 'page', url: '/profile' },
+        { id: 'audit-log', title: 'Audit Log', subtitle: 'System audit trail', type: 'page', url: '/admin/audit-log' },
     ];
 
     // Comprehensive search across all entities
@@ -424,7 +434,7 @@ export function AppHeader() {
     const [alertCount, setAlertCount] = useState(0);
     const [criticalTicketCount, setCriticalTicketCount] = useState(0);
     const userMenuRef = useRef<HTMLDivElement>(null);
-    const { hasPermission } = useRole();
+    const { hasPermission, currentRole } = useRole();
 
     // Fetch alert count on mount and periodically
     useEffect(() => {
@@ -504,91 +514,201 @@ export function AppHeader() {
                         isChildOfHeader
                     >
                         <SideNavItems>
-                            {/* Dashboard */}
-                            <SideNavLink
-                                as={Link}
-                                to="/dashboard"
+                            {/* ========================================
+                                OPERATIONS
+                               ======================================== */}
+                            <SideNavMenu
+                                title="Operations"
                                 renderIcon={Dashboard}
-                                isActive={isActive('/dashboard')}
+                                defaultExpanded
+                                isActive={
+                                    isActive('/dashboard') ||
+                                    isActive('/priority-alerts') ||
+                                    isActive('/tickets') ||
+                                    isActive('/on-call') ||
+                                    isActive('/service-status')
+                                }
                             >
-                                Dashboard
-                            </SideNavLink>
-
-                            {/* Priority Alerts with dynamic badge */}
-                            {hasPermission('view-alerts') && (
                                 <SideNavLink
                                     as={Link}
-                                    to="/priority-alerts"
-                                    renderIcon={WarningAlt}
-                                    isActive={isActive('/priority-alerts')}
-                                    className="sidenav-link-with-badge"
+                                    to="/dashboard"
+                                    isActive={isActive('/dashboard')}
                                 >
-                                    <span className="sidenav-link-text">Priority Alerts</span>
-                                    <Tag type="red" size="sm" className="sidenav-alert-badge">
-                                        {alertCount}
-                                    </Tag>
+                                    Dashboard
                                 </SideNavLink>
-                            )}
 
+                                {hasPermission('view-alerts') && (
+                                    <SideNavLink
+                                        as={Link}
+                                        to="/priority-alerts"
+                                        isActive={isActive('/priority-alerts')}
+                                        className="sidenav-link-with-badge"
+                                    >
+                                        <span className="sidenav-link-text">Priority Alerts</span>
+                                        <Tag type="red" size="sm" className="sidenav-alert-badge">
+                                            {alertCount}
+                                        </Tag>
+                                    </SideNavLink>
+                                )}
 
+                                {hasPermission('view-tickets') && (
+                                    <SideNavLink
+                                        as={Link}
+                                        to="/tickets"
+                                        isActive={isActive('/tickets')}
+                                        className={criticalTicketCount > 0 ? 'sidenav-link-with-badge' : ''}
+                                    >
+                                        {criticalTicketCount > 0 ? (
+                                            <>
+                                                <span className="sidenav-link-text">Tickets</span>
+                                                <Tag type="magenta" size="sm" className="sidenav-alert-badge">
+                                                    {criticalTicketCount}
+                                                </Tag>
+                                            </>
+                                        ) : (
+                                            'Tickets'
+                                        )}
+                                    </SideNavLink>
+                                )}
 
-                            {/* Trends & Insights */}
-                            {hasPermission('view-analytics') && (
                                 <SideNavLink
                                     as={Link}
-                                    to="/trends"
-                                    renderIcon={ChartLine}
-                                    isActive={isActive('/trends')}
+                                    to="/on-call"
+                                    isActive={isActive('/on-call')}
                                 >
-                                    Trends & Insights
+                                    On-Call Schedule
                                 </SideNavLink>
-                            )}
 
-                            {/* Tickets with critical count badge */}
-                            {hasPermission('view-tickets') && (
                                 <SideNavLink
                                     as={Link}
-                                    to="/tickets"
-                                    renderIcon={Ticket}
-                                    isActive={isActive('/tickets')}
-                                    className={criticalTicketCount > 0 ? 'sidenav-link-with-badge' : ''}
+                                    to="/service-status"
+                                    isActive={isActive('/service-status')}
                                 >
-                                    {criticalTicketCount > 0 ? (
-                                        <>
-                                            <span className="sidenav-link-text">Tickets</span>
-                                            <Tag type="magenta" size="sm" className="sidenav-alert-badge">
-                                                {criticalTicketCount}
-                                            </Tag>
-                                        </>
-                                    ) : (
-                                        'Tickets'
-                                    )}
+                                    Service Status
                                 </SideNavLink>
-                            )}
+                            </SideNavMenu>
 
-                            {/* Device Explorer */}
+                            {/* ========================================
+                                INFRASTRUCTURE
+                               ======================================== */}
                             {hasPermission('view-devices') && (
-                                <SideNavLink
-                                    as={Link}
-                                    to="/devices"
+                                <SideNavMenu
+                                    title="Infrastructure"
                                     renderIcon={Devices}
-                                    isActive={isActive('/devices')}
+                                    defaultExpanded
+                                    isActive={isActive('/devices') || isActive('/topology')}
                                 >
-                                    Devices
-                                </SideNavLink>
+                                    <SideNavLink
+                                        as={Link}
+                                        to="/devices"
+                                        isActive={isActive('/devices')}
+                                    >
+                                        Devices
+                                    </SideNavLink>
+                                    <SideNavLink
+                                        as={Link}
+                                        to="/topology"
+                                        isActive={isActive('/topology')}
+                                    >
+                                        Network Topology
+                                    </SideNavLink>
+                                </SideNavMenu>
                             )}
 
-                            {/* Configuration */}
-                            <SideNavLink
-                                as={Link}
-                                to="/configuration"
-                                renderIcon={SettingsAdjust}
-                                isActive={isActive('/configuration')}
-                            >
-                                Configuration
-                            </SideNavLink>
+                            {/* ========================================
+                                ANALYTICS
+                               ======================================== */}
+                            {hasPermission('view-analytics') && (
+                                <SideNavMenu
+                                    title="Analytics"
+                                    renderIcon={ChartLine}
+                                    defaultExpanded
+                                    isActive={
+                                        isActive('/trends') ||
+                                        isActive('/incident-history') ||
+                                        isActive('/reports')
+                                    }
+                                >
+                                    <SideNavLink
+                                        as={Link}
+                                        to="/trends"
+                                        isActive={isActive('/trends')}
+                                    >
+                                        Trends & Insights
+                                    </SideNavLink>
 
-                            {/* Settings */}
+                                    <SideNavLink
+                                        as={Link}
+                                        to="/incident-history"
+                                        isActive={isActive('/incident-history')}
+                                    >
+                                        Incident History
+                                    </SideNavLink>
+
+                                    <SideNavLink
+                                        as={Link}
+                                        to="/reports/sla"
+                                        isActive={isActive('/reports/sla')}
+                                    >
+                                        SLA Reports
+                                    </SideNavLink>
+
+                                    <SideNavLink
+                                        as={Link}
+                                        to="/reports"
+                                        isActive={isActive('/reports') && !isActive('/reports/sla')}
+                                    >
+                                        Reports
+                                    </SideNavLink>
+                                </SideNavMenu>
+                            )}
+
+                            {/* ========================================
+                                CONFIGURATION
+                               ======================================== */}
+                            <SideNavMenu
+                                title="Configuration"
+                                renderIcon={SettingsAdjust}
+                                isActive={isActive('/configuration') || isActive('/runbooks')}
+                            >
+                                <SideNavLink
+                                    as={Link}
+                                    to="/configuration"
+                                    isActive={isActive('/configuration')}
+                                >
+                                    Alert Configuration
+                                </SideNavLink>
+                                <SideNavLink
+                                    as={Link}
+                                    to="/runbooks"
+                                    isActive={isActive('/runbooks')}
+                                >
+                                    Runbooks
+                                </SideNavLink>
+                            </SideNavMenu>
+
+                            {/* ========================================
+                                ADMINISTRATION (sysadmin only)
+                               ======================================== */}
+                            {currentRole.id === 'sysadmin' && (
+                                <SideNavMenu
+                                    title="Administration"
+                                    renderIcon={Security}
+                                    isActive={isActive('/admin')}
+                                >
+                                    <SideNavLink
+                                        as={Link}
+                                        to="/admin/audit-log"
+                                        isActive={isActive('/admin/audit-log')}
+                                    >
+                                        Audit Log
+                                    </SideNavLink>
+                                </SideNavMenu>
+                            )}
+
+                            {/* ========================================
+                                Bottom Section - Settings & Profile
+                               ======================================== */}
                             <SideNavLink
                                 as={Link}
                                 to="/settings"
@@ -596,6 +716,15 @@ export function AppHeader() {
                                 isActive={isActive('/settings')}
                             >
                                 Settings
+                            </SideNavLink>
+
+                            <SideNavLink
+                                as={Link}
+                                to="/profile"
+                                renderIcon={UserAvatar}
+                                isActive={isActive('/profile')}
+                            >
+                                Profile
                             </SideNavLink>
                         </SideNavItems>
 

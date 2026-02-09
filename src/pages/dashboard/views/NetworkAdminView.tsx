@@ -3,29 +3,76 @@
  *
  * Device-focused dashboard for network administrators.
  * Shows device inventory, health status, configuration changes, and capacity planning.
+ *
+ * Uses a proper Carbon DataTable with pagination, sorting, and filtering.
+ *
+ * Services:
+ * - Device data from deviceService.getDevices() and getDeviceStats()
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { Tile, Tag, ProgressBar, SkeletonText, SkeletonPlaceholder } from '@carbon/react';
+import { useNavigate } from 'react-router-dom';
+import {
+    Tile, Tag, ProgressBar, SkeletonText, SkeletonPlaceholder, InlineNotification,
+    DataTable, TableContainer, Table, TableHead, TableRow, TableHeader, TableBody, TableCell,
+    Pagination,
+} from '@carbon/react';
 import { DonutChart } from '@carbon/charts-react';
-import { KPICard, type KPICardProps, DashboardHeader, DataTableWrapper } from '@/components/ui';
+import { KPICard, type KPICardProps, PageHeader, DataTableWrapper } from '@/components/ui';
+import ChartWrapper from '@/components/ui/ChartWrapper';
 import { CheckmarkFilled, Misuse, Warning, Router } from '@carbon/icons-react';
 import { deviceService } from '@/features/devices/services/deviceService';
 import type { Device, DeviceStats } from '@/features/devices/services/deviceService';
+import { createDonutChartOptions } from '@/shared/constants/charts';
 import '@/styles/pages/_dashboard.scss';
 import '@/styles/components/_kpi-card.scss';
+import '@carbon/charts-react/styles.css';
 import type { RoleConfig } from '@/features/roles/types/role.types';
 
 interface NetworkAdminViewProps {
     config: RoleConfig;
 }
 
+const DEVICE_HEADERS = [
+    { key: 'name', header: 'Device' },
+    { key: 'type', header: 'Type' },
+    { key: 'status', header: 'Status' },
+    { key: 'healthScore', header: 'Health Score' },
+    { key: 'alerts', header: 'Alerts' },
+    { key: 'lastSeen', header: 'Last Seen' },
+];
+
 export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
+    const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(true);
     const [devices, setDevices] = useState<Device[]>([]);
     const [deviceStats, setDeviceStats] = useState<DeviceStats>({ online: 0, critical: 0, warning: 0, offline: 0, total: 0 });
     const [error, setError] = useState<string | null>(null);
+    const [currentTheme, setCurrentTheme] = useState('g100');
+
+    // Search & Pagination State
     const [searchQuery, setSearchQuery] = useState('');
+    const [firstRowIndex, setFirstRowIndex] = useState(0);
+    const [currentPageSize, setCurrentPageSize] = useState(10);
+
+    // Detect theme
+    useEffect(() => {
+        const detectTheme = () => {
+            try {
+                const themeSetting = document.documentElement.getAttribute('data-theme-setting');
+                if (themeSetting === 'light') setCurrentTheme('white');
+                else if (themeSetting === 'dark') setCurrentTheme('g100');
+                else {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    setCurrentTheme(prefersDark ? 'g100' : 'white');
+                }
+            } catch { /* ignore */ }
+        };
+        detectTheme();
+        const observer = new MutationObserver(detectTheme);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme-setting'] });
+        return () => observer.disconnect();
+    }, []);
 
     // Fetch real device data from API/service
     useEffect(() => {
@@ -57,7 +104,6 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
         };
 
         fetchData();
-        // Refresh every 30 seconds
         const interval = setInterval(fetchData, 30000);
 
         return () => {
@@ -78,6 +124,25 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
             device.status?.toLowerCase().includes(query)
         );
     }, [devices, searchQuery]);
+
+    // Paginated devices
+    const paginatedDevices = useMemo(() => {
+        return filteredDevices.slice(firstRowIndex, firstRowIndex + currentPageSize);
+    }, [filteredDevices, firstRowIndex, currentPageSize]);
+
+    // Transform devices for Carbon DataTable (primitive values for each key)
+    const tableRows = useMemo(() =>
+        paginatedDevices.map(device => ({
+            id: device.id,
+            name: device.name,
+            type: device.type,
+            status: device.status,
+            healthScore: device.healthScore,
+            alerts: device.recentAlerts,
+            lastSeen: device.lastSeen || 'N/A',
+        })),
+        [paginatedDevices]
+    );
 
     // Calculate devices by type from real data
     const devicesByType = useMemo(() => {
@@ -132,15 +197,37 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
         return <Tag type={type} size="sm">{label}</Tag>;
     };
 
+    // Chart options with theme support
+    const typeDonutOptions = useMemo(() =>
+        createDonutChartOptions({ title: 'Devices by Type', height: '300px', theme: currentTheme, showTitle: false }),
+        [currentTheme]
+    );
+
+    const statusDonutOptions = useMemo(() => ({
+        title: '',
+        resizable: true,
+        donut: { center: { label: 'Status' } },
+        height: '300px',
+        theme: currentTheme as any,
+        color: {
+            scale: {
+                'Online': '#24a148',
+                'Warning': '#ff832b',
+                'Critical': '#da1e28',
+                'Offline': '#6f6f6f',
+            }
+        }
+    }), [currentTheme]);
+
     // Loading state
     if (isLoading && devices.length === 0) {
         return (
             <div className="dashboard-page">
                 <div className="dashboard-page__content">
-                    <DashboardHeader
+                    <PageHeader
                         title="Network Administration"
                         subtitle="Loading device data..."
-                        systemStatus="operational"
+                        badges={[{ text: 'System Operational', color: '#24a148' }]}
                     />
                     <div className="kpi-row">
                         {[1, 2, 3, 4].map((i) => (
@@ -167,17 +254,23 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
         <div className="dashboard-page">
             <div className="dashboard-page__content">
                 {/* Dashboard Header */}
-                <DashboardHeader
+                <PageHeader
                     title="Network Administration"
                     subtitle="Device inventory, health monitoring, and configuration management"
-                    systemStatus={error ? 'degraded' : 'operational'}
+                    badges={[error
+                        ? { text: 'System Degraded', color: '#ee5396' }
+                        : { text: 'System Operational', color: '#24a148' }
+                    ]}
                 />
 
                 {/* Error state */}
                 {error && (
-                    <div style={{ padding: '1rem', background: 'var(--cds-support-error-inverse)', borderRadius: '4px', marginBottom: '1rem', color: 'var(--cds-text-on-color)' }}>
-                        {error}
-                    </div>
+                    <InlineNotification
+                        kind="error"
+                        title="Error"
+                        subtitle={error}
+                        style={{ marginBottom: '1rem' }}
+                    />
                 )}
 
                 {/* KPI Section */}
@@ -194,18 +287,13 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
                             <h3>Devices by Type</h3>
                         </div>
                         <div className="chart-container">
-                            <div className="cds--cc--donut">
-                                <DonutChart
-                                    data={devicesByType.length > 0 ? devicesByType : [{ group: 'No Data', value: 1 }]}
-                                    options={{
-                                        title: '',
-                                        resizable: true,
-                                        donut: { center: { label: 'Devices' } },
-                                        height: '300px',
-                                        theme: 'g100',
-                                    }}
-                                />
-                            </div>
+                            <ChartWrapper
+                                ChartComponent={DonutChart}
+                                data={devicesByType.length > 0 ? devicesByType : [{ group: 'No Data', value: 1 }]}
+                                options={typeDonutOptions}
+                                height="300px"
+                                emptyMessage="No device data available"
+                            />
                         </div>
                     </Tile>
 
@@ -214,91 +302,131 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
                             <h3>Device Status Distribution</h3>
                         </div>
                         <div className="chart-container">
-                            <div className="cds--cc--donut">
-                                <DonutChart
-                                    data={[
-                                        { group: 'Online', value: deviceStats.online || 0 },
-                                        { group: 'Warning', value: deviceStats.warning || 0 },
-                                        { group: 'Critical', value: deviceStats.critical || 0 },
-                                        { group: 'Offline', value: deviceStats.offline || 0 },
-                                    ].filter(d => d.value > 0)}
-                                    options={{
-                                        title: '',
-                                        resizable: true,
-                                        donut: { center: { label: 'Status' } },
-                                        height: '300px',
-                                        theme: 'g100',
-                                        color: {
-                                            scale: {
-                                                'Online': '#24a148',
-                                                'Warning': '#ff832b',
-                                                'Critical': '#da1e28',
-                                                'Offline': '#6f6f6f',
-                                            }
-                                        }
-                                    }}
-                                />
-                            </div>
+                            <ChartWrapper
+                                ChartComponent={DonutChart}
+                                data={[
+                                    { group: 'Online', value: deviceStats.online || 0 },
+                                    { group: 'Warning', value: deviceStats.warning || 0 },
+                                    { group: 'Critical', value: deviceStats.critical || 0 },
+                                    { group: 'Offline', value: deviceStats.offline || 0 },
+                                ].filter(d => d.value > 0)}
+                                options={statusDonutOptions}
+                                height="300px"
+                                emptyMessage="No status data available"
+                            />
                         </div>
                     </Tile>
                 </div>
 
-                {/* Device Inventory Table */}
-                <DataTableWrapper title="Device Inventory" onSearch={setSearchQuery}>
-                    <table className="cds--data-table cds--data-table--md" style={{ width: '100%' }}>
-                        <thead>
-                            <tr>
-                                <th>Device</th>
-                                <th>Type</th>
-                                <th>Status</th>
-                                <th>Health Score</th>
-                                <th>Alerts</th>
-                                <th>Last Seen</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredDevices.slice(0, 10).map(device => (
-                                <tr key={device.id}>
-                                    <td>
-                                        <div style={{ display: 'flex', flexDirection: 'column' }}>
-                                            <span style={{ fontWeight: 600 }}>{device.name}</span>
-                                            <span style={{ fontSize: '12px', color: 'var(--cds-text-secondary)' }}>{device.ip}</span>
-                                        </div>
-                                    </td>
-                                    <td style={{ textTransform: 'capitalize' }}>{device.type}</td>
-                                    <td>{getStatusTag(device.status)}</td>
-                                    <td>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                            <ProgressBar
-                                                value={device.healthScore}
-                                                max={100}
-                                                size="small"
-                                                status={device.healthScore < 50 ? 'error' : device.healthScore < 75 ? 'active' : 'finished'}
-                                                hideLabel
-                                                label="Health"
-                                            />
-                                            <span style={{ minWidth: '40px' }}>{device.healthScore}%</span>
-                                        </div>
-                                    </td>
-                                    <td>
-                                        {device.recentAlerts > 0 ? (
-                                            <Tag type="red" size="sm">{device.recentAlerts}</Tag>
+                {/* Device Inventory Table - Proper Carbon DataTable */}
+                <DataTableWrapper
+                    title="Device Inventory"
+                    onSearch={(value) => {
+                        setSearchQuery(value);
+                        setFirstRowIndex(0);
+                    }}
+                    searchPlaceholder="Search by name, IP, type, or location..."
+                    searchValue={searchQuery}
+                    showFilter={true}
+                    showRefresh={true}
+                >
+                    <DataTable rows={tableRows} headers={DEVICE_HEADERS} isSortable>
+                        {({ rows, headers, getTableProps, getHeaderProps, getRowProps }) => (
+                            <TableContainer>
+                                <Table {...getTableProps()}>
+                                    <TableHead>
+                                        <TableRow>
+                                            {headers.map((header) => (
+                                                <TableHeader {...getHeaderProps({ header })} key={header.key}>
+                                                    {header.header}
+                                                </TableHeader>
+                                            ))}
+                                        </TableRow>
+                                    </TableHead>
+                                    <TableBody>
+                                        {rows.length === 0 ? (
+                                            <TableRow>
+                                                <TableCell colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--cds-text-secondary)' }}>
+                                                    {searchQuery ? `No devices matching "${searchQuery}"` : 'No devices found'}
+                                                </TableCell>
+                                            </TableRow>
                                         ) : (
-                                            <span style={{ color: 'var(--cds-text-secondary)' }}>0</span>
+                                            rows.map((row) => {
+                                                const device = paginatedDevices.find(d => d.id === row.id);
+                                                if (!device) return null;
+
+                                                return (
+                                                    <TableRow {...getRowProps({ row })} key={row.id}>
+                                                        <TableCell>
+                                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                                <span
+                                                                    style={{ fontWeight: 600, cursor: 'pointer', color: 'var(--cds-link-primary)' }}
+                                                                    role="link"
+                                                                    tabIndex={0}
+                                                                    onClick={() => navigate(`/devices/${device.id}`)}
+                                                                    onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/devices/${device.id}`); }}
+                                                                >
+                                                                    {device.name}
+                                                                </span>
+                                                                <span style={{ fontSize: '12px', color: 'var(--cds-text-secondary)' }}>{device.ip}</span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell style={{ textTransform: 'capitalize' }}>{device.type}</TableCell>
+                                                        <TableCell>{getStatusTag(device.status)}</TableCell>
+                                                        <TableCell>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                                <ProgressBar
+                                                                    value={device.healthScore}
+                                                                    max={100}
+                                                                    size="small"
+                                                                    status={device.healthScore < 50 ? 'error' : device.healthScore < 75 ? 'active' : 'finished'}
+                                                                    hideLabel
+                                                                    label="Health"
+                                                                />
+                                                                <span style={{ minWidth: '40px' }}>{device.healthScore}%</span>
+                                                            </div>
+                                                        </TableCell>
+                                                        <TableCell>
+                                                            {device.recentAlerts > 0 ? (
+                                                                <Tag
+                                                                    type="red"
+                                                                    size="sm"
+                                                                    style={{ cursor: 'pointer' }}
+                                                                    onClick={() => navigate(`/alerts?device=${encodeURIComponent(device.name)}`)}
+                                                                >
+                                                                    {device.recentAlerts}
+                                                                </Tag>
+                                                            ) : (
+                                                                <span style={{ color: 'var(--cds-text-secondary)' }}>0</span>
+                                                            )}
+                                                        </TableCell>
+                                                        <TableCell style={{ color: 'var(--cds-text-secondary)' }}>
+                                                            {device.lastSeen || 'N/A'}
+                                                        </TableCell>
+                                                    </TableRow>
+                                                );
+                                            })
                                         )}
-                                    </td>
-                                    <td style={{ color: 'var(--cds-text-secondary)' }}>{device.lastSeen || 'N/A'}</td>
-                                </tr>
-                            ))}
-                            {filteredDevices.length === 0 && (
-                                <tr>
-                                    <td colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--cds-text-secondary)' }}>
-                                        {searchQuery ? `No devices matching "${searchQuery}"` : 'No devices found'}
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                    </TableBody>
+                                </Table>
+                            </TableContainer>
+                        )}
+                    </DataTable>
+
+                    <Pagination
+                        totalItems={filteredDevices.length}
+                        backwardText="Previous page"
+                        forwardText="Next page"
+                        pageSize={currentPageSize}
+                        pageSizes={[5, 10, 20, 50]}
+                        itemsPerPageText="Items per page"
+                        onChange={({ page, pageSize }: { page: number; pageSize: number }) => {
+                            if (pageSize !== currentPageSize) {
+                                setCurrentPageSize(pageSize);
+                            }
+                            setFirstRowIndex((page - 1) * pageSize);
+                        }}
+                    />
                 </DataTableWrapper>
             </div>
         </div>

@@ -20,7 +20,7 @@ import {
     Tile,
 } from '@carbon/react';
 import {
-    Export,
+    Download,
     Checkmark,
     View,
     Close,
@@ -39,6 +39,7 @@ import type { PriorityAlert } from '@/features/alerts/types/alert.types';
 // Data Service
 import { alertDataService } from '@/shared/services';
 import { normalizeAlert } from '@/shared/utils/normalizeAlert';
+import { API_BASE_URL } from '@/shared/config/api.config';
 
 // Reusable components
 import { KPICard, PageHeader, DataTableWrapper } from '@/components';
@@ -111,7 +112,7 @@ export function PriorityAlertsPage() {
     const [searchQuery, setSearchQuery] = useState(deviceFilter || '');
     const [selectedSeverity, setSelectedSeverity] = useState(SEVERITY_FILTER_OPTIONS[0]);
     const [selectedStatus, setSelectedStatus] = useState(STATUS_FILTER_OPTIONS[0]);
-    const [selectedTime, setSelectedTime] = useState(TIME_PERIOD_OPTIONS[0]);
+    const [selectedTime, setSelectedTime] = useState(TIME_PERIOD_OPTIONS[2]); // Default to 30d to show recent alerts
     const [activeQuickFilters, setActiveQuickFilters] = useState<string[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
@@ -134,8 +135,8 @@ export function PriorityAlertsPage() {
     const handleAcknowledgeAlert = async (alertId: string) => {
         try {
             await alertDataService.acknowledgeAlert(alertId);
-            // Refresh alerts after acknowledging
-            const updatedAlerts = await alertDataService.getAlerts();
+            // Refresh alerts after acknowledging, preserving current time filter
+            const updatedAlerts = await alertDataService.getAlerts(selectedTime.id);
             setAlerts((updatedAlerts || []).map((a: any) => normalizeAlert(a)));
         } catch (error) {
             console.error('Failed to acknowledge alert:', error);
@@ -151,8 +152,8 @@ export function PriorityAlertsPage() {
 
             await Promise.all(alertsToAck.map(id => alertDataService.acknowledgeAlert(id)));
 
-            // Refresh alerts
-            const updatedAlerts = await alertDataService.getAlerts();
+            // Refresh alerts, preserving current time filter
+            const updatedAlerts = await alertDataService.getAlerts(selectedTime.id);
             setAlerts((updatedAlerts || []).map((a: any) => normalizeAlert(a)));
             setSelectedRows(new Set());
         } catch (error) {
@@ -160,12 +161,24 @@ export function PriorityAlertsPage() {
         }
     };
 
-    const handleExport = async () => {
+    const handleExportCSV = async () => {
         try {
-            await alertDataService.exportReport('csv');
-            console.log('Export completed successfully');
+            const token = localStorage.getItem('auth_token');
+            const response = await fetch(`${API_BASE_URL}/api/v1/reports/export?type=alerts`, {
+                headers: { 'Authorization': `Bearer ${token}` },
+            });
+            if (!response.ok) {
+                throw new Error(`Export failed with status ${response.status}`);
+            }
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `alerts-report-${new Date().toISOString().split('T')[0]}.csv`;
+            a.click();
+            window.URL.revokeObjectURL(url);
         } catch (error) {
-            console.error('Failed to export report:', error);
+            console.error('Failed to export alerts CSV:', error);
         }
     };
 
@@ -178,9 +191,7 @@ export function PriorityAlertsPage() {
             if (!isMounted) return;
             setIsLoading(true);
             try {
-                // TODO: When API supports time filtering, pass selectedTime.id to getAlerts()
-                // For now, we fetch all and filter client-side
-                const data = await alertDataService.getAlerts();
+                const data = await alertDataService.getAlerts(selectedTime.id);
                 if (isMounted) {
                     const normalized = (data || []).map((a: any) => normalizeAlert(a));
                     setAlerts(normalized);
@@ -296,7 +307,7 @@ export function PriorityAlertsPage() {
         setSearchQuery('');
         setSelectedSeverity(SEVERITY_FILTER_OPTIONS[0]);
         setSelectedStatus(STATUS_FILTER_OPTIONS[0]);
-        setSelectedTime(TIME_PERIOD_OPTIONS[0]);
+        setSelectedTime(TIME_PERIOD_OPTIONS[2]);
         setActiveQuickFilters([]);
         setCurrentPage(1);
     };
@@ -352,8 +363,8 @@ export function PriorityAlertsPage() {
                         </p>
                     </div>
                     <div className="page-header-actions">
-                        <Button kind="tertiary" renderIcon={Export} disabled>
-                            Export
+                        <Button kind="ghost" renderIcon={Download} disabled>
+                            Export CSV
                         </Button>
                         <Button kind="primary" renderIcon={Checkmark} disabled>
                             Acknowledge All
@@ -399,10 +410,10 @@ export function PriorityAlertsPage() {
                 showBorder={true}
                 actions={[
                     {
-                        label: 'Export',
-                        onClick: handleExport,
-                        variant: 'tertiary',
-                        icon: Export,
+                        label: 'Export CSV',
+                        onClick: handleExportCSV,
+                        variant: 'ghost',
+                        icon: Download,
                     },
                     {
                         label: 'Acknowledge All',
@@ -536,7 +547,7 @@ export function PriorityAlertsPage() {
                                             if (!alert) return null;
 
                                             return (
-                                                <TableRow {...getRowProps({ row })} key={row.id}>
+                                                <TableRow {...getRowProps({ row })} key={row.id} onClick={() => navigate(`/alerts/${alert.id}`)} style={{ cursor: 'pointer' }}>
                                                     <TableCell>
                                                         {getSeverityTag(alert.severity)}
                                                     </TableCell>
@@ -586,7 +597,7 @@ export function PriorityAlertsPage() {
                                                             <span className="confidence-value">{alert.confidence}%</span>
                                                         </div>
                                                     </TableCell>
-                                                    <TableCell>
+                                                    <TableCell onClick={(e: React.MouseEvent) => e.stopPropagation()}>
                                                         <div className="actions-cell">
                                                             <Button
                                                                 kind="ghost"

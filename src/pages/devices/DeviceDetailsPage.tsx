@@ -25,6 +25,8 @@ import {
     TableCell,
     TableContainer,
     InlineNotification,
+    ContentSwitcher,
+    Switch,
 } from '@carbon/react';
 import {
     ArrowLeft,
@@ -41,6 +43,7 @@ import { ScaleTypes } from '@carbon/charts';
 import { PageHeader, KPICard } from '@/components/ui';
 import { getDeviceIcon } from '@/shared/constants/devices';
 import { deviceService, alertDataService } from '@/shared/services';
+import { env } from '@/shared/config';
 import type { DeviceDetails } from '@/shared/services';
 
 import '@/styles/pages/_device-details.scss';
@@ -50,6 +53,28 @@ interface MetricDataPoint {
     group: string;
     date: Date;
     value: number;
+}
+
+type MetricsPeriod = '1h' | '6h' | '24h' | '7d';
+
+const PERIOD_OPTIONS: { key: MetricsPeriod; label: string }[] = [
+    { key: '1h', label: '1 Hour' },
+    { key: '6h', label: '6 Hours' },
+    { key: '24h', label: '24 Hours' },
+    { key: '7d', label: '7 Days' },
+];
+
+interface MetricsAPIResponse {
+    metrics: Array<{
+        timestamp: string;
+        cpu_usage: number;
+        memory_usage: number;
+        bandwidth_in: number;
+        bandwidth_out: number;
+        error_rate: number;
+    }>;
+    device_id: string;
+    period: string;
 }
 
 interface Incident {
@@ -76,7 +101,58 @@ export function DeviceDetailsPage() {
     const [metricHistory, setMetricHistory] = useState<MetricDataPoint[]>([]);
     const [incidents, setIncidents] = useState<Incident[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [metricsLoading, setMetricsLoading] = useState(false);
+    const [metricsPeriod, setMetricsPeriod] = useState<MetricsPeriod>('24h');
     const [error, setError] = useState<string | null>(null);
+
+    // Build metrics API URL from the same env config the services use
+    const metricsApiUrl = useCallback((id: string, period: MetricsPeriod) => {
+        const base = env.apiBaseUrl.replace(/\/$/, '');
+        return `${base}/api/${env.apiVersion}/devices/${id}/metrics?period=${period}`;
+    }, []);
+
+    // Fetch metrics from the backend endpoint
+    const fetchMetrics = useCallback(async (id: string, period: MetricsPeriod) => {
+        setMetricsLoading(true);
+        try {
+            const token = localStorage.getItem('noc_token');
+            const headers: Record<string, string> = {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json',
+            };
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(metricsApiUrl(id, period), { headers });
+            if (!response.ok) {
+                throw new Error(`HTTP ${response.status}`);
+            }
+
+            const data: MetricsAPIResponse = await response.json();
+            if (!data.metrics || data.metrics.length === 0) {
+                setMetricHistory([]);
+                return;
+            }
+
+            // Transform API response into chart-compatible MetricDataPoint array.
+            // Each API row produces 2 chart points (CPU + Memory).
+            const points: MetricDataPoint[] = [];
+            for (const m of data.metrics) {
+                const date = new Date(m.timestamp);
+                points.push(
+                    { group: 'CPU', date, value: m.cpu_usage },
+                    { group: 'Memory', date, value: m.memory_usage },
+                );
+            }
+            setMetricHistory(points);
+        } catch (err) {
+            console.warn('[DeviceDetails] Failed to fetch metrics, chart will show empty state:', err);
+            setMetricHistory([]);
+        } finally {
+            setMetricsLoading(false);
+        }
+    }, [metricsApiUrl]);
 
     const fetchDevice = useCallback(async () => {
         if (!deviceId) return;
@@ -110,30 +186,23 @@ export function DeviceDetailsPage() {
             });
             setIncidents(incidentData);
 
-            // Generate metric history from device CPU/memory if available
-            // In production, this would come from a metrics API
-            if (deviceData.cpuUsage !== undefined && deviceData.memoryUsage !== undefined) {
-                const points: MetricDataPoint[] = [];
-                const now = new Date();
-                // Create trend data based on current values with slight variations
-                for (let i = 23; i >= 0; i--) {
-                    const date = new Date(now.getTime() - i * 3600000);
-                    const cpuVariation = (Math.sin(i / 4) * 10);
-                    const memVariation = (Math.cos(i / 4) * 8);
-                    points.push(
-                        { group: 'CPU', date, value: Math.max(0, Math.min(100, deviceData.cpuUsage + cpuVariation)) },
-                        { group: 'Memory', date, value: Math.max(0, Math.min(100, deviceData.memoryUsage + memVariation)) }
-                    );
-                }
-                setMetricHistory(points);
-            }
+            // Fetch metrics from backend
+            await fetchMetrics(deviceId, metricsPeriod);
         } catch (err) {
             console.error('Failed to fetch device:', err);
             setError('Failed to load device details. The device may not exist or the API is unavailable.');
         } finally {
             setIsLoading(false);
         }
-    }, [deviceId]);
+    }, [deviceId, fetchMetrics, metricsPeriod]);
+
+    // When the user changes the period selector, re-fetch only metrics
+    const handlePeriodChange = useCallback((period: MetricsPeriod) => {
+        setMetricsPeriod(period);
+        if (deviceId) {
+            fetchMetrics(deviceId, period);
+        }
+    }, [deviceId, fetchMetrics]);
 
     useEffect(() => {
         fetchDevice();
@@ -349,9 +418,25 @@ export function DeviceDetailsPage() {
 
                     {/* Performance Chart */}
                     <Tile className="chart-tile tile--bordered tile--purple">
-                        <h3>Performance (Last 24 Hours)</h3>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+                            <h3 style={{ margin: 0 }}>Performance</h3>
+                            <ContentSwitcher
+                                size="sm"
+                                selectedIndex={PERIOD_OPTIONS.findIndex(p => p.key === metricsPeriod)}
+                                onChange={(e: { index: number }) => {
+                                    const selected = PERIOD_OPTIONS[e.index];
+                                    if (selected) handlePeriodChange(selected.key);
+                                }}
+                            >
+                                {PERIOD_OPTIONS.map(opt => (
+                                    <Switch key={opt.key} name={opt.key} text={opt.label} />
+                                ))}
+                            </ContentSwitcher>
+                        </div>
                         <div className="chart-container">
-                            {metricHistory.length > 0 ? (
+                            {metricsLoading ? (
+                                <SkeletonPlaceholder style={{ height: '300px', width: '100%' }} />
+                            ) : metricHistory.length > 0 ? (
                                 <LineChart
                                     data={metricHistory}
                                     options={{
@@ -387,7 +472,7 @@ export function DeviceDetailsPage() {
                             <Activity size={20} style={{ marginRight: '0.5rem' }} />
                             Recent Incidents
                         </h3>
-                        <Button kind="ghost" size="sm" onClick={() => navigate('/alerts')}>View All Alerts</Button>
+                        <Button kind="ghost" size="sm" onClick={() => navigate(`/priority-alerts?device=${encodeURIComponent(device.name)}`)}>View All Alerts</Button>
                     </div>
                     <div className="incidents-table-container">
                         {incidents.length > 0 ? (
@@ -409,14 +494,27 @@ export function DeviceDetailsPage() {
                                                     const incident = incidents.find(i => i.id === row.id);
                                                     if (!incident) return null;
                                                     return (
-                                                        <TableRow {...getRowProps({ row })}>
+                                                        <TableRow
+                                                            {...getRowProps({ row })}
+                                                            onClick={() => navigate(`/alerts/${incident.id}`)}
+                                                            style={{ cursor: 'pointer' }}
+                                                        >
                                                             <TableCell>{incident.time}</TableCell>
                                                             <TableCell>{getSeverityTag(incident.severity)}</TableCell>
                                                             <TableCell>{incident.description}</TableCell>
                                                             <TableCell>{incident.category}</TableCell>
                                                             <TableCell>
                                                                 {incident.ticketId ? (
-                                                                    <a href="#" className="ticket-link">{incident.ticketId}</a>
+                                                                    <span
+                                                                        className="ticket-link"
+                                                                        onClick={(e) => {
+                                                                            e.stopPropagation();
+                                                                            navigate(`/tickets/${incident.ticketId}`);
+                                                                        }}
+                                                                        style={{ cursor: 'pointer', color: 'var(--cds-link-primary)' }}
+                                                                    >
+                                                                        {incident.ticketId}
+                                                                    </span>
                                                                 ) : (
                                                                     <span className="text-secondary">--</span>
                                                                 )}

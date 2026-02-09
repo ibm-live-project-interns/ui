@@ -79,37 +79,7 @@
         }
     }
 
-    // Page Header
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: $spacing-05;
-        flex-wrap: wrap;
-        gap: $spacing-04;
-
-        .header-left,
-        .page-header-left {
-            .page-title {
-                @include react.type-style('productive-heading-05');
-                margin: 0 0 $spacing-02 0;
-            }
-
-            .page-subtitle,
-            .page-description {
-                @include react.type-style('body-compact-01');
-                color: $text-secondary;
-                margin: 0;
-            }
-        }
-
-        .header-right,
-        .page-header-actions {
-            display: flex;
-            align-items: center;
-            gap: $spacing-04;
-        }
-    }
+    // Page Header - using shared PageHeader component, no overrides needed
 
     // Section Common Styles
     .section-header,

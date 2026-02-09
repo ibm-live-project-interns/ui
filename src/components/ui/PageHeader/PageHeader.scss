@@ -161,10 +161,10 @@
         gap: 12px; // gap-3
         flex-shrink: 0;
 
-        // Make buttons consistent height
+        // Make buttons consistent height (md = 40px)
         .cds--btn {
-            height: 32px; // h-8 = 32px
-            min-height: 32px;
+            height: 40px;
+            min-height: 40px;
         }
     }
 

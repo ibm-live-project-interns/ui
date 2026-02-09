@@ -44,7 +44,7 @@ export interface AlertDistribution {
 
 export interface IAlertDataService {
     // Alert queries
-    getAlerts(): Promise<PriorityAlert[]>;
+    getAlerts(period?: string): Promise<PriorityAlert[]>;
     getNocAlerts(): Promise<SummaryAlert[]>;
     getAlertsSummary(): Promise<AlertSummary>;
     getAlertById(id: string): Promise<DetailedAlert | null>;
@@ -230,9 +230,40 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
         };
     }
 
-    async getAlerts(): Promise<PriorityAlert[]> {
+    async getAlerts(period?: string): Promise<PriorityAlert[]> {
+        let endpoint = API_ENDPOINTS.ALERTS;
+
+        // Build time range query params from period (24h, 7d, 30d, 90d)
+        if (period) {
+            const now = new Date();
+            const from = new Date();
+            switch (period) {
+                case '24h':
+                    from.setHours(from.getHours() - 24);
+                    break;
+                case '7d':
+                    from.setDate(from.getDate() - 7);
+                    break;
+                case '30d':
+                    from.setDate(from.getDate() - 30);
+                    break;
+                case '90d':
+                    from.setDate(from.getDate() - 90);
+                    break;
+                default:
+                    // Unknown period, don't apply time filter
+                    break;
+            }
+            if (from.getTime() !== now.getTime()) {
+                const params = new URLSearchParams();
+                params.set('from', from.toISOString());
+                params.set('to', now.toISOString());
+                endpoint = `${endpoint}?${params.toString()}`;
+            }
+        }
+
         // Backend returns array directly, not { alerts: [...] }
-        const response = await this.get<any>(API_ENDPOINTS.ALERTS);
+        const response = await this.get<any>(endpoint);
         const alerts = Array.isArray(response) ? response : (response.alerts || []);
         return alerts.map((alert: any) => this.transformAlert(alert));
     }
@@ -429,12 +460,20 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
     async getAIImpactOverTime(): Promise<ChartDataPoint[]> {
         const response = await this.get<any[]>(API_ENDPOINTS.AI_IMPACT_OVER_TIME);
         // Transform backend format {date, alerts_processed, patterns_detected, mttr_improvement_pct}
-        // to Carbon Charts format {date, value, group}
-        return (response || []).map((point: any) => ({
-            date: new Date(point.timestamp || point.date),
-            value: point.value ?? point.alerts_processed ?? point.mttr_improvement_pct ?? 0,
-            group: point.group || point.label || 'AI Impact'
-        })).filter(point => !isNaN(point.date.getTime()));
+        // to Carbon Charts format: flatten each point into 3 ChartDataPoints (one per metric/group)
+        // so the LineChart renders 3 separate lines.
+        const result: ChartDataPoint[] = [];
+        for (const point of (response || [])) {
+            const date = new Date(point.timestamp || point.date);
+            if (isNaN(date.getTime())) continue;
+
+            result.push(
+                { date, value: point.alerts_processed ?? 0, group: 'Alerts Processed' },
+                { date, value: point.patterns_detected ?? 0, group: 'Patterns Detected' },
+                { date, value: point.mttr_improvement_pct ?? 0, group: 'MTTR Improvement %' },
+            );
+        }
+        return result;
     }
 
     async acknowledgeAlert(id: string): Promise<void> {

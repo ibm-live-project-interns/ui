@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Tile, Button, Tag, SkeletonText, InlineNotification, ToastNotification } from '@carbon/react';
+import { Tile, Button, Tag, SkeletonText, InlineNotification } from '@carbon/react';
 import { Time, Chip, Activity, IbmWatsonxCodeAssistant, WarningAlt, ArrowRight, ArrowLeft, Checkmark, Renew } from '@carbon/icons-react';
 import { AlertActions } from './components/AlertActions';
 import { RawTrapData } from './components/RawTrapData';
@@ -14,15 +14,7 @@ import type { Severity } from '@/shared/types';
 import { alertDataService } from '@/features/alerts/services';
 import { ticketDataService } from '@/features/tickets/services';
 import { normalizeAlert } from '@/shared/utils/normalizeAlert';
-
-
-// Toast message type
-interface ToastMessage {
-    id: string;
-    kind: 'success' | 'error' | 'info' | 'warning';
-    title: string;
-    subtitle: string;
-}
+import { useToast } from '@/contexts';
 
 export function AlertDetailsPage() {
     const { alertId } = useParams<{ alertId: string }>();
@@ -30,18 +22,8 @@ export function AlertDetailsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [alert, setAlert] = useState<DetailedAlert | null>(null);
     const [error, setError] = useState<string | null>(null);
-    const [toasts, setToasts] = useState<ToastMessage[]>([]);
     const [isReanalyzing, setIsReanalyzing] = useState(false);
-
-    // Helper to add a toast
-    const addToast = (kind: ToastMessage['kind'], title: string, subtitle: string) => {
-        const id = `toast-${Date.now()}`;
-        setToasts(prev => [...prev, { id, kind, title, subtitle }]);
-        // Auto-remove after 5 seconds
-        setTimeout(() => {
-            setToasts(prev => prev.filter(t => t.id !== id));
-        }, 5000);
-    };
+    const { addToast } = useToast();
 
     useEffect(() => {
         const loadAlert = async () => {
@@ -166,20 +148,6 @@ export function AlertDetailsPage() {
 
     return (
         <div className="alert-details-page">
-            {/* Toast Notifications Container */}
-            <div className="alert-details-page__toast-container">
-                {toasts.map((toast) => (
-                    <ToastNotification
-                        key={toast.id}
-                        kind={toast.kind}
-                        title={toast.title}
-                        subtitle={toast.subtitle}
-                        timeout={5000}
-                        onClose={() => setToasts(prev => prev.filter(t => t.id !== toast.id))}
-                    />
-                ))}
-            </div>
-
             {/* Page Header with breadcrumbs, title, badges, and actions */}
             <PageHeader
                 breadcrumbs={[
