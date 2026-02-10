@@ -1,0 +1,136 @@
+// ChartWrapper Styles
+// Enhanced skeleton loading and empty states
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+
+.chart-wrapper {
+    position: relative;
+    background-color: $layer-01;
+    border-radius: 0;
+
+    &__title {
+        font-size: 14px;
+        font-weight: 600;
+        color: $text-primary;
+        margin: 0 0 $spacing-03 0;
+        padding: 0;
+    }
+
+    // Loading state with skeleton
+    &--loading {
+        display: flex;
+        flex-direction: column;
+    }
+
+    &__skeleton {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        background-color: $layer-02;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    &__skeleton-placeholder {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+    }
+
+    &__skeleton-lines {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-04;
+        padding: $spacing-05;
+        width: 100%;
+    }
+
+    &__skeleton-line {
+        height: 8px;
+        background: linear-gradient(90deg,
+                $layer-02 25%,
+                $layer-accent-01 50%,
+                $layer-02 75%);
+        background-size: 200% 100%;
+        animation: skeleton-shimmer 1.5s infinite;
+        border-radius: 2px;
+    }
+
+    // Empty state with skeleton background
+    &--empty {
+        display: flex;
+        flex-direction: column;
+    }
+
+    &__empty-state {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background-color: $layer-02;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+
+    &__empty-skeleton {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: flex-end;
+        justify-content: center;
+        padding: $spacing-05;
+        opacity: 0.3;
+    }
+
+    &__empty-bars {
+        display: flex;
+        align-items: flex-end;
+        gap: $spacing-03;
+        height: 60%;
+        width: 60%;
+    }
+
+    &__empty-bar {
+        flex: 1;
+        background-color: $layer-accent-01;
+        border-radius: 2px 2px 0 0;
+    }
+
+    &__empty-overlay {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: $spacing-03;
+        padding: $spacing-05;
+        text-align: center;
+    }
+
+    &__empty-icon {
+        color: $text-secondary;
+        opacity: 0.6;
+    }
+
+    &__empty-message {
+        font-size: 14px;
+        color: $text-secondary;
+        font-weight: 500;
+    }
+}
+
+@keyframes skeleton-shimmer {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}

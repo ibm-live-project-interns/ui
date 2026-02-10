@@ -1,0 +1,165 @@
+// KPICard Styles
+// Severity-based accent colors with Carbon design tokens
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/colors' as *;
+
+.kpi-card {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-02;
+    padding: $spacing-05;
+    background-color: $layer-01;
+    border: 1px solid $border-subtle-01;
+    border-bottom: 2px solid $border-subtle-01;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+    // Severity variants - use Carbon color tokens
+    &--critical {
+        border-bottom-color: $red-50;
+    }
+
+    &--major {
+        border-bottom-color: $orange-40;
+    }
+
+    &--minor {
+        border-bottom-color: $blue-60;
+    }
+
+    &--info {
+        border-bottom-color: $cyan-50;
+    }
+
+    &--success {
+        border-bottom-color: $green-50;
+    }
+
+    &--neutral {
+        border-bottom-color: $border-subtle-01;
+    }
+
+    &--clickable {
+        cursor: pointer;
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+        }
+
+        &:focus {
+            outline: 2px solid $focus;
+            outline-offset: 2px;
+        }
+    }
+
+    &__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: $text-secondary;
+    }
+
+    &__label {
+        font-size: 12px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.02em;
+    }
+
+    &__icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0.9;
+        transition: opacity 0.2s ease;
+
+        // Icon inherits color from parent span
+        svg {
+            fill: currentColor;
+        }
+
+        .kpi-card:hover & {
+            opacity: 1;
+        }
+    }
+
+    &__value-row {
+        display: flex;
+        align-items: baseline;
+        gap: $spacing-03;
+    }
+
+    &__value {
+        font-size: 2rem;
+        font-weight: 300;
+        color: $text-primary;
+        line-height: 1.2;
+    }
+
+    &__badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 2px 8px;
+        font-size: 10px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        border-radius: 2px;
+        background-color: $layer-accent-01;
+        color: $text-primary;
+
+        &--success {
+            background-color: $green-50;
+            color: $white;
+        }
+
+        &--warning {
+            background-color: $orange-40;
+            color: $white;
+        }
+
+        &--error {
+            background-color: $red-50;
+            color: $white;
+        }
+    }
+
+    &__subtitle {
+        font-size: 11px;
+        color: $text-secondary;
+        margin-top: -$spacing-01;
+    }
+
+    &__trend {
+        display: flex;
+        align-items: center;
+        gap: $spacing-02;
+        font-size: 10px;
+        color: $text-secondary;
+        margin-top: auto;
+
+        svg {
+            fill: currentColor;
+        }
+
+        &--positive {
+            color: $green-50;
+        }
+
+        &--negative {
+            color: $red-50;
+        }
+    }
+}
+
+// Responsive adjustments
+@media (max-width: 672px) {
+    .kpi-card {
+        &__value {
+            font-size: 1.5rem;
+        }
+    }
+}

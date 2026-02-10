@@ -1,0 +1,80 @@
+// EmptyState Styles
+// Standardized empty state display with Carbon design tokens
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as *;
+
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+
+    // Size variants
+    &--sm {
+        padding: $spacing-05; // 1rem
+        gap: $spacing-03;
+    }
+
+    &--md {
+        padding: $spacing-07; // 2rem
+        gap: $spacing-04;
+    }
+
+    &--lg {
+        padding: $spacing-09; // 4rem (3rem closest, but $spacing-10 = 4rem)
+        gap: $spacing-05;
+    }
+
+    // Icon container - muted circle background
+    &__icon-container {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: $layer-accent-01;
+        color: $text-secondary;
+
+        .empty-state--sm & {
+            width: 48px;
+            height: 48px;
+        }
+
+        .empty-state--md & {
+            width: 64px;
+            height: 64px;
+        }
+
+        .empty-state--lg & {
+            width: 96px;
+            height: 96px;
+        }
+
+        svg {
+            fill: currentColor;
+        }
+    }
+
+    // Title - Carbon heading compact 01
+    &__title {
+        @include type-style('heading-compact-01');
+        color: $text-primary;
+        margin: 0;
+    }
+
+    // Description - Carbon body 01, secondary color
+    &__description {
+        @include type-style('body-01');
+        color: $text-secondary;
+        margin: 0;
+        max-width: 36rem;
+    }
+
+    // Action button spacing
+    &__action {
+        margin-top: $spacing-03;
+    }
+}

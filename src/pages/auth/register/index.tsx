@@ -1,35 +1,48 @@
+/**
+ * Register Page
+ *
+ * New user registration with form validation.
+ */
+
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import {
     TextInput,
     PasswordInput,
     Button,
     Tile,
     InlineLoading,
+    InlineNotification,
 } from '@carbon/react';
 import { UserFollow, ArrowRight } from '@carbon/icons-react';
-import { authService } from '@/services/AuthService';
-import '@/styles/AuthPages.scss';
+import { authService } from '@/shared/services';
+import '@/styles/pages/_auth.scss';
 
 export function RegisterPage() {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
-        fullName: '',
+        firstName: '',
+        lastName: '',
         email: '',
         password: '',
         confirmPassword: '',
     });
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
+    const [success, setSuccess] = useState('');
 
     const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [field]: e.target.value });
+        setError('');
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setSuccess('');
 
-        if (!formData.fullName || !formData.email || !formData.password) {
+        // Validation
+        if (!formData.firstName || !formData.email || !formData.password) {
             setError('Please fill in all required fields');
             return;
         }
@@ -39,27 +52,32 @@ export function RegisterPage() {
             return;
         }
 
+        if (formData.password.length < 8) {
+            setError('Password must be at least 8 characters');
+            return;
+        }
+
         setIsLoading(true);
 
         try {
-            // Split full name into first and last name
-            const names = formData.fullName.split(' ');
-            const firstName = names[0];
-            const lastName = names.slice(1).join(' ') || 'User';
-
-            await authService.register({
-                firstName,
-                lastName,
+            const response = await authService.register({
                 email: formData.email,
+                username: formData.email.split('@')[0],
                 password: formData.password,
-                role: { id: 'operator', text: 'Operator' } // Default role
+                first_name: formData.firstName,
+                last_name: formData.lastName,
             });
 
-            // Redirect to login on success
-            window.location.href = '/login';
-        } catch (err: any) {
+            setSuccess(response.message);
+
+            // Redirect to login after successful registration
+            setTimeout(() => {
+                navigate('/login');
+            }, 2000);
+        } catch (err: unknown) {
             console.error('Registration failed:', err);
-            setError(err.message || 'Registration failed. Please try again.');
+            const message = err instanceof Error ? err.message : 'Registration failed. Please try again.';
+            setError(message);
         } finally {
             setIsLoading(false);
         }
@@ -74,24 +92,52 @@ export function RegisterPage() {
                 </div>
 
                 <h1 className="auth-title">Create Account</h1>
+                <p className="auth-subtitle">Register for access</p>
 
-                {error && <div className="auth-error">{error}</div>}
+                {error && (
+                    <InlineNotification
+                        kind="error"
+                        title="Error"
+                        subtitle={error}
+                        lowContrast
+                        hideCloseButton
+                        className="auth-notification"
+                    />
+                )}
+
+                {success && (
+                    <InlineNotification
+                        kind="success"
+                        title="Success"
+                        subtitle={success}
+                        lowContrast
+                        hideCloseButton
+                        className="auth-notification"
+                    />
+                )}
 
                 <form onSubmit={handleSubmit} className="auth-form">
-                    <TextInput
-                        id="fullName"
-                        labelText="Full Name"
-                        placeholder="Enter your full name"
-                        value={formData.fullName}
-                        onChange={handleChange('fullName')}
-                        disabled={isLoading}
-                    />
+                    <div className="auth-name-row">
+                        <TextInput
+                            id="firstName"
+                            labelText="First Name"
+                            value={formData.firstName}
+                            onChange={handleChange('firstName')}
+                            disabled={isLoading}
+                        />
+                        <TextInput
+                            id="lastName"
+                            labelText="Last Name"
+                            value={formData.lastName}
+                            onChange={handleChange('lastName')}
+                            disabled={isLoading}
+                        />
+                    </div>
 
                     <TextInput
                         id="email"
                         labelText="Email"
                         type="email"
-                        placeholder="Enter your email"
                         value={formData.email}
                         onChange={handleChange('email')}
                         disabled={isLoading}
@@ -100,16 +146,15 @@ export function RegisterPage() {
                     <PasswordInput
                         id="password"
                         labelText="Password"
-                        placeholder="Create a password"
                         value={formData.password}
                         onChange={handleChange('password')}
                         disabled={isLoading}
+                        helperText="Minimum 8 characters"
                     />
 
                     <PasswordInput
                         id="confirmPassword"
                         labelText="Confirm Password"
-                        placeholder="Confirm your password"
                         value={formData.confirmPassword}
                         onChange={handleChange('confirmPassword')}
                         disabled={isLoading}
@@ -118,7 +163,7 @@ export function RegisterPage() {
                     <Button
                         type="submit"
                         className="auth-submit-btn"
-                        disabled={isLoading}
+                        disabled={isLoading || !!success}
                         renderIcon={isLoading ? undefined : ArrowRight}
                     >
                         {isLoading ? (

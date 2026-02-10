@@ -1,0 +1,117 @@
+// Reports Hub Page Styles
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as *;
+
+.reports-hub {
+  width: 100%;
+
+  // KPI Row
+  &__kpi-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: $spacing-05;
+    margin: $spacing-06 0;
+
+    @media (max-width: 1056px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 672px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // Report Cards Grid
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-05;
+
+    @media (max-width: 800px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // Individual Report Card
+  &__card {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-05;
+    padding: $spacing-06;
+    min-height: 200px;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background-color: $layer-hover-01;
+    }
+  }
+
+  &__card-header {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-04;
+  }
+
+  &__card-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 40px;
+    height: 40px;
+    border-radius: 6px;
+    background-color: $layer-02;
+  }
+
+  &__card-title-group {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-02;
+    min-width: 0;
+  }
+
+  &__card-title {
+    @include type-style('heading-compact-01');
+    color: $text-primary;
+    margin: 0;
+  }
+
+  &__card-timestamp {
+    @include type-style('label-01');
+    color: $text-secondary;
+
+    &--never {
+      color: $text-placeholder;
+      font-style: italic;
+    }
+  }
+
+  &__card-description {
+    @include type-style('body-compact-01');
+    color: $text-secondary;
+    margin: 0;
+    flex: 1;
+    line-height: 1.6;
+  }
+
+  &__card-footer {
+    display: flex;
+    align-items: center;
+    margin-top: auto;
+    padding-top: $spacing-04;
+    border-top: 1px solid $border-subtle-01;
+  }
+
+  // Toast container (fixed bottom-right)
+  &__toasts {
+    position: fixed;
+    bottom: $spacing-05;
+    right: $spacing-05;
+    z-index: 9000;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-03;
+    max-width: 400px;
+  }
+}

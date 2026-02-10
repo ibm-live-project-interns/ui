@@ -1,0 +1,537 @@
+// Service Status Page Styles
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as *;
+@use '@carbon/react' as react;
+@use '@carbon/colors' as *;
+
+.service-status-page {
+  width: 100%;
+
+  // Overall Status Banner
+  &__banner {
+    display: flex;
+    align-items: center;
+    gap: $spacing-04;
+    padding: $spacing-05 $spacing-06;
+    border-radius: 4px;
+    margin-bottom: $spacing-06;
+
+    &--operational {
+      background: rgba(36, 161, 72, 0.1);
+      border: 1px solid $support-success;
+    }
+
+    &--degraded {
+      background: rgba(245, 165, 36, 0.1);
+      border: 1px solid $support-warning;
+    }
+
+    &--outage {
+      background: rgba(218, 30, 40, 0.1);
+      border: 1px solid $support-error;
+    }
+
+    .banner-icon {
+      flex-shrink: 0;
+    }
+
+    .banner-content {
+      flex: 1;
+
+      .banner-title {
+        @include react.type-style('heading-compact-02');
+        margin: 0 0 $spacing-01 0;
+      }
+
+      .banner-subtitle {
+        @include react.type-style('body-compact-01');
+        color: $text-secondary;
+        margin: 0;
+      }
+    }
+
+    .banner-actions {
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      gap: $spacing-03;
+
+      .last-refresh {
+        @include react.type-style('label-01');
+        color: $text-secondary;
+        white-space: nowrap;
+      }
+    }
+  }
+
+  // KPI Row
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $spacing-05;
+    margin-bottom: $spacing-06;
+
+    @media (max-width: 1056px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 672px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // ==========================================
+  // Docker Container Status Section
+  // ==========================================
+  &__docker-section {
+    margin-bottom: $spacing-07;
+
+    .section-title-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: $spacing-04;
+      flex-wrap: wrap;
+      gap: $spacing-03;
+    }
+
+    .section-title {
+      @include react.type-style('heading-compact-02');
+      margin: 0;
+      display: flex;
+      align-items: center;
+    }
+
+    .docker-timestamp {
+      @include react.type-style('label-01');
+      color: $text-secondary;
+    }
+  }
+
+  &__docker-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: $spacing-05;
+
+    @media (max-width: 672px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // Docker Card
+  &__docker-card {
+    padding: $spacing-05;
+    position: relative;
+    border-left: 3px solid transparent;
+    transition: border-color 0.15s ease;
+
+    &--running {
+      border-left-color: $support-success;
+    }
+
+    &--stopped {
+      border-left-color: $support-error;
+    }
+
+    &--restarting {
+      border-left-color: $support-warning;
+    }
+
+    &--paused {
+      border-left-color: $support-info;
+    }
+
+    .docker-card-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      margin-bottom: $spacing-04;
+      gap: $spacing-03;
+
+      .docker-name-row {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+        min-width: 0;
+      }
+
+      .docker-name {
+        @include react.type-style('body-compact-01');
+        font-weight: 600;
+        margin: 0;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .docker-tags {
+        display: flex;
+        gap: $spacing-02;
+        flex-shrink: 0;
+      }
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+
+      &--running {
+        background-color: $support-success;
+        box-shadow: 0 0 4px rgba(36, 161, 72, 0.5);
+      }
+
+      &--stopped {
+        background-color: $support-error;
+        box-shadow: 0 0 4px rgba(218, 30, 40, 0.4);
+      }
+
+      &--restarting {
+        background-color: $support-warning;
+        box-shadow: 0 0 4px rgba(245, 165, 36, 0.4);
+      }
+
+      &--paused {
+        background-color: $support-info;
+      }
+    }
+
+    .docker-card-meta {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-02;
+      margin-bottom: $spacing-04;
+
+      .docker-meta-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+
+        .meta-label {
+          @include react.type-style('label-01');
+          color: $text-secondary;
+        }
+
+        .meta-value {
+          @include react.type-style('label-01');
+          font-weight: 500;
+          color: $text-primary;
+          text-align: right;
+          max-width: 60%;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+    }
+
+    .docker-card-actions {
+      display: flex;
+      gap: $spacing-03;
+      border-top: 1px solid $border-subtle-01;
+      padding-top: $spacing-03;
+      margin-top: $spacing-02;
+    }
+  }
+
+  // ==========================================
+  // Application Services Grid
+  // ==========================================
+  &__services-section {
+    margin-bottom: $spacing-06;
+
+    .section-title {
+      @include react.type-style('heading-compact-02');
+      margin: 0 0 $spacing-04 0;
+    }
+  }
+
+  &__services-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: $spacing-05;
+
+    @media (max-width: 672px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // Service Card
+  &__service-card {
+    padding: $spacing-05;
+    position: relative;
+    border-left: 3px solid transparent;
+    transition: border-color 0.15s ease;
+
+    &--operational {
+      border-left-color: $support-success;
+    }
+
+    &--degraded {
+      border-left-color: $support-warning;
+    }
+
+    &--down {
+      border-left-color: $support-error;
+    }
+
+    .service-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: $spacing-04;
+
+      .service-name-row {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+      }
+
+      .service-name {
+        @include react.type-style('body-compact-01');
+        font-weight: 600;
+        margin: 0;
+      }
+    }
+
+    .status-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      flex-shrink: 0;
+
+      &--operational {
+        background-color: $support-success;
+        box-shadow: 0 0 6px rgba(36, 161, 72, 0.4);
+      }
+
+      &--degraded {
+        background-color: $support-warning;
+        box-shadow: 0 0 6px rgba(245, 165, 36, 0.4);
+      }
+
+      &--down {
+        background-color: $support-error;
+        box-shadow: 0 0 6px rgba(218, 30, 40, 0.4);
+      }
+    }
+
+    .status-badge {
+      @include react.type-style('label-01');
+      font-weight: 600;
+      padding: 2px 8px;
+      border-radius: 12px;
+      text-transform: capitalize;
+
+      &--operational {
+        background: rgba(36, 161, 72, 0.15);
+        color: $support-success;
+      }
+
+      &--degraded {
+        background: rgba(245, 165, 36, 0.15);
+        color: $support-warning;
+      }
+
+      &--down {
+        background: rgba(218, 30, 40, 0.15);
+        color: $support-error;
+      }
+    }
+
+    .service-details {
+      @include react.type-style('label-01');
+      color: $text-secondary;
+      margin: 0 0 $spacing-04 0;
+    }
+
+    .service-metrics {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-03;
+    }
+
+    .service-metric-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+
+      .metric-label {
+        @include react.type-style('label-01');
+        color: $text-secondary;
+      }
+
+      .metric-value {
+        @include react.type-style('label-01');
+        font-weight: 600;
+        color: $text-primary;
+      }
+    }
+
+    .uptime-bar {
+      margin-top: $spacing-02;
+
+      // Override Carbon ProgressBar height for compact look
+      :global(.cds--progress-bar__bar) {
+        height: 4px;
+      }
+    }
+  }
+
+  // Last Incident Card
+  &__incident-section {
+    margin-bottom: $spacing-06;
+
+    .section-title {
+      @include react.type-style('heading-compact-02');
+      margin: 0 0 $spacing-04 0;
+    }
+  }
+
+  &__incident-card {
+    padding: $spacing-05;
+    display: flex;
+    gap: $spacing-05;
+    align-items: flex-start;
+
+    @media (max-width: 672px) {
+      flex-direction: column;
+    }
+
+    .incident-icon {
+      flex-shrink: 0;
+      color: $support-warning;
+    }
+
+    .incident-content {
+      flex: 1;
+      min-width: 0;
+
+      .incident-title {
+        @include react.type-style('body-compact-01');
+        font-weight: 600;
+        margin: 0 0 $spacing-03 0;
+      }
+
+      .incident-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: $spacing-05;
+      }
+
+      .incident-meta-item {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-01;
+
+        .meta-label {
+          @include react.type-style('label-01');
+          color: $text-secondary;
+        }
+
+        .meta-value {
+          @include react.type-style('body-compact-01');
+          font-weight: 500;
+        }
+      }
+    }
+  }
+
+  // No incident state
+  &__no-incident {
+    padding: $spacing-05;
+
+    .no-incident-content {
+      display: flex;
+      align-items: center;
+      gap: $spacing-04;
+
+      .no-incident-icon {
+        color: $support-success;
+        flex-shrink: 0;
+      }
+
+      .no-incident-text {
+        @include react.type-style('body-compact-01');
+        color: $text-secondary;
+        margin: 0;
+      }
+    }
+  }
+
+  // Loading skeleton
+  &__skeleton-banner {
+    height: 72px;
+    margin-bottom: $spacing-06;
+    border-radius: 4px;
+  }
+
+  &__skeleton-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: $spacing-05;
+    margin-bottom: $spacing-06;
+
+    .skeleton-card {
+      height: 180px;
+    }
+  }
+
+  // ==========================================
+  // Logs Modal
+  // ==========================================
+  &__logs-modal {
+    .logs-modal-controls {
+      display: flex;
+      align-items: flex-end;
+      gap: $spacing-04;
+      margin-bottom: $spacing-04;
+
+      // Constrain the dropdown width
+      :global(.cds--dropdown__wrapper) {
+        max-width: 160px;
+      }
+    }
+
+    .logs-modal-content {
+      background-color: $layer-01;
+      border: 1px solid $border-subtle-01;
+      border-radius: 4px;
+      max-height: 480px;
+      overflow: auto;
+    }
+
+    .logs-loading {
+      display: flex;
+      align-items: center;
+      gap: $spacing-04;
+      padding: $spacing-05;
+      color: $text-secondary;
+      @include react.type-style('body-compact-01');
+    }
+
+    .logs-output {
+      @include react.type-style('code-01');
+      padding: $spacing-04;
+      margin: 0;
+      white-space: pre-wrap;
+      word-break: break-all;
+      color: $text-primary;
+      min-height: 200px;
+      line-height: 1.5;
+      font-size: 0.75rem;
+    }
+  }
+
+  // ==========================================
+  // Toast container (fixed position)
+  // ==========================================
+  &__toast-container {
+    position: fixed;
+    bottom: $spacing-07;
+    right: $spacing-07;
+    z-index: 9000;
+  }
+}

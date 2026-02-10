@@ -1,0 +1,145 @@
+// AlertTicker Styles
+// Matches ui-revamp-idea design with scrolling animation
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/type' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/colors' as *;
+
+$ticker-height: 40px;
+
+.alert-ticker {
+    display: flex;
+    align-items: center;
+    height: $ticker-height;
+    background-color: $layer-01;
+    border: 1px solid rgba($red-50, 0.3);
+    overflow: hidden;
+    position: relative;
+    margin-bottom: $spacing-05;
+
+    &--empty {
+        border-color: rgba($green-50, 0.3);
+    }
+
+    &--paused {
+        .alert-ticker__content {
+            animation-play-state: paused;
+        }
+    }
+
+    &__badge {
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        display: flex;
+        align-items: center;
+        gap: $spacing-02;
+        padding: 0 $spacing-04;
+        background-color: $red-50;
+        color: $white;
+        font-size: 10px;
+        font-weight: 700;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        z-index: 10;
+
+        svg {
+            fill: currentColor;
+        }
+
+        &--success {
+            background-color: $green-50;
+        }
+    }
+
+    &__container {
+        flex: 1;
+        overflow: hidden;
+        white-space: nowrap;
+        padding-left: 100px; // Space for badge
+    }
+
+    &__content {
+        display: inline-flex;
+        animation: ticker-scroll 30s linear infinite;
+
+        &:hover {
+            animation-play-state: paused;
+        }
+    }
+
+    &__item {
+        display: inline-flex;
+        align-items: center;
+        gap: $spacing-02;
+        margin-right: $spacing-07;
+        padding: $spacing-02 $spacing-03;
+        background: none;
+        border: none;
+        border-radius: 2px;
+        color: $text-primary;
+        font-size: 12px;
+        font-family: inherit;
+        cursor: pointer;
+        pointer-events: all; // Ensure clicks work during animation
+        transition: color 0.15s ease, background-color 0.15s ease;
+
+        &:hover,
+        &:focus {
+            color: $link-primary;
+            background-color: rgba($blue-60, 0.1);
+            outline: none;
+        }
+
+        &:focus-visible {
+            outline: 2px solid $focus;
+            outline-offset: 1px;
+        }
+    }
+
+    &__time {
+        color: $red-50;
+        font-weight: 700;
+        font-family: 'IBM Plex Mono', monospace;
+
+        &--major {
+            color: $orange-40;
+        }
+    }
+
+    &__device {
+        font-weight: 500;
+    }
+
+    &__text {
+        font-weight: 400;
+    }
+
+    &__message {
+        flex: 1;
+        padding-left: $spacing-04;
+        padding-right: $spacing-04;
+        font-size: 12px;
+        color: $text-primary;
+        text-align: right;
+    }
+}
+
+@keyframes ticker-scroll {
+    0% {
+        transform: translateX(0);
+    }
+
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+// Reduced motion preference
+@media (prefers-reduced-motion: reduce) {
+    .alert-ticker__content {
+        animation: none;
+    }
+}

@@ -1,0 +1,789 @@
+// Dashboard Page Styles
+// Uses Carbon Design System spacing tokens and native CSS Grid for layout
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as *;
+@use '@carbon/react' as react;
+@use '@carbon/colors' as *;
+
+.dashboard-page {
+    // Global padding is applied in index.scss - no padding here
+    width: 100%;
+
+    // Content wrapper - matches alert-details pattern
+    &__content {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-04;
+    }
+
+    // KPI Card Skeleton
+    .kpi-card-skeleton {
+        padding: $spacing-05;
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-03;
+    }
+
+    // KPI Row
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: $spacing-06;
+        margin-bottom: $spacing-06;
+
+        @media (max-width: 1056px) {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media (max-width: 672px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    // Charts Row
+    .charts-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: $spacing-06;
+        margin-bottom: $spacing-06;
+        align-items: stretch; // Ensure equal height
+
+        @media (max-width: 1056px) {
+            grid-template-columns: 1fr;
+        }
+
+        .chart-tile {
+            padding: $spacing-05;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+
+            .chart-header {
+                margin-bottom: $spacing-06;
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                min-height: 32px; // Fixed height properly aligns headers
+            }
+
+            .chart-container {
+                flex: 1;
+                display: flex;
+                flex-direction: column;
+                min-height: 300px;
+
+                // Fix Carbon chart container
+                div[class*="chart-holder"] {
+                    flex: 1;
+                }
+
+                // Center the donut chart - needs full width and proper centering
+                .cds--cc--donut {
+                    display: flex;
+                    justify-content: center;
+                    align-items: center;
+                    width: 100%;
+                    height: 100%;
+
+                    // Target the actual Carbon chart wrapper
+                    >div {
+                        display: flex;
+                        justify-content: center;
+                        width: 100%;
+                    }
+
+                    svg {
+                        display: block;
+                        margin: 0 auto;
+                    }
+                }
+            }
+        }
+    }
+
+    // Chart container centering - ensures donut/pie charts are centered in all tiles
+    .chart-container {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+
+        // Carbon charts wrapper
+        > div {
+            width: 100%;
+        }
+    }
+
+    // Global Tile Borders
+    // Apply colored left borders to tiles for visual emphasis
+    .cds--tile,
+    .chart-tile,
+    .device-tile,
+    .settings-tile {
+        &.tile--bordered {
+            border-left: 3px solid transparent;
+        }
+
+        &.tile--critical {
+            border-left: 3px solid $red-60;
+        }
+
+        &.tile--warning {
+            border-left: 3px solid $orange-40;
+        }
+
+        &.tile--success {
+            border-left: 3px solid $green-50;
+        }
+
+        &.tile--info {
+            border-left: 3px solid $blue-60;
+        }
+
+        &.tile--blue {
+            border-left: 3px solid $blue-60;
+        }
+
+        &.tile--purple {
+            border-left: 3px solid $purple-60;
+        }
+
+        &.tile--teal {
+            border-left: 3px solid $teal-50;
+        }
+
+        &.tile--cyan {
+            border-left: 3px solid $cyan-50;
+        }
+    }
+
+
+    // Dashboard Header
+    .dashboard-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: $spacing-06;
+        flex-wrap: wrap;
+        gap: $spacing-04;
+
+        .header-left {
+            .dashboard-title {
+                @include react.type-style('productive-heading-05');
+                margin: 0 0 $spacing-02 0;
+            }
+
+            .dashboard-subtitle {
+                @include react.type-style('body-compact-01');
+                color: $text-secondary;
+                margin: 0;
+            }
+        }
+
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: $spacing-04;
+
+            // System Operational tag styling
+            .cds--tag {
+                display: inline-flex;
+                align-items: center;
+                gap: $spacing-02;
+
+                .cds--tag__custom-icon {
+                    flex-shrink: 0;
+                }
+            }
+        }
+    }
+
+    // Critical Alert Ticker
+    .critical-alert-ticker {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: $spacing-05;
+        background: linear-gradient(90deg, rgba($red-60, 0.15) 0%, rgba($red-60, 0.05) 100%);
+        border: 1px solid rgba($red-60, 0.3);
+        border-radius: 4px;
+        padding: $spacing-03 $spacing-05;
+        margin-bottom: $spacing-05;
+
+        .ticker-label {
+            display: flex;
+            align-items: center;
+            gap: $spacing-03;
+            color: $red-60;
+            flex-shrink: 0;
+
+            .ticker-text-group {
+                display: flex;
+                flex-direction: column;
+
+                .ticker-title {
+                    @include react.type-style('heading-compact-01');
+                    font-weight: 600;
+                }
+
+                .ticker-subtitle {
+                    @include react.type-style('label-01');
+                    color: $text-secondary;
+                }
+            }
+        }
+
+        .ticker-alerts {
+            display: flex;
+            flex: 1;
+            min-width: 0;
+            justify-content: flex-end;
+
+            .alert-item-animated {
+                display: flex;
+                align-items: center;
+                gap: $spacing-04;
+                cursor: pointer;
+                padding: $spacing-02 $spacing-04;
+                border-radius: 4px;
+                transition: all 0.3s ease;
+                background: rgba($red-60, 0.05);
+                border: 1px solid transparent;
+                min-width: 0;
+                flex: 1;
+                max-width: 600px;
+                animation: slideIn 0.5s ease-out;
+
+                &:hover {
+                    background: rgba($red-60, 0.1);
+                    border-color: rgba($red-60, 0.4);
+                    transform: translateY(-1px);
+                }
+
+                &:focus {
+                    outline: 2px solid $focus;
+                    outline-offset: 2px;
+                }
+
+                .alert-content {
+                    display: flex;
+                    align-items: center;
+                    gap: $spacing-03;
+                    flex: 1;
+                    min-width: 0;
+
+                    .critical-icon {
+                        color: $red-60;
+                        flex-shrink: 0;
+                    }
+
+                    .alert-text {
+                        display: flex;
+                        align-items: baseline;
+                        gap: $spacing-02;
+                        @include react.type-style('body-compact-01');
+                        min-width: 0;
+                        flex: 1;
+
+                        .alert-device {
+                            font-weight: 600;
+                            color: $text-primary;
+                            flex-shrink: 0;
+                        }
+
+                        .alert-separator {
+                            color: $text-secondary;
+                            flex-shrink: 0;
+                        }
+
+                        .alert-message {
+                            color: $text-secondary;
+                            overflow: hidden;
+                            text-overflow: ellipsis;
+                            white-space: nowrap;
+                        }
+                    }
+                }
+
+                .ticker-indicator {
+                    display: flex;
+                    align-items: center;
+                    gap: $spacing-02;
+                    flex-shrink: 0;
+
+                    .indicator-dot {
+                        width: 6px;
+                        height: 6px;
+                        border-radius: 50%;
+                        background: rgba($red-60, 0.3);
+                        transition: all 0.3s ease;
+
+                        &.active {
+                            background: $red-60;
+                            transform: scale(1.2);
+                        }
+                    }
+                }
+            }
+
+            .alert-item-no-alerts {
+                display: flex;
+                align-items: center;
+                gap: $spacing-02;
+                @include react.type-style('body-compact-01');
+                color: $text-secondary;
+                padding: $spacing-02 $spacing-04;
+
+                .check-icon {
+                    color: $green-50;
+                }
+            }
+        }
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateX(-20px);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateX(0);
+        }
+    }
+
+    // KPI Stats Row - Native CSS Grid
+    // Replaced by shared .kpi-row in KPICard.scss
+
+
+    // Charts Row - Native CSS Grid (matches KPI row alignment)
+    .charts-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: $spacing-05;
+        margin-bottom: $spacing-05;
+
+        @media (min-width: 1057px) {
+            // 10:6 ratio on large screens to match Carbon 16-column grid
+            grid-template-columns: 10fr 6fr;
+        }
+
+        @media (max-width: 672px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .chart-tile {
+        padding: $spacing-05;
+        height: 100%;
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: $spacing-04;
+
+            h3 {
+                @include react.type-style('heading-compact-02');
+                margin: 0;
+            }
+
+            .time-period-buttons {
+                display: flex;
+                gap: $spacing-02;
+            }
+        }
+
+        .chart-container {
+            width: 100%;
+            min-height: 320px;
+
+            // Center the legend
+            .cds--cc--legend {
+                justify-content: center;
+            }
+        }
+    }
+
+    // Refined Table Container (Polished UI)
+    .refined-table-container {
+        background-color: $layer-01; // Darker base
+        margin-bottom: $spacing-05;
+        // box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); // Optional: add subtle shadow like reference
+
+        .refined-table-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: $spacing-05;
+            border-bottom: 1px solid $border-subtle-01;
+
+            .refined-table-title {
+                @include react.type-style('heading-compact-01');
+                font-weight: 600;
+                margin: 0;
+            }
+
+            .refined-table-actions {
+                display: flex;
+                gap: $spacing-03;
+
+                .search-wrapper {
+                    width: 200px;
+
+                    .cds--search-input {
+                        background-color: $layer-01;
+                        border-bottom: none;
+
+                        &:focus {
+                            outline: 2px solid $focus;
+                        }
+                    }
+
+                    .cds--search-magnifier {
+                        color: $text-secondary;
+                    }
+                }
+
+                .refined-action-btn {
+                    color: $text-primary;
+
+                    // Custom hover effect if needed, otherwise Carbon ghost button handles it
+                    &:hover {
+                        background-color: $layer-hover-02;
+                    }
+                }
+            }
+        }
+
+        // Override Carbon DataTable styles within this container
+        .cds--data-table-container {
+            padding-top: 0; // Remove default container top padding
+            background: transparent;
+        }
+
+        .refined-data-table {
+
+            thead {
+                background-color: $layer-accent-01;
+
+                tr {
+                    height: 40px; // Slightly shorter header row
+                }
+
+                th {
+                    background-color: $layer-accent-01;
+                    padding: $spacing-03 $spacing-05;
+                    border-bottom: 1px solid $border-subtle-01;
+
+                    // Header Text Logic
+                    .cds--table-header-label {
+                        @include react.type-style('label-01');
+                        text-transform: uppercase;
+                        font-weight: 600;
+                        color: $text-secondary;
+                        letter-spacing: 0.5px;
+                    }
+                }
+            }
+
+            tbody {
+                tr {
+                    height: 48px; // Comfortable row height
+                    transition: background-color 0.15s ease;
+
+                    &:hover {
+                        background-color: $layer-hover-01;
+
+                        td {
+                            background-color: $layer-hover-01;
+                            color: $text-primary;
+                        }
+                    }
+
+                    td {
+                        padding: $spacing-03 $spacing-05;
+                        border-bottom: 1px solid $border-subtle-01;
+                        background-color: $layer-01; // Dark content
+                        @include react.type-style('body-compact-01');
+                        vertical-align: middle;
+
+                        &:last-child {
+                            text-align: right;
+                        }
+                    }
+                }
+            }
+
+            // Cell specifc styling
+            .cell-timestamp {
+                color: $text-primary;
+                white-space: nowrap;
+            }
+
+            .cell-device {
+                .device-cell-content {
+                    display: flex;
+                    align-items: center;
+                    gap: $spacing-03;
+                    font-weight: 500;
+                }
+            }
+
+            .cell-summary {
+                max-width: 300px;
+
+                .summary-truncate {
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    color: $text-secondary;
+                }
+            }
+
+            .cell-actions {
+                .action-btns-right {
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: $spacing-02;
+                }
+            }
+        }
+
+        // Pagination Styling Override to blend in
+        .refined-pagination {
+            border-top: none;
+
+            // Ensure background matches container
+            .cds--pagination__left,
+            .cds--pagination__right {
+                background-color: $layer-01; // Match dark content
+                border-top: 1px solid $border-subtle-01;
+            }
+
+            // Tweaks to colors if needed
+            .cds--select-input {
+                background-color: transparent;
+            }
+        }
+    }
+
+    // Bottom Row - Native CSS Grid (matches KPI row alignment)
+    .bottom-row {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: $spacing-05;
+
+        @media (max-width: 672px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    .bottom-tile {
+        padding: $spacing-05;
+        height: 100%;
+
+        h3 {
+            @include react.type-style('heading-compact-02');
+            margin: 0 0 $spacing-04 0;
+        }
+
+        // Devices List
+        .devices-list {
+            display: flex;
+            flex-direction: column;
+            gap: $spacing-03;
+
+            .device-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: $spacing-03;
+                background: $layer-02;
+                border-radius: 4px;
+
+                .device-left {
+                    display: flex;
+                    align-items: center;
+                    gap: $spacing-03;
+
+                    // Severity icon backgrounds with rounded edges
+                    .severity-bg {
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 8px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        flex-shrink: 0;
+
+                        &.critical {
+                            background: rgba($red-60, 0.2);
+
+                            .device-icon-svg {
+                                color: $red-60;
+                            }
+                        }
+
+                        &.major {
+                            background: rgba($orange-40, 0.2);
+
+                            .device-icon-svg {
+                                color: $orange-40;
+                            }
+                        }
+
+                        &.minor {
+                            background: rgba($yellow-30, 0.2);
+
+                            .device-icon-svg {
+                                color: $yellow-30;
+                            }
+                        }
+
+                        &.info {
+                            background: rgba($blue-60, 0.2);
+
+                            .device-icon-svg {
+                                color: $blue-60;
+                            }
+                        }
+                    }
+
+                    .device-details {
+                        .device-name {
+                            @include react.type-style('body-compact-01');
+                            font-weight: 600;
+                        }
+
+                        .device-model {
+                            @include react.type-style('label-01');
+                            color: $text-secondary;
+                        }
+                    }
+                }
+
+                .device-right {
+                    text-align: right;
+
+                    .alerts-count {
+                        @include react.type-style('heading-03');
+                    }
+
+                    .alerts-label {
+                        @include react.type-style('label-01');
+                        color: $text-secondary;
+                    }
+                }
+            }
+        }
+
+        // Metrics List
+        .metrics-list {
+            display: flex;
+            flex-direction: column;
+            gap: $spacing-04;
+
+            .metric-row {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: $spacing-04;
+
+                .metric-left {
+                    flex: 1;
+
+                    .metric-name {
+                        @include react.type-style('body-compact-01');
+                        margin-bottom: $spacing-03;
+                    }
+
+                    // Progress bar styling for visibility in dark mode
+                    .cds--progress-bar {
+                        height: 4px;
+                        border-radius: 2px;
+                        background-color: $layer-02;
+                        position: relative;
+                        overflow: visible;
+
+                        &::after {
+                            content: '';
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            right: 0;
+                            bottom: 0;
+                            background: $border-subtle-01;
+                            border-radius: 2px;
+                        }
+
+                        .cds--progress-bar__bar {
+                            background: $blue-60;
+                            border-radius: 2px;
+                            position: relative;
+                            z-index: 1;
+                            height: 100%;
+                        }
+                    }
+                }
+
+                .metric-change {
+                    @include react.type-style('body-compact-01');
+                    font-weight: 600;
+                    min-width: 60px;
+                    text-align: right;
+
+                    &.positive {
+                        color: $green-50;
+                    }
+
+                    &.negative {
+                        color: $red-60;
+                    }
+                }
+            }
+        }
+    }
+
+    // Coming Soon Tile
+    .coming-soon-tile {
+        padding: $spacing-07;
+        text-align: center;
+        margin-top: $spacing-05;
+
+        h2 {
+            @include react.type-style('heading-03');
+            margin-bottom: $spacing-05;
+            color: $blue-60;
+        }
+
+        p {
+            @include react.type-style('body-01');
+            margin-bottom: $spacing-03;
+            color: $text-secondary;
+        }
+
+        ul {
+            list-style: none;
+            padding: 0;
+            margin: $spacing-05 auto;
+            max-width: 500px;
+            text-align: left;
+
+            li {
+                @include react.type-style('body-01');
+                padding: $spacing-03 0;
+                border-bottom: 1px solid $border-subtle-01;
+                color: $text-primary;
+
+                &:before {
+                    content: '→';
+                    margin-right: $spacing-03;
+                    color: $blue-60;
+                }
+            }
+        }
+    }
+}

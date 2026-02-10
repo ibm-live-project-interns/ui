@@ -1,0 +1,151 @@
+// Device Explorer Page Styles
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as *;
+@use '@carbon/react' as react;
+
+.device-explorer-page {
+    width: 100%;
+
+    // KPI Row - no extra horizontal padding (content wrapper provides padding)
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: $spacing-06;
+        margin-top: $spacing-05;
+        margin-bottom: $spacing-06;
+
+        @media (max-width: 1056px) {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media (max-width: 672px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    // Filters Row - no extra horizontal padding
+    .filters-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-end;
+        gap: $spacing-06;
+        margin-bottom: $spacing-06;
+        flex-wrap: wrap;
+
+        .filter-group {
+            display: flex;
+            gap: $spacing-04;
+            flex-wrap: wrap;
+
+            .cds--dropdown {
+                min-width: 140px;
+            }
+        }
+
+        .view-toggle {
+            display: flex;
+            gap: $spacing-02;
+        }
+    }
+
+    // Device Table Tile Container - no extra padding
+    .device-table-container {
+        // Container relies on content wrapper padding
+    }
+
+    // Device Table Tile
+    .devices-table-tile {
+        padding: $spacing-06;
+        background: $layer-01;
+        border: 1px solid $border-subtle-01;
+
+        // Table header styling - using theme tokens
+        .cds--data-table thead {
+            background: $layer-02;
+
+            tr {
+                background: $layer-02;
+
+                th {
+                    background: $layer-02;
+                    color: $text-secondary;
+                    font-size: 11px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 0.5px;
+                    padding: $spacing-03 $spacing-04;
+                    border-bottom: none;
+                }
+            }
+        }
+
+        // Table body styling
+        .cds--data-table tbody {
+            tr {
+                background: $layer-01;
+                transition: background-color 0.15s ease;
+
+                &:hover {
+                    background: $layer-hover-01;
+                }
+
+                td {
+                    padding: $spacing-03 $spacing-04;
+                    border-bottom: 1px solid $border-subtle-01;
+                }
+            }
+        }
+
+        .enhanced-data-table {
+            width: 100%;
+        }
+
+        .device-cell {
+            display: flex;
+            align-items: center;
+            gap: $spacing-03;
+
+            .device-icon-svg {
+                color: $icon-secondary;
+                flex-shrink: 0;
+            }
+
+            .device-info {
+                display: flex;
+                flex-direction: column;
+
+                .device-name {
+                    @include react.type-style('body-compact-01');
+                    font-weight: 600;
+                }
+
+                .device-ip {
+                    @include react.type-style('label-01');
+                    color: $text-secondary;
+                }
+            }
+        }
+
+        .health-cell {
+            display: flex;
+            align-items: center;
+            gap: $spacing-03;
+            min-width: 100px;
+
+            .cds--progress-bar {
+                flex: 1;
+                max-width: 80px;
+            }
+        }
+
+        .no-alerts {
+            color: $text-secondary;
+        }
+
+        // Pagination
+        .cds--pagination {
+            margin-top: $spacing-06;
+        }
+    }
+}

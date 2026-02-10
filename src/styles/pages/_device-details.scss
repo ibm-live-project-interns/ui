@@ -1,0 +1,128 @@
+// Device Details Page Styles
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react' as react;
+
+.device-details-page {
+    padding: 0;
+    width: 100%;
+
+    &__content {
+        // Global padding is applied in index.scss
+        padding: 0;
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-06;
+    }
+}
+
+.kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $spacing-05;
+
+    @media (max-width: 1056px) {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 672px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.details-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: $spacing-05;
+
+    @media (max-width: 1056px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+.info-tile {
+    h3 {
+        @include react.type-style('productive-heading-02');
+        margin-bottom: $spacing-05;
+        padding-bottom: $spacing-03;
+        border-bottom: 1px solid $border-subtle-01;
+    }
+
+    .info-rows {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: $spacing-03 0;
+        border-bottom: 1px solid $border-subtle-01;
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    .info-label {
+        @include react.type-style('label-01');
+        color: $text-secondary;
+    }
+
+    .info-value {
+        @include react.type-style('body-compact-01');
+        color: $text-primary;
+        display: flex;
+        align-items: center;
+        gap: $spacing-02;
+    }
+}
+
+.chart-tile {
+    h3 {
+        @include react.type-style('productive-heading-02');
+        margin-bottom: $spacing-05;
+    }
+
+    .chart-container {
+        height: 300px;
+    }
+}
+
+.incidents-tile {
+    grid-column: 1 / -1;
+
+    .incidents-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: $spacing-05;
+        padding-bottom: $spacing-03;
+        border-bottom: 1px solid $border-subtle-01;
+
+        h3 {
+            @include react.type-style('productive-heading-02');
+            display: flex;
+            align-items: center;
+        }
+    }
+
+    .incidents-table-container {
+        overflow-x: auto;
+
+        // Carbon DataTable Overrides for Tile integration
+        .cds--data-table-container {
+            padding-top: 0;
+            border-top: none;
+        }
+
+        .cds--data-table {
+
+            td,
+            th {
+                background-color: transparent;
+            }
+        }
+    }
+}

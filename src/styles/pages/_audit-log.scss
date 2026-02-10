@@ -1,0 +1,125 @@
+// Audit Log Page Styles
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as *;
+@use '@carbon/react' as react;
+
+.audit-log-page {
+    width: 100%;
+
+    // Content wrapper
+    &__content {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-05;
+    }
+
+    // Filters row
+    &__filters {
+        display: flex;
+        gap: $spacing-04;
+        flex-wrap: wrap;
+        align-items: flex-end;
+
+        @media (max-width: 672px) {
+            flex-direction: column;
+        }
+    }
+
+    // Date filters row
+    &__date-filters {
+        display: flex;
+        gap: $spacing-04;
+        align-items: center;
+        flex-wrap: wrap;
+
+        @media (max-width: 672px) {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+    }
+
+    // Filter summary banner
+    &__filter-summary {
+        @include react.type-style('body-compact-01');
+        color: $text-secondary;
+        background: $layer-01;
+        border: 1px solid $border-subtle-01;
+        border-radius: 4px;
+        padding: $spacing-03 $spacing-05;
+    }
+
+    // Search field
+    &__search {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    // Clear filters button
+    &__clear-filters {
+        align-self: center;
+    }
+
+    // Table cell: timestamp
+    &__timestamp {
+        white-space: nowrap;
+        color: var(--cds-text-secondary);
+        @include react.type-style('body-compact-01');
+    }
+
+    // Table cell: username
+    &__username {
+        font-weight: 600;
+    }
+
+    // Table cell: resource type
+    &__resource-type {
+        font-weight: 500;
+    }
+
+    // Table cell: resource ID
+    &__resource-id {
+        color: var(--cds-text-secondary);
+        margin-left: 4px;
+    }
+
+    // Table cell: details (truncated)
+    &__details {
+        max-width: 250px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    // Table cell: IP address (monospace)
+    &__ip {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.8125rem;
+        background: var(--cds-layer-02);
+        padding: 2px 6px;
+        border-radius: 2px;
+    }
+
+    // KPI row (reuse shared pattern)
+    .kpi-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: $spacing-05;
+
+        @media (max-width: 1056px) {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        @media (max-width: 672px) {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    // KPI skeleton
+    .kpi-card-skeleton {
+        padding: $spacing-05;
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-03;
+    }
+}

@@ -1,0 +1,15 @@
+// SLA Compliance Reports Page Styles
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+
+.sla-reports-page {
+  width: 100%;
+  padding-bottom: $spacing-07;
+
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: $spacing-05;
+    margin-top: $spacing-06;
+  }
+}
