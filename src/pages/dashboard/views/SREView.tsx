@@ -428,7 +428,6 @@ export function SREView({ config: _config }: SREViewProps) {
                                             value={service.uptime}
                                             max={100}
                                             size="small"
-                                            status={service.uptime >= 90 ? 'finished' : service.uptime >= 70 ? 'active' : 'error'}
                                             hideLabel
                                         />
                                         <span style={{ fontSize: '12px', color: 'var(--cds-text-secondary)', minWidth: '60px' }}>

@@ -12,7 +12,6 @@ import {
   Tile,
   Button,
   ProgressBar,
-  SkeletonText,
   SkeletonPlaceholder,
   InlineNotification,
   Tag,
@@ -801,13 +800,6 @@ export function ServiceStatusPage() {
                         value={service.uptime_percent}
                         max={100}
                         size="small"
-                        status={
-                          service.uptime_percent >= 99.5
-                            ? 'active'
-                            : service.uptime_percent >= 95
-                              ? 'active'
-                              : 'error'
-                        }
                       />
                     </div>
                   </div>
@@ -873,6 +865,7 @@ export function ServiceStatusPage() {
           <Dropdown
             id="log-lines-dropdown"
             titleText="Lines"
+            label="Select line count"
             items={LOG_LINE_OPTIONS}
             itemToString={(item: { id: string; text: string } | null) => item?.text ?? ''}
             selectedItem={LOG_LINE_OPTIONS.find((o) => o.id === logLines) ?? LOG_LINE_OPTIONS[1]}

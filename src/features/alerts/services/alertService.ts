@@ -88,6 +88,12 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
 
     // Helper to transform backend alert to frontend format
     private transformAlert(backendAlert: any): any {
+        // Normalize confidence: DB stores 0-1 (e.g. 0.94), display as 0-100 (e.g. 94)
+        const normalizeConfidence = (val: number): number => {
+            if (val > 0 && val <= 1) return Math.round(val * 100);
+            return Math.round(val);
+        };
+
         const getRelativeTime = (timestamp: string) => {
             const date = new Date(timestamp);
             const now = new Date();
@@ -178,7 +184,7 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
             status: backendAlert.status || 'open',
             aiTitle: backendAlert.title || backendAlert.ai_title || 'Alert Detected',
             aiSummary: backendAlert.ai_summary || backendAlert.description || 'Alert received and pending analysis.',
-            confidence: backendAlert.ai_confidence || backendAlert.confidence || 0,
+            confidence: normalizeConfidence(backendAlert.ai_confidence || backendAlert.confidence || 0),
             timestamp: {
                 absolute: backendAlert.timestamp || new Date().toISOString(),
                 relative: getRelativeTime(backendAlert.timestamp || new Date().toISOString()),
@@ -231,7 +237,7 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
     }
 
     async getAlerts(period?: string): Promise<PriorityAlert[]> {
-        let endpoint = API_ENDPOINTS.ALERTS;
+        let endpoint: string = API_ENDPOINTS.ALERTS;
 
         // Build time range query params from period (24h, 7d, 30d, 90d)
         if (period) {
@@ -359,9 +365,12 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
 
     async getAIMetrics(): Promise<AIMetric[]> {
         const response = await this.get<any>(API_ENDPOINTS.AI_METRICS);
-        // Backend returns single object like {total_processed, success_rate, alerts_enriched, ...}
-        // Transform to AIMetric[] array with {id, label, value} format
+        // Backend returns: {total_processed, success_rate, alerts_enriched, ...}
+        // success_rate is already a percentage (0-100), convert counts to percentages for display
         const successRate = response.success_rate ?? response.successRate ?? 0;
+        const totalProcessed = response.total_processed ?? response.totalProcessed ?? 0;
+        const alertsEnriched = response.alerts_enriched ?? response.alertsEnriched ?? 0;
+        const enrichmentRate = totalProcessed > 0 ? Math.round((alertsEnriched / totalProcessed) * 100) : 0;
         return [
             {
                 id: 'ai-accuracy',
@@ -372,12 +381,14 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
             {
                 id: 'total-processed',
                 label: 'Total Processed',
-                value: response.total_processed ?? response.totalProcessed ?? 0,
+                value: 100,
+                description: `${totalProcessed} alerts`,
             },
             {
                 id: 'alerts-enriched',
                 label: 'Alerts Enriched',
-                value: response.alerts_enriched ?? response.alertsEnriched ?? 0,
+                value: enrichmentRate,
+                description: `${alertsEnriched} of ${totalProcessed}`,
             },
         ];
     }

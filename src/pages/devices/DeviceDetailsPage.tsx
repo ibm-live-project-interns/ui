@@ -423,9 +423,11 @@ export function DeviceDetailsPage() {
                             <ContentSwitcher
                                 size="sm"
                                 selectedIndex={PERIOD_OPTIONS.findIndex(p => p.key === metricsPeriod)}
-                                onChange={(e: { index: number }) => {
-                                    const selected = PERIOD_OPTIONS[e.index];
-                                    if (selected) handlePeriodChange(selected.key);
+                                onChange={(e: { index?: number }) => {
+                                    if (e.index != null) {
+                                        const selected = PERIOD_OPTIONS[e.index];
+                                        if (selected) handlePeriodChange(selected.key);
+                                    }
                                 }}
                             >
                                 {PERIOD_OPTIONS.map(opt => (

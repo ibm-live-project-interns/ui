@@ -296,7 +296,7 @@ export function IncidentHistoryPage() {
 
   // Data
   const [resolvedIncidents, setResolvedIncidents] = useState<ResolvedIncident[]>([]);
-  const [resolvedTickets, setResolvedTickets] = useState<TicketInfo[]>([]);
+  const [_resolvedTickets, setResolvedTickets] = useState<TicketInfo[]>([]);
 
   // ==========================================
   // Theme Detection (matches TrendsPage pattern)

@@ -15,7 +15,6 @@ import {
 import {
     Notification,
     Dashboard,
-    WarningAlt,
     ChartLine,
     Devices,
     Settings,
@@ -27,8 +26,6 @@ import {
     CheckmarkOutline,
     UserAvatar,
     Security,
-    Activity,
-    Report,
 } from '@carbon/icons-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef, useCallback } from 'react';

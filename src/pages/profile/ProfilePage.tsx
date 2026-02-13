@@ -436,7 +436,7 @@ export function ProfilePage() {
                 />
                 <div className="profile-page__content" style={{ padding: '2rem' }}>
                     <SkeletonText heading width="30%" />
-                    <SkeletonText paragraph lineCount={4} style={{ marginTop: '1rem' }} />
+                    <div style={{ marginTop: '1rem' }}><SkeletonText paragraph lineCount={4} /></div>
                 </div>
             </div>
         );
@@ -459,12 +459,11 @@ export function ProfilePage() {
                         title="Failed to load profile"
                         subtitle={loadError}
                         lowContrast
-                        actions={
-                            <Button kind="ghost" size="sm" onClick={fetchProfile}>
-                                Retry
-                            </Button>
-                        }
-                    />
+                    >
+                        <Button kind="ghost" size="sm" onClick={fetchProfile}>
+                            Retry
+                        </Button>
+                    </InlineNotification>
                 </div>
             </div>
         );

@@ -82,7 +82,7 @@ export function TopInterfaces() {
                         {[1, 2, 3].map(i => (
                             <div key={i}>
                                 <SkeletonText width="80%" />
-                                <SkeletonText width="100%" style={{ marginTop: '0.5rem' }} />
+                                <div style={{ marginTop: '0.5rem' }}><SkeletonText width="100%" /></div>
                             </div>
                         ))}
                     </>

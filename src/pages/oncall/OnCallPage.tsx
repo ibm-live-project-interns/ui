@@ -22,7 +22,6 @@ import {
   TableCell,
   Tag,
   Tile,
-  Button,
   SkeletonText,
   DataTableSkeleton,
 } from '@carbon/react';

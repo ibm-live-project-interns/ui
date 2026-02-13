@@ -283,7 +283,9 @@ export function SeniorEngineerView({ config: _config }: SeniorEngineerViewProps)
         switch (type) {
             case 'optimization': return <Settings size={20} />;
             case 'pattern': return <ChartLineSmooth size={20} />;
+            case 'trend': return <ChartLineSmooth size={20} />;
             case 'anomaly': return <Analytics size={20} />;
+            case 'recommendation': return <IbmWatsonxCodeAssistant size={20} />;
             case 'prediction': return <ArrowUp size={20} />;
             default: return <IbmWatsonxCodeAssistant size={20} />;
         }
@@ -293,9 +295,10 @@ export function SeniorEngineerView({ config: _config }: SeniorEngineerViewProps)
         switch (type) {
             case 'optimization': return 'green';
             case 'pattern': return 'blue';
+            case 'trend': return 'blue';
             case 'anomaly': return 'red';
+            case 'recommendation': return 'purple';
             case 'prediction': return 'purple';
-            case 'recommendation': return 'blue';
             default: return 'gray';
         }
     };
