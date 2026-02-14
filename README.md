@@ -1,10 +1,23 @@
-# Alert Visualization UI
+# Sentrix UI
 
-A React application for viewing and managing network alerts with AI-generated insights. Built with [Carbon Design System](https://carbondesignsystem.com/).
+A React frontend for Sentrix for viewing and managing network alerts with AI-generated insights. Built with [Carbon Design System](https://carbondesignsystem.com/).
 
 ## What This Does
 
 Shows alerts from network devices (SNMP traps, syslogs) with AI-generated explanations and recommended actions. To make sense of network noise.
+
+## Tech Stack
+
+| Dependency | Version |
+|-----------|---------|
+| React | 19.2.0 |
+| TypeScript | 5.9.3 |
+| Vite | 7.2.4 |
+| @carbon/react | 1.97.0 |
+| @carbon/charts-react | 1.27.0 |
+| React Router | 7.9.6 |
+| Sass | 1.97.1 |
+| Playwright | 1.58.1 |
 
 ## Quick Start
 
@@ -12,10 +25,10 @@ Shows alerts from network devices (SNMP traps, syslogs) with AI-generated explan
 # Install dependencies
 npm install
 
-# Start development server (uses mock data)
+# Dev server with mock data (port 5173)
 npm run dev
 
-# Start with real API
+# Dev server with real API
 VITE_USE_MOCK=false npm run dev
 
 # Production build
@@ -24,228 +37,196 @@ npm run build
 
 ## Access Points
 
-| Mode | URL | Data Source | Login |
-|------|-----|-------------|-------|
-| Development | http://localhost:5173 | Mock data | See credentials below |
-| Production | http://localhost:3000 | Real API | See credentials below |
+| Mode | URL | Credentials |
+|------|-----|-------------|
+| Development | http://localhost:5173 | Any credentials (demo mode) |
+| Docker/Prod | http://localhost:3000 | `admin@admin.com` / `admin123` |
 
-## User Credentials (Role-Based Dashboards)
+In Docker, nginx proxies `/api/*` from port 3000 to the API Gateway at port 8080.
 
-The application features **role-based dashboards** - each user role sees a customized dashboard with relevant KPIs and features.
+## Roles (5)
 
-| Role | Username | Password | Dashboard Features |
-|------|----------|----------|-------------------|
-| **Network Operations** | `netops` | `netops123` | Alert monitoring, severity distribution, recent alerts, noisy devices |
-| **Site Reliability Engineer** | `sre` | `sre123` | MTTR metrics, availability, incident trends, service health |
-| **Network Administrator** | `netadmin` | `netadmin123` | Device inventory, health status, CPU/memory usage, config changes |
-| **Senior Engineer** | `senior` | `senior123` | Advanced analytics, AI insights, pattern analysis, correlation matrix |
+Role is selected at login and persists in localStorage. Changeable in Settings.
 
-**Demo Mode:** For quick testing, any credentials work, and you'll default to Network Operations dashboard. The role persists in localStorage and can be changed in Settings.
+| Role ID | Display Name | Key Permissions |
+|---------|-------------|-----------------|
+| `network-ops` | NOC Operator | View/acknowledge alerts, create tickets |
+| `sre` | Site Reliability Engineer | View analytics, export reports, MTTR metrics |
+| `network-admin` | Network Administrator | Manage devices, device groups, export reports |
+| `senior-eng` | Senior Engineer | Full analytics, AI insights, pattern analysis |
+| `sysadmin` | System Administrator | User management, audit logs, full admin access |
 
-### Role Permissions
+## Pages
 
-| Permission | Network Ops | SRE | Network Admin | Senior Eng |
-|------------|-------------|-----|---------------|------------|
-| View Alerts | ✅ | ✅ | ✅ | ✅ |
-| Acknowledge Alerts | ✅ | ✅ | ❌ | ✅ |
-| Create Tickets | ✅ | ✅ | ❌ | ✅ |
-| View Devices | ✅ | ✅ | ✅ | ✅ |
-| Manage Devices | ❌ | ❌ | ✅ | ✅ |
-| View Analytics | ❌ | ✅ | ❌ | ✅ |
-| Export Reports | ❌ | ✅ | ✅ | ✅ |
+| Route | Page Component | Description |
+|-------|---------------|-------------|
+| `/dashboard` | DashboardPage | Role-based dashboard (5 views: NetworkOps, SRE, NetworkAdmin, SeniorEng, SysAdmin) |
+| `/priority-alerts` | PriorityAlertsPage | Alert table with filters, bulk actions, CSV export |
+| `/alerts/:id` | AlertDetailsPage | AI analysis, root causes, raw trap data, device info |
+| `/tickets` | TicketsPage | Ticket list with create/edit, dynamic assignees |
+| `/tickets/:id` | TicketDetailsPage | Ticket detail with comments, status change, delete |
+| `/devices` | DeviceExplorerPage | Device inventory with health scores, filtering |
+| `/devices/:id` | DeviceDetailsPage | Device metrics charts, real API data, period selector |
+| `/device-groups` | DeviceGroupsPage | Device group management (create, assign devices) |
+| `/trends` | TrendsPage | Alert trends, recurring alerts, AI insights, peak hours |
+| `/incident-history` | IncidentHistoryPage | Resolved incidents, MTTR, SLA, root cause charts |
+| `/reports` | ReportsHubPage | 5 report types, CSV download, download history |
+| `/reports/sla` | SLAReportsPage | SLA compliance, trend chart, violations table |
+| `/on-call` | OnCallPage | Current on-call, weekly schedule, overrides |
+| `/topology` | TopologyPage | Network topology visualization, connections table |
+| `/configuration` | ConfigurationPage | Threshold rules, channels, policies, maintenance windows |
+| `/runbooks` | RunbooksPage | Knowledge base CRUD, category filter, step editor |
+| `/service-status` | ServiceStatusPage | Docker container monitoring, log viewer |
+| `/admin/audit-log` | AuditLogPage | Audit log with KPIs, filters, CSV export (sysadmin) |
+| `/settings` | SettingsPage | Theme, notifications, role selection |
+| `/profile` | ProfilePage | Account details, password change |
+| `/login` | LoginPage | Email/password + Google OAuth |
+| `/register` | RegisterPage | Account registration |
+| `/forgot-password` | ForgotPasswordPage | Password reset |
+| `/welcome` | WelcomePage | Landing page |
 
 ## Project Structure
 
 ```
-src/
-├── app/                # App-wide providers and routing
-│   ├── providers/      # Context providers
-│   └── routes/         # Route definitions
-├── components/         # React components
-│   ├── auth/           # Authentication components
-│   ├── feedback/       # Loading, error states
-│   ├── layout/         # App layout (Header, Sidebar)
-│   ├── ui/             # Reusable UI (KPICard, ChartWrapper, etc.)
-│   └── widgets/        # Dashboard widgets
-├── features/           # Feature-specific logic
-│   ├── alerts/         # Alert services, hooks, types
-│   ├── auth/           # Authentication logic
-│   ├── devices/        # Device management logic
-│   ├── roles/          # Role-based access control
-│   └── tickets/        # Ticket management logic
-├── pages/              # Page views
-│   ├── alerts/         # Priority Alerts & Details
-│   ├── auth/           # Login, Register
-│   ├── configuration/  # App configuration
-│   ├── dashboard/      # Role-based dashboards
-│   ├── devices/        # Device Explorer & Details
-│   ├── not-found/      # 404 Page
-│   ├── settings/       # User settings
-│   ├── tickets/        # Ticket list & details
-│   ├── trends/         # Trends & Insights
-│   └── welcome/        # Landing page
-├── shared/             # Shared utilities
-│   ├── api/            # HTTP client
-│   ├── config/         # App configuration
-│   ├── constants/      # App constants
-│   ├── services/       # Shared services
-│   ├── types/          # Shared types
-│   └── utils/          # Helper functions
-└── styles/             # Global styles ("_*.scss")
-```
-
-## Key Features
-
-- **Role-Based Dashboards** - Customized dashboards for each user role (Network Ops, SRE, Network Admin, Senior Engineer)
-- **Real-Time Monitoring** - Live alert updates with severity-based KPIs
-- **Priority Alerts** - Advanced filtering, search, and bulk actions
-- **Alert Details** - AI-powered analysis with root causes and recommendations
-- **Tickets** - Integrated issue tracking system
-- **Trends & Insights** - Historical analysis, patterns, and AI insights
-- **Device Management** - Health monitoring and configuration tracking (Network Admin role)
-- **Analytics Dashboard** - Pattern detection and correlation analysis (Senior Engineer role)
-**Data Service:**
-```typescript
-import { alertDataService } from '@/features/alerts/services/alertService';
-
-const alerts = await alertDataService.getAlerts();
-const summary = await alertDataService.getAlertsSummary();
-```
-
-**Role System:**
-```typescript
-import { useRole } from '@/features/roles/hooks';
-
-function MyComponent() {
-  const { currentRole, hasPermission } = useRole();
-
-  if (hasPermission('manage-devices')) {
-    // Show device management UI
-  }
-
-  console.log(currentRole.displayName); // "Network Operations"
-}
+ui/src/
+├── app/                    # Providers and routing
+│   ├── providers/          # AuthProvider, RoleProvider, ThemeProvider, ToastProvider
+│   └── routes/             # Route definitions
+├── components/
+│   ├── auth/               # ProtectedRoute, AuthGuard
+│   ├── feedback/           # Loading, error states
+│   ├── layout/             # AppHeader (sidebar nav), AppLayout
+│   ├── ui/                 # Shared components:
+│   │   ├── AlertTicker/    # Critical alert ticker with auto-rotation
+│   │   ├── ChartWrapper    # Carbon Charts wrapper
+│   │   ├── DataTableWrapper/ # Carbon DataTable wrapper
+│   │   ├── EmptyState/     # Empty state (3 sizes: sm/md/lg)
+│   │   ├── FilterBar/      # Reusable filter toolbar
+│   │   ├── KPICard/        # Metric card with icon, trend, badge
+│   │   ├── KPIRow          # KPI card row layout
+│   │   ├── NoisyDevicesCard # Top alerting devices
+│   │   ├── PageHeader/     # Page header with breadcrumbs, actions
+│   │   └── WidgetErrorBoundary # Chart error boundary
+│   └── widgets/            # Dashboard widgets
+├── features/
+│   ├── alerts/             # alertService (mock + API), hooks, types
+│   ├── auth/               # authService, JWT handling
+│   ├── devices/            # deviceService, hooks
+│   ├── roles/              # RBAC (5 roles, 13 permissions)
+│   └── tickets/            # ticketService, types
+├── pages/                  # 18 page directories (listed above)
+│   ├── admin/              # AuditLogPage
+│   ├── alerts/             # PriorityAlertsPage, AlertDetailsPage + sub-components
+│   ├── auth/               # login, register, forgot-password
+│   ├── configuration/      # ConfigurationPage (4 tabs)
+│   ├── dashboard/          # DashboardPage + views/ (5 role-based views)
+│   ├── devices/            # DeviceExplorerPage, DeviceDetailsPage, DeviceGroupsPage
+│   ├── incidents/          # IncidentHistoryPage
+│   ├── oncall/             # OnCallPage
+│   ├── profile/            # ProfilePage
+│   ├── reports/            # ReportsHubPage, SLAReportsPage
+│   ├── runbooks/           # RunbooksPage
+│   ├── service-status/     # ServiceStatusPage
+│   ├── settings/           # SettingsPage + RoleSelector
+│   ├── tickets/            # TicketsPage, TicketDetailsPage
+│   ├── topology/           # TopologyPage
+│   ├── trends/             # TrendsPage
+│   └── welcome/            # WelcomePage
+├── shared/
+│   ├── api/                # HTTP client (Axios)
+│   ├── config/             # api.config.ts (54 endpoint constants)
+│   ├── constants/          # routes.ts (25 routes), charts.ts, alerts.tsx
+│   ├── contexts/           # ToastContext (shared toast notifications)
+│   ├── services/           # userService
+│   ├── types/              # Shared TypeScript types
+│   └── utils/              # formatters, helpers
+└── styles/                 # SCSS (21 page/component stylesheets)
 ```
 
 ## Environment Variables
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `VITE_USE_MOCK_DATA` | `true` (dev) | Use mock data |
-| `VITE_API_URL` | `http://localhost:8080` | API base URL |
-| `VITE_ENABLE_WEBSOCKET` | `false` | Enable WebSocket |
+| `VITE_USE_MOCK` | `true` (dev) / `false` (prod) | Use mock data instead of real API |
+| `VITE_API_BASE_URL` | `http://localhost:8080` | API Gateway base URL |
+| `VITE_API_VERSION` | `v1` | API version prefix |
+| `VITE_API_TIMEOUT` | `30000` | Request timeout (ms) |
+| `VITE_ENABLE_WEBSOCKET` | `false` | Enable WebSocket connection |
+| `VITE_ALERT_POLLING_INTERVAL` | `30000` | Alert refresh interval (ms) |
+| `VITE_DASHBOARD_REFRESH_INTERVAL` | `30000` | Dashboard refresh interval (ms) |
+| `VITE_DEFAULT_THEME` | `system` | Default theme: `light`, `dark`, `system` |
+
+## Key Patterns
+
+**Service layer** (mock/API switching):
+```typescript
+import { alertDataService } from '@/features/alerts/services/alertService';
+
+// Automatically uses mock or real API based on VITE_USE_MOCK
+const alerts = await alertDataService.getAlerts();
+```
+
+**Role system**:
+```typescript
+import { useRole } from '@/features/roles/hooks';
+
+const { currentRole, hasPermission } = useRole();
+if (hasPermission('manage-devices')) { /* ... */ }
+```
+
+**Theme detection** (MutationObserver on `data-theme-setting`):
+```typescript
+const observer = new MutationObserver(() => {
+    const theme = document.documentElement.getAttribute('data-theme-setting');
+    setCurrentTheme(theme === 'dark' ? 'g100' : 'white');
+});
+observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme-setting'] });
+```
+
+**Chart options** (Carbon Charts):
+```typescript
+import { createAreaChartOptions, createDonutChartOptions } from '@/shared/constants/charts';
+const options = createAreaChartOptions({ title: 'Alerts Over Time', theme: currentTheme });
+```
 
 ## Docker
 
-### Full Stack Deployment
-
 ```bash
-# Start all services (requires ingestor repo cloned alongside)
-docker compose up -d --build
+# Full stack (from infra/prod/)
+cd infra/prod && docker compose up -d --build
 
-# View logs
-docker compose logs -f
-
-# Stop services
-docker compose down
+# UI only
+docker compose build ui && docker compose up -d ui
 ```
 
-### Access Points (Docker)
-
-| Service | URL | Credentials |
-|---------|-----|-------------|
-| UI | http://localhost:3000 | `admin` / `admin123` (any password works) |
-| API | http://localhost:8080/api/v1 | JWT Auth (Direct access) |
-| PgAdmin | http://localhost:5050 | admin@admin.com / root |
-| Kafka UI | http://localhost:8090 | - |
-
-**Note:** When using the web UI at port 3000, nginx proxies API requests to the backend at port 8080.
-
-### Using PgAdmin
-
-1. Open http://localhost:5050
-2. Login: `admin@admin.com` / `root`
-3. Server "NOC Database" is pre-configured (password: `secret` if prompted)
-4. Browse: Servers → NOC Database → Databases → noc_alerts → Schemas → public → Tables
-
-### Troubleshooting
-
-If database tables are missing on first run:
-```bash
-# Reset and recreate database
-docker compose down -v
-docker compose up -d --build
-```
-
-## Documentation
-
-Full documentation is in the [docs repository](https://github.com/ibm-live-project-interns/docs):
-
-- [UI Screens & Components](https://github.com/ibm-live-project-interns/docs/blob/main/docs/UI_SCREENS.md) - Complete UI guide with code examples
-- [API Reference](https://github.com/ibm-live-project-interns/docs/blob/main/docs/API.md) - REST API documentation
-- [Architecture](https://github.com/ibm-live-project-interns/docs/blob/main/docs/ARCHITECTURE.md) - System design
-- [Environment Config](https://github.com/ibm-live-project-interns/docs/blob/main/docs/ENVIRONMENT.md) - All environment variables
-- [Deployment](https://github.com/ibm-live-project-interns/docs/blob/main/docs/DEPLOYMENT.md) - Deployment guide
-
-**Offline Access:** If you have all repos cloned side-by-side, docs are at `../docs/docs/`
-
-## Related Repositories
-
-| Repository | Description |
-|------------|-------------|
-| [docs](https://github.com/ibm-live-project-interns/docs) | Documentation |
-| [ingestor](https://github.com/ibm-live-project-interns/ingestor) | Backend services |
-| [datasource](https://github.com/ibm-live-project-interns/datasource) | Data simulation |
-| [infra](https://github.com/ibm-live-project-interns/infra) | Infrastructure |
-
-## Tech Stack
-
-- React 19 + TypeScript
-- Vite
-- IBM Carbon Design System
-- Carbon Charts
-- React Router
-- SCSS
+Access at http://localhost:3000 (nginx proxies API to :8080).
 
 ## E2E Testing (Playwright)
 
-The project includes a comprehensive Playwright test suite for all major features.
-
 ```bash
-# Run all tests against Docker (port 3000)
-npm test
-
-# Run against local dev server
-BASE_URL=http://localhost:5173 npm test
-
-# Run specific suites
-npm run test:config         # Configuration page
-npm run test:tickets        # Tickets page
-npm run test:validation     # Input validation
-
-# Run with visible browser
-npm run test:headed
-
-# View HTML test report
-npm run test:report
+npm test                    # Run against Docker (port 3000)
+BASE_URL=http://localhost:5173 npm test  # Against dev server
+npm run test:config         # Configuration page tests
+npm run test:tickets        # Ticket tests
+npm run test:validation     # Input validation tests
+npm run test:headed         # With visible browser
+npm run test:report         # View HTML report
 ```
 
-### Test Files
-
-| File | Tests | Covers |
-|------|-------|--------|
-| `tests/configuration.spec.ts` | 10 | CRUD for rules, channels, policies, maintenance windows |
-| `tests/tickets.spec.ts` | 9 | Ticket create/edit, alert linking, assignee dropdown |
-| `tests/input-validation.spec.ts` | 11 | Structured inputs, required field validation across all modals |
+| Test Suite | Tests | Coverage |
+|-----------|-------|---------|
+| `tests/configuration.spec.ts` | 10 | CRUD for rules, channels, policies, maintenance |
+| `tests/tickets.spec.ts` | 9 | Create/edit, alert linking, assignee dropdown |
+| `tests/input-validation.spec.ts` | 11 | Structured inputs, required field validation |
 
 ## Scripts
 
 ```bash
-npm run dev       # Start dev server
-npm run build     # Production build
-npm run preview   # Preview production build
-npm run lint      # Run ESLint
-npm run format    # Format with Prettier
-npm test          # Run Playwright E2E tests
-npm run test:headed  # Run tests with visible browser
+npm run dev           # Vite dev server (:5173)
+npm run build         # Production build
+npm run preview       # Preview production build
+npm run lint          # ESLint
+npm run format        # Prettier
+npm test              # Playwright E2E
+npm run test:headed   # E2E with visible browser
 ```

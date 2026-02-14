@@ -42,6 +42,7 @@ import { ROLE_NAMES } from '@/shared/types';
 import type { User, RoleID } from '@/shared/types';
 import { parseAPIError } from '@/shared/utils/errors';
 import { useToast } from '@/contexts';
+import { authService } from '@/features/auth/services/authService';
 
 // ==========================================
 // Types
@@ -436,7 +437,7 @@ export function ProfilePage() {
                 />
                 <div className="profile-page__content" style={{ padding: '2rem' }}>
                     <SkeletonText heading width="30%" />
-                    <SkeletonText paragraph lineCount={4} style={{ marginTop: '1rem' }} />
+                    <div style={{ marginTop: '1rem' }}><SkeletonText paragraph lineCount={4} /></div>
                 </div>
             </div>
         );
@@ -459,12 +460,11 @@ export function ProfilePage() {
                         title="Failed to load profile"
                         subtitle={loadError}
                         lowContrast
-                        actions={
-                            <Button kind="ghost" size="sm" onClick={fetchProfile}>
-                                Retry
-                            </Button>
-                        }
-                    />
+                    >
+                        <Button kind="ghost" size="sm" onClick={fetchProfile}>
+                            Retry
+                        </Button>
+                    </InlineNotification>
                 </div>
             </div>
         );
@@ -598,100 +598,121 @@ export function ProfilePage() {
 
                     {/* ========================================
                         Security Section
+                        Hidden for Google OAuth users (no password to manage)
                        ======================================== */}
-                    <Column lg={16} md={8} sm={4} style={{ marginBottom: '1.5rem' }}>
-                        <Tile style={{ padding: '1.5rem' }}>
-                            <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.125rem', fontWeight: 600 }}>
-                                Security
-                            </h3>
-                            <p style={{ margin: '0 0 1.5rem', color: 'var(--cds-text-secondary, #525252)', fontSize: '0.875rem' }}>
-                                Change your password. You will remain logged in on this device after changing your password.
-                            </p>
+                    {authService.isOAuthSession() ? (
+                        <Column lg={16} md={8} sm={4} style={{ marginBottom: '1.5rem' }}>
+                            <Tile style={{ padding: '1.5rem' }}>
+                                <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.125rem', fontWeight: 600 }}>
+                                    Security
+                                </h3>
+                                <p style={{ margin: '0 0 1rem', color: 'var(--cds-text-secondary, #525252)', fontSize: '0.875rem' }}>
+                                    You signed in with Google. Password management is not available for OAuth accounts.
+                                </p>
+                                <InlineNotification
+                                    kind="info"
+                                    title="Google Account"
+                                    subtitle="Your password is managed by Google. To change your password, visit your Google Account settings."
+                                    lowContrast
+                                    hideCloseButton
+                                />
+                            </Tile>
+                        </Column>
+                    ) : (
+                        <Column lg={16} md={8} sm={4} style={{ marginBottom: '1.5rem' }}>
+                            <Tile style={{ padding: '1.5rem' }}>
+                                <h3 style={{ margin: '0 0 0.25rem', fontSize: '1.125rem', fontWeight: 600 }}>
+                                    Security
+                                </h3>
+                                <p style={{ margin: '0 0 1.5rem', color: 'var(--cds-text-secondary, #525252)', fontSize: '0.875rem' }}>
+                                    Change your password. You will remain logged in on this device after changing your password.
+                                </p>
 
-                            {passwordNotification && (
-                                <div style={{ marginBottom: '1rem' }}>
-                                    <InlineNotification
-                                        kind={passwordNotification.kind}
-                                        title={passwordNotification.title}
-                                        subtitle={passwordNotification.subtitle}
-                                        lowContrast
-                                        onCloseButtonClick={() => setPasswordNotification(null)}
+                                {passwordNotification && (
+                                    <div style={{ marginBottom: '1rem' }}>
+                                        <InlineNotification
+                                            kind={passwordNotification.kind}
+                                            title={passwordNotification.title}
+                                            subtitle={passwordNotification.subtitle}
+                                            lowContrast
+                                            onCloseButtonClick={() => setPasswordNotification(null)}
+                                        />
+                                    </div>
+                                )}
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1rem' }}>
+                                    <PasswordInput
+                                        id="profile-current-password"
+                                        labelText="Current Password"
+                                        value={currentPassword}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentPassword(e.target.value)}
+                                        placeholder="Enter your current password"
+                                        autoComplete="off"
+                                    />
+                                    <PasswordInput
+                                        id="profile-new-password"
+                                        labelText="New Password"
+                                        value={newPassword}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
+                                        placeholder="Enter a new password"
+                                        invalid={newPassword.length > 0 && newPassword.length < 8}
+                                        invalidText="Password must be at least 8 characters."
+                                        autoComplete="off"
+                                    />
+                                    <PasswordInput
+                                        id="profile-confirm-password"
+                                        labelText="Confirm New Password"
+                                        value={confirmPassword}
+                                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
+                                        placeholder="Confirm your new password"
+                                        invalid={confirmPassword.length > 0 && confirmPassword !== newPassword}
+                                        invalidText="Passwords do not match."
+                                        autoComplete="off"
                                     />
                                 </div>
-                            )}
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '1rem' }}>
-                                <PasswordInput
-                                    id="profile-current-password"
-                                    labelText="Current Password"
-                                    value={currentPassword}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentPassword(e.target.value)}
-                                    placeholder="Enter your current password"
-                                    autoComplete="current-password"
-                                />
-                                <PasswordInput
-                                    id="profile-new-password"
-                                    labelText="New Password"
-                                    value={newPassword}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
-                                    placeholder="Enter a new password"
-                                    invalid={newPassword.length > 0 && newPassword.length < 8}
-                                    invalidText="Password must be at least 8 characters."
-                                    autoComplete="new-password"
-                                />
-                                <PasswordInput
-                                    id="profile-confirm-password"
-                                    labelText="Confirm New Password"
-                                    value={confirmPassword}
-                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
-                                    placeholder="Confirm your new password"
-                                    invalid={confirmPassword.length > 0 && confirmPassword !== newPassword}
-                                    invalidText="Passwords do not match."
-                                    autoComplete="new-password"
-                                />
-                            </div>
-
-                            {/* Password requirements hint */}
-                            <div
-                                style={{
-                                    padding: '0.75rem 1rem',
-                                    backgroundColor: 'var(--cds-layer-02, #f4f4f4)',
-                                    borderRadius: '4px',
-                                    marginBottom: '1.5rem',
-                                    fontSize: '0.8125rem',
-                                    color: 'var(--cds-text-secondary, #525252)',
-                                }}
-                            >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                                    <Information size={16} />
-                                    <strong>Password requirements:</strong>
-                                </div>
-                                <ul style={{ margin: 0, paddingLeft: '1.5rem', listStyleType: 'disc' }}>
-                                    <li style={{ color: newPassword.length >= 8 ? 'var(--cds-support-success, #198038)' : undefined }}>
-                                        At least 8 characters
-                                    </li>
-                                    <li style={{ color: newPassword !== currentPassword && newPassword.length > 0 ? 'var(--cds-support-success, #198038)' : undefined }}>
-                                        Must be different from current password
-                                    </li>
-                                    <li style={{ color: confirmPassword.length > 0 && confirmPassword === newPassword ? 'var(--cds-support-success, #198038)' : undefined }}>
-                                        Confirmation must match new password
-                                    </li>
-                                </ul>
-                            </div>
-
-                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                <Button
-                                    kind="primary"
-                                    size="md"
-                                    renderIcon={Password}
-                                    onClick={handlePasswordChange}
-                                    disabled={!isPasswordFormValid || passwordSaving}
+                                {/* Password requirements hint */}
+                                <div
+                                    style={{
+                                        padding: '0.75rem 1rem',
+                                        backgroundColor: 'var(--cds-layer-02, #f4f4f4)',
+                                        borderRadius: '4px',
+                                        marginBottom: '1.5rem',
+                                        fontSize: '0.8125rem',
+                                        color: 'var(--cds-text-secondary, #525252)',
+                                    }}
                                 >
-                                    {passwordSaving ? 'Changing...' : 'Change Password'}
-                                </Button>
-                            </div>
-                        </Tile>
-                    </Column>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                                        <Information size={16} />
+                                        <strong>Password requirements:</strong>
+                                    </div>
+                                    <ul style={{ margin: 0, paddingLeft: '1.5rem', listStyleType: 'disc' }}>
+                                        <li style={{ color: newPassword.length >= 8 ? 'var(--cds-support-success, #198038)' : undefined }}>
+                                            At least 8 characters
+                                        </li>
+                                        <li style={{ color: newPassword !== currentPassword && newPassword.length > 0 ? 'var(--cds-support-success, #198038)' : undefined }}>
+                                            Must be different from current password
+                                        </li>
+                                        <li style={{ color: confirmPassword.length > 0 && confirmPassword === newPassword ? 'var(--cds-support-success, #198038)' : undefined }}>
+                                            Confirmation must match new password
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                                    <Button
+                                        kind="primary"
+                                        size="md"
+                                        renderIcon={Password}
+                                        onClick={handlePasswordChange}
+                                        disabled={!isPasswordFormValid || passwordSaving}
+                                    >
+                                        {passwordSaving ? 'Changing...' : 'Change Password'}
+                                    </Button>
+                                </div>
+                            </Tile>
+                        </Column>
+                    )}
 
                     {/* ========================================
                         Account Info Section (read-only)

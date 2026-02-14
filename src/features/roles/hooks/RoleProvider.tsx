@@ -45,6 +45,18 @@ export function RoleProvider({ children, defaultRole = 'network-ops' }: RoleProv
         localStorage.setItem('user-role', roleId);
     }, [roleId]);
 
+    // Listen for role changes from authService (login/logout) so sidebar updates
+    useEffect(() => {
+        const handleRoleChanged = (e: Event) => {
+            const newRole = (e as CustomEvent).detail as RoleId;
+            if (newRole && newRole !== roleId) {
+                setRoleId(newRole);
+            }
+        };
+        window.addEventListener('role-changed', handleRoleChanged);
+        return () => window.removeEventListener('role-changed', handleRoleChanged);
+    }, [roleId]);
+
     const setRole = (newRoleId: RoleId) => {
         setRoleId(newRoleId);
     };

@@ -10,7 +10,7 @@ import { Tile, SkeletonText } from '@carbon/react';
 import { ArrowUp, ArrowDown, Subtract } from '@carbon/icons-react';
 import './KPICard.scss';
 
-export type KPISeverity = 'critical' | 'major' | 'minor' | 'info' | 'success' | 'neutral';
+export type KPISeverity = 'critical' | 'major' | 'warning' | 'minor' | 'info' | 'success' | 'neutral';
 export type TrendDirection = 'up' | 'down' | 'stable';
 
 export interface KPITrend {
@@ -101,11 +101,22 @@ export function KPICard({
         );
     }
 
+    // Keyboard accessibility: trigger click on Enter/Space
+    const handleKeyDown = onClick
+        ? (e: React.KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                onClick();
+            }
+        }
+        : undefined;
+
     return (
         <Tile
             id={id}
             className={`kpi-card kpi-card--${severity} ${onClick ? 'kpi-card--clickable' : ''} ${className}`}
             onClick={onClick}
+            onKeyDown={handleKeyDown}
             role={onClick ? 'button' : undefined}
             tabIndex={onClick ? 0 : undefined}
         >

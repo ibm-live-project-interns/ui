@@ -17,6 +17,7 @@
 import { HttpService } from '@/shared/api';
 import { env, API_ENDPOINTS } from '@/shared/config';
 import { parseAPIError } from '@/shared/utils/errors';
+import { authLogger } from '@/shared/utils/logger';
 import type { RoleID } from '@/shared/types';
 
 // ==========================================
@@ -83,7 +84,18 @@ class UserManagementService extends HttpService {
             const users = Array.isArray(response) ? response : (response.users || []);
             return users.map((u: any) => this.transformUser(u));
         } catch (error) {
-            console.warn('[UserService] GET /users not available yet, returning empty list:', error);
+            // Re-throw permission/auth errors instead of swallowing them
+            if (error instanceof Error) {
+                const msg = error.message.toLowerCase();
+                if (msg.includes('403') || msg.includes('forbidden') || msg.includes('insufficient role') || msg.includes('permission denied')) {
+                    throw new Error('Permission denied: You do not have access to manage users.');
+                }
+                if (msg.includes('session expired') || msg.includes('401')) {
+                    throw error;
+                }
+            }
+            // Only fall back to empty array for network/connectivity errors
+            authLogger.warn('GET /users not available, returning empty list', error);
             return [];
         }
     }
@@ -185,12 +197,42 @@ class UserManagementService extends HttpService {
     }
 
     private generateTempPassword(): string {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
-        let password = '';
-        for (let i = 0; i < 16; i++) {
-            password += chars.charAt(Math.floor(Math.random() * chars.length));
+        // Use crypto.getRandomValues() for cryptographically secure randomness
+        const uppercase = 'ABCDEFGHJKLMNPQRSTUVWXYZ';
+        const lowercase = 'abcdefghijkmnpqrstuvwxyz';
+        const digits = '23456789';
+        const symbols = '!@#$%^&*';
+        const allChars = uppercase + lowercase + digits + symbols;
+
+        // Guarantee at least one character from each required class
+        const mandatory = [
+            uppercase[this.cryptoRandomInt(uppercase.length)],
+            lowercase[this.cryptoRandomInt(lowercase.length)],
+            digits[this.cryptoRandomInt(digits.length)],
+            symbols[this.cryptoRandomInt(symbols.length)],
+        ];
+
+        // Fill remaining 12 characters from the full set
+        const remaining: string[] = [];
+        for (let i = 0; i < 12; i++) {
+            remaining.push(allChars[this.cryptoRandomInt(allChars.length)]);
         }
-        return password;
+
+        // Shuffle all characters together using Fisher-Yates with crypto random
+        const combined = [...mandatory, ...remaining];
+        for (let i = combined.length - 1; i > 0; i--) {
+            const j = this.cryptoRandomInt(i + 1);
+            [combined[i], combined[j]] = [combined[j], combined[i]];
+        }
+
+        return combined.join('');
+    }
+
+    /** Generate a cryptographically secure random integer in [0, max) */
+    private cryptoRandomInt(max: number): number {
+        const array = new Uint32Array(1);
+        crypto.getRandomValues(array);
+        return array[0] % max;
     }
 }
 

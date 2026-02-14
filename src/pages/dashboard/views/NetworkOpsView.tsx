@@ -552,11 +552,10 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
                     max={100}
                     hideLabel
                     size="small"
-                    status={metric.trend === 'up' ? 'active' : 'error'}
                   />
                 </div>
                 <div className={`metric-change ${metric.trend || 'stable'}`}>
-                  {metric.change || `${typeof metric.value === 'number' ? Math.round(metric.value * 10) / 10 : metric.value}%`}
+                  {metric.description || `${typeof metric.value === 'number' ? Math.round(metric.value * 10) / 10 : metric.value}%`}
                 </div>
               </div>
             ))}

@@ -15,7 +15,6 @@ import {
 import {
     Notification,
     Dashboard,
-    WarningAlt,
     ChartLine,
     Devices,
     Settings,
@@ -27,8 +26,6 @@ import {
     CheckmarkOutline,
     UserAvatar,
     Security,
-    Activity,
-    Report,
 } from '@carbon/icons-react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useState, useEffect, useRef, useCallback } from 'react';
@@ -61,6 +58,7 @@ import { alertDataService, authService, ticketDataService } from '@/shared/servi
 import { useRole } from '@/features/roles/hooks';
 import { ROLE_NAMES } from '@/shared/types';
 import { SEVERITY_COLORS } from '@/shared/constants/colors';
+import { env } from '@/shared/config';
 
 // Helper to get initials from username, email, or name
 function getInitials(name?: string, email?: string): string {
@@ -90,30 +88,13 @@ function getDisplayName(user: any): string {
 
 /**
  * Notification Dropdown Component
+ *
+ * Shares alert data with the main AppHeader component to avoid duplicate polling.
  */
-function NotificationDropdown() {
+function NotificationDropdown({ notifications }: { notifications: any[] }) {
     const navigate = useNavigate();
     const [isOpen, setIsOpen] = useState(false);
-    const [notifications, setNotifications] = useState<any[]>([]);
     const dropdownRef = useRef<HTMLDivElement>(null);
-
-    // Load recent alerts as notifications
-    useEffect(() => {
-        const loadNotifications = async () => {
-            try {
-                const alerts = await alertDataService.getAlerts();
-                // Get the 5 most recent alerts
-                setNotifications(alerts.slice(0, 5));
-            } catch (error) {
-                console.error('Failed to load notifications:', error);
-            }
-        };
-        loadNotifications();
-
-        // Refresh every 30 seconds
-        const interval = setInterval(loadNotifications, 30000);
-        return () => clearInterval(interval);
-    }, []);
 
     // Click outside to close
     useEffect(() => {
@@ -179,9 +160,9 @@ function NotificationDropdown() {
                                         style={{ backgroundColor: getSeverityColor(alert.severity) }}
                                     />
                                     <div className="notification-content">
-                                        <span className="notification-title">{alert.aiTitle || 'Alert'}</span>
-                                        <span className="notification-device">{alert.device?.name || 'Unknown Device'}</span>
-                                        <span className="notification-time">{typeof alert.timestamp === 'string' ? alert.timestamp : alert.timestamp?.relative || 'Now'}</span>
+                                        <span className="notification-title">{alert.title || alert.description || 'Alert'}</span>
+                                        <span className="notification-device">{alert.source || (typeof alert.device === 'string' ? alert.device : alert.device?.name) || 'Unknown Device'}</span>
+                                        <span className="notification-time">{alert.created_at ? new Date(alert.created_at).toLocaleTimeString() : 'Now'}</span>
                                     </div>
                                 </button>
                             ))
@@ -223,6 +204,7 @@ function HeaderSearch() {
         { id: 'service-status', title: 'Service Status', subtitle: 'Service health and availability', type: 'page', url: '/service-status' },
         { id: 'tickets', title: 'Tickets', subtitle: 'Ticket management', type: 'page', url: '/tickets' },
         { id: 'devices', title: 'Devices', subtitle: 'Device inventory', type: 'page', url: '/devices' },
+        { id: 'device-groups', title: 'Device Groups', subtitle: 'Organize devices into logical groups', type: 'page', url: '/device-groups' },
         { id: 'configuration', title: 'Alert Configuration', subtitle: 'Alert rules and settings', type: 'page', url: '/configuration' },
         { id: 'settings', title: 'Settings', subtitle: 'User settings', type: 'page', url: '/settings' },
         { id: 'profile', title: 'Profile', subtitle: 'User profile management', type: 'page', url: '/profile' },
@@ -248,21 +230,23 @@ function HeaderSearch() {
                 results.push(...matchingPages);
 
                 try {
-                    // Search alerts
+                    // Search alerts - using correct Alert interface fields:
+                    // id, title, description, severity, source, device, ai_summary
                     const alerts = await alertDataService.getAlerts();
                     const matchingAlerts = alerts
-                        .filter(alert =>
+                        .filter((alert: any) =>
                             alert.id?.toLowerCase().includes(query) ||
-                            alert.aiTitle?.toLowerCase().includes(query) ||
-                            alert.aiSummary?.toLowerCase().includes(query) ||
-                            alert.device?.name?.toLowerCase().includes(query) ||
+                            alert.title?.toLowerCase().includes(query) ||
+                            alert.description?.toLowerCase().includes(query) ||
+                            alert.ai_summary?.toLowerCase().includes(query) ||
+                            alert.source?.toLowerCase().includes(query) ||
                             alert.severity?.toLowerCase().includes(query)
                         )
                         .slice(0, 5)
-                        .map(alert => ({
+                        .map((alert: any) => ({
                             id: alert.id,
-                            title: alert.aiTitle || alert.id,
-                            subtitle: alert.device?.name || 'Unknown Device',
+                            title: alert.title || alert.description || alert.id,
+                            subtitle: alert.source || alert.device || 'Unknown Device',
                             type: 'alert' as const,
                             url: `/alerts/${alert.id}`,
                             severity: alert.severity
@@ -273,19 +257,20 @@ function HeaderSearch() {
                 }
 
                 try {
-                    // Search tickets
+                    // Search tickets - using correct TicketInfo interface fields:
+                    // id, ticketNumber, title, deviceName, assignedTo
                     const tickets = await ticketDataService.getTickets();
                     const matchingTickets = tickets
                         .filter(ticket =>
-                            ticket.title.toLowerCase().includes(query) ||
-                            ticket.ticketNumber.toLowerCase().includes(query) ||
-                            ticket.deviceName.toLowerCase().includes(query)
+                            ticket.title?.toLowerCase().includes(query) ||
+                            (ticket.ticketNumber && ticket.ticketNumber.toLowerCase().includes(query)) ||
+                            (ticket.deviceName && ticket.deviceName.toLowerCase().includes(query))
                         )
                         .slice(0, 5)
                         .map(ticket => ({
                             id: ticket.id,
-                            title: `${ticket.ticketNumber} - ${ticket.title}`,
-                            subtitle: ticket.deviceName,
+                            title: `${ticket.ticketNumber || ticket.id} - ${ticket.title}`,
+                            subtitle: ticket.deviceName || 'Unknown Device',
                             type: 'ticket' as const,
                             url: `/tickets/${ticket.id}`
                         }));
@@ -433,21 +418,33 @@ export function AppHeader() {
     const [userMenuOpen, setUserMenuOpen] = useState(false);
     const [alertCount, setAlertCount] = useState(0);
     const [criticalTicketCount, setCriticalTicketCount] = useState(0);
+    // Shared notification alerts -- single polling source to avoid duplicate API calls
+    const [notificationAlerts, setNotificationAlerts] = useState<any[]>([]);
     const userMenuRef = useRef<HTMLDivElement>(null);
     const { hasPermission, currentRole } = useRole();
 
-    // Fetch alert count on mount and periodically
+    // Single polling loop for alert count, ticket count, and notification alerts
     useEffect(() => {
+        // Check auto-refresh setting from localStorage
+        const autoRefreshSetting = localStorage.getItem('settings_autoRefresh');
+        const autoRefreshEnabled = autoRefreshSetting !== 'false';
+
         const fetchCounts = async () => {
             try {
                 const alertsCount = await alertDataService.getActiveAlertCount();
                 setAlertCount(alertsCount);
             } catch (error) {
                 console.debug('Alert count fetch skipped:', error);
-                // Keep previous count or 0
             }
 
-            // Get critical/high priority open tickets count
+            // Fetch recent alerts for notification dropdown (shared data, no duplicate polling)
+            try {
+                const alerts = await alertDataService.getAlerts();
+                setNotificationAlerts(alerts.slice(0, 5));
+            } catch (error) {
+                console.debug('Notification alerts fetch skipped:', error);
+            }
+
             try {
                 const tickets = await ticketDataService.getTickets();
                 const criticalCount = tickets.filter(
@@ -460,9 +457,15 @@ export function AppHeader() {
             }
         };
         fetchCounts();
-        // Refresh every 30 seconds
-        const interval = setInterval(fetchCounts, 30000);
-        return () => clearInterval(interval);
+
+        // Only set interval if auto-refresh is enabled
+        let interval: ReturnType<typeof setInterval> | null = null;
+        if (autoRefreshEnabled) {
+            interval = setInterval(fetchCounts, 30000);
+        }
+        return () => {
+            if (interval) clearInterval(interval);
+        };
     }, []);
 
     const isActive = (path: string) => {
@@ -485,7 +488,7 @@ export function AppHeader() {
     return (
         <HeaderContainer
             render={({ isSideNavExpanded, onClickSideNavExpand }) => (
-                <Header aria-label="IBM watsonx Alerts">
+                <Header aria-label={env.appName}>
                     <SkipToContent />
                     <HeaderMenuButton
                         aria-label={isSideNavExpanded ? 'Close menu' : 'Open menu'}
@@ -493,8 +496,8 @@ export function AppHeader() {
                         isActive={isSideNavExpanded}
                         aria-expanded={isSideNavExpanded}
                     />
-                    <HeaderName as={Link} to="/" prefix="IBM">
-                        watsonx Alerts
+                    <HeaderName as={Link} to="/" prefix="">
+                        {env.appName}
                     </HeaderName>
 
                     {/* Global Bar - Expandable Search and Notifications */}
@@ -503,7 +506,7 @@ export function AppHeader() {
                         <HeaderSearch />
 
                         {/* Notifications Dropdown */}
-                        <NotificationDropdown />
+                        <NotificationDropdown notifications={notificationAlerts} />
                     </HeaderGlobalBar>
 
                     <SideNav
@@ -596,7 +599,7 @@ export function AppHeader() {
                                     title="Infrastructure"
                                     renderIcon={Devices}
                                     defaultExpanded
-                                    isActive={isActive('/devices') || isActive('/topology')}
+                                    isActive={isActive('/devices') || isActive('/topology') || isActive('/device-groups')}
                                 >
                                     <SideNavLink
                                         as={Link}
@@ -611,6 +614,13 @@ export function AppHeader() {
                                         isActive={isActive('/topology')}
                                     >
                                         Network Topology
+                                    </SideNavLink>
+                                    <SideNavLink
+                                        as={Link}
+                                        to="/device-groups"
+                                        isActive={isActive('/device-groups')}
+                                    >
+                                        Device Groups
                                     </SideNavLink>
                                 </SideNavMenu>
                             )}

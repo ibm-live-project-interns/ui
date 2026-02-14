@@ -8,6 +8,7 @@
 
 import { env, API_ENDPOINTS } from '@/shared/config';
 import { HttpService } from '@/shared/api';
+import { ticketLogger } from '@/shared/utils/logger';
 
 export interface TicketInfo {
     id: string;
@@ -28,6 +29,8 @@ export interface CreateTicketData {
     title: string;
     description: string;
     priority: 'critical' | 'high' | 'medium' | 'low';
+    category?: string;
+    deviceId?: string;
     deviceName?: string;
     assignee?: string;
 }
@@ -189,7 +192,7 @@ class MockTicketDataService implements ITicketDataService {
         tickets.unshift(newTicket); // Add to beginning
         this.saveTickets(tickets);
 
-        console.log('[MockTicketService] Created ticket:', newTicket);
+        ticketLogger.debug('Created mock ticket', { id: newTicket.id, ticketNumber: newTicket.ticketNumber });
         return newTicket;
     }
 
@@ -305,7 +308,7 @@ class ApiTicketDataService extends HttpService implements ITicketDataService {
             assignedTo: t.assignedTo || t.assigned_to || t.assignee || 'Unassigned',
             createdAt: t.createdAt || t.created_at,
             updatedAt: t.updatedAt || t.updated_at,
-            deviceName: t.deviceName || t.device_name || 'Unknown',
+            deviceName: t.deviceName || t.device_name || t.device_id || 'Unknown',
         }));
     }
 
@@ -315,7 +318,7 @@ class ApiTicketDataService extends HttpService implements ITicketDataService {
             const ticket = response.ticket || response;
             return this.transformTicket(ticket);
         } catch {
-            console.warn('[TicketService] Failed to fetch ticket by ID:', id);
+            ticketLogger.warn('Failed to fetch ticket by ID', { id });
             return null;
         }
     }
@@ -339,16 +342,22 @@ class ApiTicketDataService extends HttpService implements ITicketDataService {
 
     async createTicket(data: CreateTicketData): Promise<TicketInfo> {
         // Transform camelCase frontend fields to snake_case backend contract
-        const payload = {
+        const payload: Record<string, unknown> = {
             title: data.title,
             description: data.description,
             priority: data.priority,
-            category: data.priority, // Use priority as category fallback since UI doesn't have a category field
             alert_id: data.alertId || undefined,
-            device_id: data.deviceName || undefined, // Backend expects device_id, UI has deviceName
             assignee: data.assignee || undefined,
         };
-        console.log('[TicketService] Creating ticket with payload:', payload);
+        // Backend requires category — default to "general" if not provided
+        payload.category = data.category || 'general';
+        // Send device_id if numeric/UUID ID is available, otherwise send device_name
+        if (data.deviceId) {
+            payload.device_id = data.deviceId;
+        } else if (data.deviceName) {
+            payload.device_name = data.deviceName;
+        }
+        ticketLogger.debug('Creating ticket', { title: data.title, priority: data.priority });
         const response = await this.post<any>(API_ENDPOINTS.TICKETS, payload);
         // Transform response back to camelCase
         const ticket = response.ticket || response;
@@ -364,7 +373,7 @@ class ApiTicketDataService extends HttpService implements ITicketDataService {
         if (data.status !== undefined) payload.status = data.status;
         if (data.assignedTo !== undefined) payload.assignee = data.assignedTo;
         if (data.alertId !== undefined) payload.alert_id = data.alertId;
-        console.log('[TicketService] Updating ticket %s with payload:', id, payload);
+        ticketLogger.debug('Updating ticket', { id, fields: Object.keys(payload) });
         const response = await this.put<any>(API_ENDPOINTS.TICKET_BY_ID(id), payload);
         const ticket = response.ticket || response;
         return this.transformTicket(ticket);
@@ -387,7 +396,7 @@ class ApiTicketDataService extends HttpService implements ITicketDataService {
                 updatedAt: c.updated_at || c.updatedAt,
             }));
         } catch {
-            console.warn('[TicketService] Failed to fetch comments for ticket:', ticketId);
+            ticketLogger.warn('Failed to fetch comments', { ticketId });
             return [];
         }
     }
@@ -419,7 +428,7 @@ class ApiTicketDataService extends HttpService implements ITicketDataService {
                 avg_resolution_hours: response.avg_resolution_hours ?? 0,
             };
         } catch {
-            console.warn('[TicketService] Failed to fetch ticket stats');
+            ticketLogger.warn('Failed to fetch ticket stats');
             return {
                 total: 0,
                 open: 0,
@@ -440,10 +449,10 @@ class ApiTicketDataService extends HttpService implements ITicketDataService {
 
 function createTicketDataService(): ITicketDataService {
     if (env.useMockData) {
-        console.info('[TicketDataService] Using mock data');
+        ticketLogger.info('Using mock data');
         return new MockTicketDataService();
     }
-    console.info('[TicketDataService] Using API:', env.apiBaseUrl);
+    ticketLogger.info('Using API: ' + env.apiBaseUrl);
     return new ApiTicketDataService();
 }
 

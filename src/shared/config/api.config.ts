@@ -35,7 +35,7 @@ export const env = {
   defaultTheme: import.meta.env.VITE_DEFAULT_THEME || 'system',
 
   // App info
-  appName: import.meta.env.VITE_APP_NAME || 'IBM watsonx Alerts',
+  appName: import.meta.env.VITE_APP_NAME || 'Sentrix',
   appVersion: import.meta.env.VITE_APP_VERSION || '1.0.0',
 
   // Google OAuth (if enabled)
@@ -65,14 +65,14 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/login',
     REGISTER: '/register',
-    LOGOUT: '/logout',
-    VERIFY_EMAIL: '/verify-email',
-    FORGOT_PASSWORD: '/forgot-password',
-    RESET_PASSWORD: '/reset-password',
-    RESEND_VERIFICATION: '/resend-verification',
+    LOGOUT: '/auth/logout',
+    VERIFY_EMAIL: '/auth/verify-email',
+    FORGOT_PASSWORD: '/auth/forgot-password',
+    RESET_PASSWORD: '/auth/reset-password',
+    RESEND_VERIFICATION: '/auth/resend-verification',
     // Google OAuth endpoints (if backend supports)
-    GOOGLE_LOGIN: '/google/login',
-    GOOGLE_CALLBACK: '/google/callback',
+    GOOGLE_LOGIN: '/auth/google/login',
+    GOOGLE_CALLBACK: '/auth/google/callback',
   },
 
   // ==========================================
@@ -172,6 +172,12 @@ export const API_ENDPOINTS = {
   // Service Status
   // ==========================================
   SERVICE_STATUS: '/service-status',
+
+  // ==========================================
+  // Device Groups
+  // ==========================================
+  DEVICE_GROUPS: '/device-groups',
+  DEVICE_GROUP_BY_ID: (id: string) => `/device-groups/${id}`,
 
   // ==========================================
   // Docker Container Status & Logs

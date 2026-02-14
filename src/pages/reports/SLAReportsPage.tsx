@@ -686,13 +686,6 @@ export function SLAReportsPage() {
                                 max={100}
                                 hideLabel
                                 size="small"
-                                status={
-                                  sevData.compliance_percent >= 99.9
-                                    ? undefined
-                                    : sevData.compliance_percent >= 90
-                                      ? undefined
-                                      : 'error'
-                                }
                               />
                               <span
                                 style={{

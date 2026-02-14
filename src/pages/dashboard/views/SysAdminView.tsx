@@ -20,7 +20,7 @@ import {
     TableSelectAll, TableSelectRow, TableBatchActions, TableBatchAction,
     TableExpandHeader, TableExpandRow, TableExpandedRow,
     Button, SkeletonText, DataTableSkeleton,
-    Modal, TextInput, Select, SelectItem,
+    Modal, TextInput, Select, SelectItem, Toggle,
     OverflowMenu, OverflowMenuItem, Pagination,
 } from '@carbon/react';
 import { useToast } from '@/contexts';
@@ -173,6 +173,34 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
     const [showBulkRoleModal, setShowBulkRoleModal] = useState(false);
     const [pendingBulkRoleIds, setPendingBulkRoleIds] = useState<string[]>([]);
     const [bulkRoleValue, setBulkRoleValue] = useState('network-ops');
+
+    // Editable role permissions state
+    const PERM_COLUMN_LABELS = ['View Alerts', 'Manage Alerts', 'View Devices', 'Manage Users', 'System Config'];
+    const PERM_ROLES: { roleId: string; label: string }[] = [
+        { roleId: 'sysadmin', label: 'System Administrator' },
+        { roleId: 'network-ops', label: 'NOC Operator' },
+        { roleId: 'network-admin', label: 'Network Administrator' },
+        { roleId: 'senior-eng', label: 'Senior Engineer' },
+        { roleId: 'sre', label: 'SRE' },
+    ];
+    const [rolePermissions, setRolePermissions] = useState<Record<string, boolean[]>>({
+        'sysadmin': [true, true, true, true, true],
+        'network-ops': [true, true, true, false, false],
+        'network-admin': [true, true, true, false, true],
+        'senior-eng': [true, true, true, false, false],
+        'sre': [true, false, true, false, false],
+    });
+
+    const handlePermissionToggle = (roleId: string, permIndex: number) => {
+        if (roleId === 'sysadmin') return; // System Administrator is always full access
+        setRolePermissions(prev => {
+            const updated = { ...prev };
+            updated[roleId] = [...prev[roleId]];
+            updated[roleId][permIndex] = !updated[roleId][permIndex];
+            return updated;
+        });
+        addToast('info', 'Permission Updated', `Updated permissions for ${PERM_ROLES.find(r => r.roleId === roleId)?.label}`);
+    };
 
     // Detect theme
     useEffect(() => {
@@ -531,12 +559,12 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
 
     // Chart options
     const areaChartOptions = useMemo(() =>
-        createAreaChartOptions({ title: 'System Load', height: '250px', theme: currentTheme, showTitle: false }),
+        createAreaChartOptions({ title: 'System Load', height: '320px', theme: currentTheme, showTitle: false }),
         [currentTheme]
     );
 
     const donutChartOptions = useMemo(() =>
-        createDonutChartOptions({ title: 'Alert Distribution', height: '250px', theme: currentTheme, showTitle: false }),
+        createDonutChartOptions({ title: 'Alert Distribution', height: '300px', theme: currentTheme, showTitle: false }),
         [currentTheme]
     );
 
@@ -813,59 +841,56 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                     </TabList>
                     <TabPanels>
                         {/* Overview Tab */}
-                        <TabPanel style={{ padding: '1rem 0' }}>
-                            {/* Overview grid: charts left, widgets right */}
-                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                                {/* Left Column: Charts */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                    <Tile className="chart-tile" style={{ minHeight: '300px' }}>
-                                        <div className="chart-header">
-                                            <h3>Alert Trends</h3>
-                                        </div>
-                                        <div className="chart-container">
-                                            <ChartWrapper
-                                                ChartComponent={StackedAreaChart}
-                                                data={alertsOverTime}
-                                                options={areaChartOptions}
-                                                height="250px"
-                                                emptyMessage="No alert data available"
-                                            />
-                                        </div>
-                                    </Tile>
-
-                                    <Tile className="chart-tile" style={{ minHeight: '300px' }}>
-                                        <div className="chart-header">
-                                            <h3>Severity Distribution</h3>
-                                        </div>
-                                        <div className="chart-container">
-                                            <ChartWrapper
-                                                ChartComponent={DonutChart}
-                                                data={severityDist}
-                                                options={donutChartOptions}
-                                                height="250px"
-                                                emptyMessage="No distribution data"
-                                            />
-                                        </div>
-                                    </Tile>
-                                </div>
-
-                                {/* Right Column: Widgets (wrapped in error boundaries) */}
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', height: '100%' }}>
-                                    <div style={{ flex: 1 }}>
-                                        <WidgetErrorBoundary widgetName="Top Interfaces">
-                                            <TopInterfaces />
-                                        </WidgetErrorBoundary>
+                        <TabPanel className="dashboard-tab-panel">
+                            {/* Charts Row: Alert Trends + Severity Distribution side by side */}
+                            <div className="charts-row">
+                                <Tile className="chart-tile">
+                                    <div className="chart-header">
+                                        <h3>Alert Trends</h3>
                                     </div>
-                                    <div style={{ flex: 1 }}>
-                                        <WidgetErrorBoundary widgetName="Config Audit Log">
-                                            <ConfigAuditLog />
-                                        </WidgetErrorBoundary>
+                                    <div className="chart-container">
+                                        <ChartWrapper
+                                            ChartComponent={StackedAreaChart}
+                                            data={alertsOverTime}
+                                            options={areaChartOptions}
+                                            height="320px"
+                                            emptyMessage="No alert data available"
+                                        />
                                     </div>
-                                </div>
+                                </Tile>
+
+                                <Tile className="chart-tile">
+                                    <div className="chart-header">
+                                        <h3>Severity Distribution</h3>
+                                    </div>
+                                    <div className="chart-container">
+                                        <ChartWrapper
+                                            ChartComponent={DonutChart}
+                                            data={severityDist}
+                                            options={donutChartOptions}
+                                            height="300px"
+                                            emptyMessage="No distribution data"
+                                        />
+                                    </div>
+                                </Tile>
+                            </div>
+
+                            {/* Bottom Row: Top Interfaces + Config Audit Log side by side */}
+                            <div className="bottom-row">
+                                <Tile className="bottom-tile">
+                                    <WidgetErrorBoundary widgetName="Top Interfaces">
+                                        <TopInterfaces />
+                                    </WidgetErrorBoundary>
+                                </Tile>
+                                <Tile className="bottom-tile">
+                                    <WidgetErrorBoundary widgetName="Config Audit Log">
+                                        <ConfigAuditLog />
+                                    </WidgetErrorBoundary>
+                                </Tile>
                             </div>
 
                             {/* Activity Table */}
-                            <div style={{ marginTop: '1rem' }}>
+                            <div className="dashboard-section">
                                 <DataTable rows={recentActivity} headers={[
                                     { key: 'user', header: 'User' },
                                     { key: 'action', header: 'Action' },
@@ -946,17 +971,16 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                             </div>
 
                             {/* User Performance Section */}
-                            <div style={{ marginTop: '1.5rem' }}>
-                                <h3 style={{ marginBottom: '1rem', fontSize: '1.125rem', fontWeight: 600 }}>
+                            <div className="dashboard-section">
+                                <h3 className="dashboard-section__title">
                                     User Performance
                                 </h3>
-                                {/* User Performance grid: table left, donut chart right */}
-                                <div style={{ display: 'grid', gridTemplateColumns: '9fr 7fr', gap: '1rem' }}>
+                                <div className="charts-row">
                                     {/* Left: Top Performers Table */}
-                                    <Tile style={{ padding: '1rem', height: '100%' }}>
-                                        <h4 style={{ marginBottom: '0.75rem', fontSize: '0.875rem', fontWeight: 600, color: 'var(--cds-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.32px' }}>
-                                            Top Performers
-                                        </h4>
+                                    <Tile className="chart-tile">
+                                        <div className="chart-header">
+                                            <h4>Top Performers</h4>
+                                        </div>
                                         {topPerformers.length === 0 ? (
                                             <EmptyState
                                                 icon={UserMultiple}
@@ -1015,11 +1039,9 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                                         )}
                                     </Tile>
                                     {/* Right: Ticket Distribution Donut Chart */}
-                                    <Tile className="chart-tile" style={{ minHeight: '320px', height: '100%' }}>
+                                    <Tile className="chart-tile">
                                         <div className="chart-header">
-                                            <h4 style={{ fontSize: '0.875rem', fontWeight: 600, color: 'var(--cds-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.32px' }}>
-                                                Ticket Distribution by Assignee
-                                            </h4>
+                                            <h4>Ticket Distribution by Assignee</h4>
                                         </div>
                                         <div className="chart-container">
                                             <ChartWrapper
@@ -1036,36 +1058,30 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                         </TabPanel>
 
                         {/* Users & Roles Tab */}
-                        <TabPanel style={{ padding: '1rem 0' }}>
+                        <TabPanel className="dashboard-tab-panel">
                             {/* User Statistics */}
-                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginBottom: '1rem' }}>
-                                <Tile style={{ background: 'var(--cds-layer-02)', padding: '1rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <UserMultiple size={24} style={{ color: '#0f62fe' }} />
-                                        <div>
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary)', textTransform: 'uppercase' }}>Total Users</div>
-                                            <div style={{ fontSize: '1.5rem', fontWeight: 600 }}>{users.length}</div>
-                                        </div>
-                                    </div>
-                                </Tile>
-                                <Tile style={{ background: 'var(--cds-layer-02)', padding: '1rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <CheckmarkFilled size={24} style={{ color: '#24a148' }} />
-                                        <div>
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary)', textTransform: 'uppercase' }}>Active</div>
-                                            <div style={{ fontSize: '1.5rem', fontWeight: 600 }}>{users.filter(u => u.is_active).length}</div>
-                                        </div>
-                                    </div>
-                                </Tile>
-                                <Tile style={{ background: 'var(--cds-layer-02)', padding: '1rem' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                                        <Security size={24} style={{ color: '#8a3ffc' }} />
-                                        <div>
-                                            <div style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary)', textTransform: 'uppercase' }}>Admins</div>
-                                            <div style={{ fontSize: '1.5rem', fontWeight: 600 }}>{users.filter(u => u.role === 'sysadmin').length}</div>
-                                        </div>
-                                    </div>
-                                </Tile>
+                            <div className="kpi-row">
+                                <KPICard
+                                    label="Total Users"
+                                    value={users.length}
+                                    icon={UserMultiple}
+                                    iconColor="#0f62fe"
+                                    severity="info"
+                                />
+                                <KPICard
+                                    label="Active"
+                                    value={users.filter(u => u.is_active).length}
+                                    icon={CheckmarkFilled}
+                                    iconColor="#24a148"
+                                    severity="success"
+                                />
+                                <KPICard
+                                    label="Admins"
+                                    value={users.filter(u => u.role === 'sysadmin').length}
+                                    icon={Security}
+                                    iconColor="#8a3ffc"
+                                    severity="info"
+                                />
                             </div>
 
                             {/* Users Table with Expandable Rows */}
@@ -1370,42 +1386,49 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                                 </>
                             )}
 
-                            {/* Role Permissions Summary */}
-                            <Tile style={{ marginTop: '1rem', padding: '1.5rem' }}>
-                                <h4 style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                    <Settings size={20} /> Role Permissions Matrix
-                                </h4>
-                                <div style={{ overflowX: 'auto' }}>
-                                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                            {/* Role Permissions Matrix - Editable */}
+                            <Tile className="section-tile">
+                                <div className="chart-header">
+                                    <h4><Settings size={20} /> Role Permissions Matrix</h4>
+                                </div>
+                                <div className="permissions-matrix-wrapper">
+                                    <table className="permissions-matrix">
                                         <thead>
-                                            <tr style={{ borderBottom: '1px solid var(--cds-border-subtle-01)' }}>
-                                                <th style={{ padding: '0.75rem', textAlign: 'left', fontWeight: 600 }}>Role</th>
-                                                <th style={{ padding: '0.75rem', textAlign: 'center' }}>View Alerts</th>
-                                                <th style={{ padding: '0.75rem', textAlign: 'center' }}>Manage Alerts</th>
-                                                <th style={{ padding: '0.75rem', textAlign: 'center' }}>View Devices</th>
-                                                <th style={{ padding: '0.75rem', textAlign: 'center' }}>Manage Users</th>
-                                                <th style={{ padding: '0.75rem', textAlign: 'center' }}>System Config</th>
+                                            <tr>
+                                                <th className="permissions-matrix__role-col">Role</th>
+                                                {PERM_COLUMN_LABELS.map((label) => (
+                                                    <th key={label} className="permissions-matrix__perm-col">{label}</th>
+                                                ))}
                                             </tr>
                                         </thead>
                                         <tbody>
-                                            {[
-                                                { role: 'System Administrator', perms: [true, true, true, true, true] },
-                                                { role: 'NOC Operator', perms: [true, true, true, false, false] },
-                                                { role: 'Network Administrator', perms: [true, true, true, false, true] },
-                                                { role: 'Senior Engineer', perms: [true, true, true, false, false] },
-                                                { role: 'SRE', perms: [true, false, true, false, false] },
-                                            ].map((item) => (
-                                                <tr key={item.role} style={{ borderBottom: '1px solid var(--cds-border-subtle-01)' }}>
-                                                    <td style={{ padding: '0.75rem', fontWeight: 500 }}>{item.role}</td>
-                                                    {item.perms.map((perm, i) => (
-                                                        <td key={i} style={{ padding: '0.75rem', textAlign: 'center' }}>
-                                                            <Tag type={perm ? 'green' : 'gray'} size="sm">
-                                                                {perm ? 'Yes' : 'No'}
-                                                            </Tag>
+                                            {PERM_ROLES.map(({ roleId, label }) => {
+                                                const isSysadmin = roleId === 'sysadmin';
+                                                const perms = rolePermissions[roleId] || [];
+                                                return (
+                                                    <tr key={roleId}>
+                                                        <td className="permissions-matrix__role-cell">
+                                                            <Tag type={getRoleTagType(roleId)} size="sm">{label}</Tag>
                                                         </td>
-                                                    ))}
-                                                </tr>
-                                            ))}
+                                                        {perms.map((enabled, i) => (
+                                                            <td key={i} className="permissions-matrix__toggle-cell">
+                                                                {isSysadmin ? (
+                                                                    <Tag type="green" size="sm">Always</Tag>
+                                                                ) : (
+                                                                    <Toggle
+                                                                        id={`perm-${roleId}-${i}`}
+                                                                        size="sm"
+                                                                        labelA=""
+                                                                        labelB=""
+                                                                        toggled={enabled}
+                                                                        onToggle={() => handlePermissionToggle(roleId, i)}
+                                                                    />
+                                                                )}
+                                                            </td>
+                                                        ))}
+                                                    </tr>
+                                                );
+                                            })}
                                         </tbody>
                                     </table>
                                 </div>
@@ -1413,7 +1436,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                         </TabPanel>
 
                         {/* System Logs Tab */}
-                        <TabPanel style={{ padding: '1rem 0' }}>
+                        <TabPanel className="dashboard-tab-panel">
                             {logsLoading && systemLogs.length === 0 ? (
                                 <DataTableSkeleton columnCount={5} rowCount={8} showHeader showToolbar />
                             ) : (
@@ -1454,7 +1477,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                                                                 if (!log) return null;
                                                                 return (
                                                                     <TableRow {...getRowProps({ row })} key={row.id}>
-                                                                        <TableCell style={{ color: 'var(--cds-text-secondary)', whiteSpace: 'nowrap' }}>
+                                                                        <TableCell className="cell-timestamp">
                                                                             {log.timestamp}
                                                                         </TableCell>
                                                                         <TableCell>
@@ -1465,9 +1488,9 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                                                                                 {log.level}
                                                                             </Tag>
                                                                         </TableCell>
-                                                                        <TableCell>
+                                                                        <TableCell className="cell-device">
                                                                             <span
-                                                                                style={{ fontWeight: 600, color: 'var(--cds-link-primary)', cursor: 'pointer' }}
+                                                                                className="device-link"
                                                                                 role="link"
                                                                                 tabIndex={0}
                                                                                 onClick={() => navigate(`/devices?search=${encodeURIComponent(log.source)}`)}
@@ -1476,8 +1499,8 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                                                                                 {log.source}
                                                                             </span>
                                                                         </TableCell>
-                                                                        <TableCell>
-                                                                            <div style={{ maxWidth: '400px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={log.message}>
+                                                                        <TableCell className="cell-summary">
+                                                                            <div className="summary-truncate" title={log.message}>
                                                                                 {log.message}
                                                                             </div>
                                                                         </TableCell>
@@ -1497,7 +1520,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                                     </DataTable>
 
                                     {/* Config Audit Log below */}
-                                    <div style={{ marginTop: '1.5rem' }}>
+                                    <div className="dashboard-section">
                                         <WidgetErrorBoundary widgetName="Config Audit Log">
                                             <ConfigAuditLog />
                                         </WidgetErrorBoundary>

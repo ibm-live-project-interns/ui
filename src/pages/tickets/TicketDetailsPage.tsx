@@ -91,7 +91,7 @@ export function TicketDetailsPage() {
                 // Load assignee options from users API
                 try {
                     const usersResult = await userService.getUsers();
-                    const users = usersResult.users || [];
+                    const users = (usersResult as any).users || (Array.isArray(usersResult) ? usersResult : []);
                     setAssigneeOptions(users.map((u: any) => ({
                         value: u.username || `${u.first_name} ${u.last_name}`.trim(),
                         text: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.username || u.email,

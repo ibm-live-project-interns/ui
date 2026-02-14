@@ -41,6 +41,7 @@ export type DeviceStatusDisplay = 'Online' | 'Offline' | 'Warning' | 'Critical';
 
 /** Basic device information for display */
 export interface DeviceInfo {
+    id?: string;
     name: string;
     ip: string;
     icon: DeviceIcon;
@@ -51,6 +52,7 @@ export interface DeviceInfo {
 
 /** Extended device info with interface details */
 export interface ExtendedDeviceInfo extends DeviceInfo {
+    type?: string;
     interface?: string;
     interfaceAlias?: string;
 }

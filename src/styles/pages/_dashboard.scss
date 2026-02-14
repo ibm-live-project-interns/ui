@@ -14,7 +14,79 @@
     &__content {
         display: flex;
         flex-direction: column;
-        gap: $spacing-04;
+        gap: $spacing-05;
+    }
+
+    // Tab panel spacing
+    .dashboard-tab-panel {
+        padding: $spacing-05 0 !important;
+    }
+
+    // Section spacing for groups of content
+    .dashboard-section {
+        margin-top: $spacing-06;
+
+        &__title {
+            @include react.type-style('heading-compact-02');
+            margin: 0 0 $spacing-05 0;
+        }
+    }
+
+    // ==========================================
+    // Overview Grid - 2-column layout for charts/widgets
+    // ==========================================
+    .overview-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: $spacing-06;
+
+        // Variant: left column wider (for tables + chart)
+        &--wide-left {
+            grid-template-columns: 9fr 7fr;
+        }
+
+        // CRITICAL: prevent chart SVGs from forcing columns wider than 1fr
+        > * {
+            min-width: 0;
+        }
+
+        @media (max-width: 1056px) {
+            grid-template-columns: 1fr;
+        }
+
+        &__column {
+            display: flex;
+            flex-direction: column;
+            gap: $spacing-06;
+            min-width: 0; // prevent overflow from chart children
+        }
+    }
+
+    // ==========================================
+    // Section Tile - full-width standalone tile with bottom margin
+    // ==========================================
+    .section-tile {
+        margin-bottom: $spacing-06;
+    }
+
+    // ==========================================
+    // Auto-fill grid - for infrastructure/service health cards
+    // ==========================================
+    .auto-fill-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: $spacing-05;
+        margin-top: $spacing-05;
+    }
+
+    // ==========================================
+    // Stats mini-cards grid (user stats, etc.)
+    // ==========================================
+    .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: $spacing-05;
+        margin-bottom: $spacing-06;
     }
 
     // KPI Card Skeleton
@@ -47,7 +119,12 @@
         grid-template-columns: repeat(2, 1fr);
         gap: $spacing-06;
         margin-bottom: $spacing-06;
-        align-items: stretch; // Ensure equal height
+        align-items: stretch;
+
+        // CRITICAL: prevent chart SVGs from forcing columns wider than 1fr
+        > * {
+            min-width: 0;
+        }
 
         @media (max-width: 1056px) {
             grid-template-columns: 1fr;
@@ -113,6 +190,31 @@
         > div {
             width: 100%;
         }
+    }
+
+    // Global Carbon Charts centering
+    // Ensures donut/pie/gauge charts are centered in all tiles across all dashboard views
+    .cds--cc--chart-wrapper {
+        display: flex;
+        justify-content: center;
+        width: 100%;
+
+        svg.cds--cc--chart-svg {
+            display: block;
+            margin: 0 auto;
+        }
+    }
+
+    // Center all Carbon chart legends
+    .cds--cc--legend {
+        justify-content: center !important;
+    }
+
+    // Ensure chart holder divs take full width and center content
+    div[class*="chart-holder"] {
+        display: flex;
+        justify-content: center;
+        width: 100%;
     }
 
     // Global Tile Borders
@@ -358,26 +460,11 @@
     // Replaced by shared .kpi-row in KPICard.scss
 
 
-    // Charts Row - Native CSS Grid (matches KPI row alignment)
-    .charts-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: $spacing-05;
-        margin-bottom: $spacing-05;
-
-        @media (min-width: 1057px) {
-            // 10:6 ratio on large screens to match Carbon 16-column grid
-            grid-template-columns: 10fr 6fr;
-        }
-
-        @media (max-width: 672px) {
-            grid-template-columns: 1fr;
-        }
-    }
-
     .chart-tile {
         padding: $spacing-05;
         height: 100%;
+        min-width: 0; // prevent overflow in grid
+        overflow: hidden; // clip chart overflow
 
         .chart-header {
             display: flex;
@@ -399,6 +486,7 @@
         .chart-container {
             width: 100%;
             min-height: 320px;
+            min-width: 0; // prevent chart SVG from overflowing
 
             // Center the legend
             .cds--cc--legend {
@@ -574,7 +662,11 @@
     .bottom-row {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: $spacing-05;
+        gap: $spacing-06;
+
+        > * {
+            min-width: 0;
+        }
 
         @media (max-width: 672px) {
             grid-template-columns: 1fr;
@@ -743,6 +835,82 @@
                         color: $red-60;
                     }
                 }
+            }
+        }
+    }
+
+    // ==========================================
+    // Clickable device/source links in tables
+    // ==========================================
+    .device-link {
+        font-weight: 600;
+        color: $blue-60;
+        cursor: pointer;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    // Cell classes usable outside of refined-table-container
+    .cell-timestamp {
+        color: $text-secondary;
+        white-space: nowrap;
+    }
+
+    .cell-summary .summary-truncate {
+        max-width: 400px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    // ==========================================
+    // Permissions Matrix - editable role permissions table
+    // ==========================================
+    .permissions-matrix-wrapper {
+        overflow-x: auto;
+    }
+
+    .permissions-matrix {
+        width: 100%;
+        border-collapse: collapse;
+        @include react.type-style('body-compact-01');
+
+        thead tr {
+            border-bottom: 2px solid $border-subtle-01;
+        }
+
+        th {
+            padding: $spacing-03 $spacing-05;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        td {
+            padding: $spacing-03 $spacing-05;
+            border-bottom: 1px solid $border-subtle-01;
+        }
+
+        &__role-col {
+            text-align: left;
+        }
+
+        &__perm-col {
+            text-align: center;
+        }
+
+        &__role-cell {
+            font-weight: 500;
+        }
+
+        &__toggle-cell {
+            text-align: center;
+
+            // Center the toggle switch within the cell
+            .cds--toggle {
+                display: inline-flex;
+                justify-content: center;
             }
         }
     }

@@ -11,6 +11,7 @@
 
 import { env, API_ENDPOINTS } from '@/shared/config';
 import { HttpService } from '@/shared/api';
+import { alertLogger } from '@/shared/utils/logger';
 import type {
     PriorityAlert,
     DetailedAlert,
@@ -27,7 +28,67 @@ import type {
     TrendKPI,
     RecurringAlert,
     AIInsight,
+    DeviceIcon,
 } from '@/shared/types';
+
+// ==========================================
+// Backend Alert Shape (snake_case from Go API)
+// ==========================================
+
+/** Represents the raw alert JSON returned by the Go backend */
+interface BackendAlert {
+    id?: string;
+    severity?: string;
+    status?: string;
+    title?: string;
+    ai_title?: string;
+    description?: string;
+    ai_summary?: string;
+    ai_confidence?: number;
+    confidence?: number;
+    timestamp?: string;
+    device_id?: string;
+    device_name?: string;
+    device_ip?: string;
+    device_model?: string;
+    device_vendor?: string;
+    device_type?: string;
+    device_location?: string;
+    location?: string;
+    source_ip?: string;
+    interface_name?: string;
+    interface_alias?: string;
+    device?: {
+        name?: string;
+        ip?: string;
+        model?: string;
+        vendor?: string;
+        icon?: string;
+    } | string;
+    aiAnalysis?: {
+        summary?: string;
+        rootCauses?: string[];
+        businessImpact?: string;
+        recommendedActions?: string[];
+    };
+    ai_root_cause?: string | string[];
+    root_causes?: string | string[];
+    ai_impact?: string;
+    business_impact?: string;
+    ai_recommendation?: string | string[];
+    recommended_actions?: string | string[];
+    raw_payload?: string;
+    raw_data?: string;
+    similar_count?: number;
+    similar_events?: number;
+    history?: Array<{
+        id: string;
+        timestamp: string;
+        title: string;
+        severity: string;
+        resolution: string;
+    }>;
+}
 
 // Re-export for external consumers
 export type { TrendKPI, RecurringAlert, AIInsight };
@@ -87,7 +148,13 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
     }
 
     // Helper to transform backend alert to frontend format
-    private transformAlert(backendAlert: any): any {
+    private transformAlert(backendAlert: BackendAlert): DetailedAlert {
+        // Normalize confidence: DB stores 0-1 (e.g. 0.94), display as 0-100 (e.g. 94)
+        const normalizeConfidence = (val: number): number => {
+            if (val > 0 && val <= 1) return Math.round(val * 100);
+            return Math.round(val);
+        };
+
         const getRelativeTime = (timestamp: string) => {
             const date = new Date(timestamp);
             const now = new Date();
@@ -103,8 +170,8 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
         };
 
         // Parse root causes - may be string or array; extract from ai_summary when dedicated field is absent
-        const parseRootCauses = (data: any): string[] => {
-            if (Array.isArray(data)) return data.filter(Boolean);
+        const parseRootCauses = (data: unknown): string[] => {
+            if (Array.isArray(data)) return (data as string[]).filter(Boolean);
             if (typeof data === 'string' && data.trim()) return [data];
             // Extract root cause insights from Watson ai_summary when ai_root_cause field doesn't exist
             const summary = backendAlert.ai_summary;
@@ -116,8 +183,8 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
         };
 
         // Parse recommended actions - may be string or array
-        const parseRecommendedActions = (data: any): string[] => {
-            if (Array.isArray(data)) return data.filter(Boolean);
+        const parseRecommendedActions = (data: unknown): string[] => {
+            if (Array.isArray(data)) return (data as string[]).filter(Boolean);
             if (typeof data === 'string' && data.trim()) {
                 // Split recommendation text into actionable items on sentence boundaries
                 const items = data.split(/(?<=[.!?])\s+/).filter((s: string) => s.trim().length > 15);
@@ -128,7 +195,7 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
         };
 
         // Derive business impact from ai_summary when ai_impact field doesn't exist
-        const deriveBusinessImpact = (data: any): string => {
+        const deriveBusinessImpact = (data: unknown): string => {
             if (typeof data === 'string' && data.trim()) return data;
             const summary = backendAlert.ai_summary;
             const severity = backendAlert.severity || 'info';
@@ -155,7 +222,7 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
         let sourceIp = '0.0.0.0';
         let deviceModel = 'Unknown Model';
         let deviceVendor = 'Unknown Vendor';
-        let deviceIcon = 'server';
+        let deviceIcon: string = 'server';
 
         if (backendAlert.device && typeof backendAlert.device === 'object') {
             // Device is already an object
@@ -174,11 +241,11 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
 
         return {
             id: backendAlert.id || 'unknown',
-            severity: backendAlert.severity || 'info',
-            status: backendAlert.status || 'open',
+            severity: (backendAlert.severity || 'info') as Severity,
+            status: (backendAlert.status || 'open') as DetailedAlert['status'],
             aiTitle: backendAlert.title || backendAlert.ai_title || 'Alert Detected',
             aiSummary: backendAlert.ai_summary || backendAlert.description || 'Alert received and pending analysis.',
-            confidence: backendAlert.ai_confidence || backendAlert.confidence || 0,
+            confidence: normalizeConfidence(backendAlert.ai_confidence || backendAlert.confidence || 0),
             timestamp: {
                 absolute: backendAlert.timestamp || new Date().toISOString(),
                 relative: getRelativeTime(backendAlert.timestamp || new Date().toISOString()),
@@ -187,7 +254,7 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
                 id: backendAlert.device_id || deviceName,
                 name: deviceName,
                 ip: sourceIp,
-                icon: deviceIcon,
+                icon: deviceIcon as DeviceIcon,
                 model: deviceModel,
                 vendor: deviceVendor,
             },
@@ -204,37 +271,31 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
                 type: backendAlert.device_type || 'Network Device',
                 location: backendAlert.device_location || backendAlert.location || 'Data Center',
                 ip: sourceIp,
-                icon: deviceIcon,
+                icon: deviceIcon as DeviceIcon,
                 vendor: deviceVendor,
                 model: deviceModel,
                 interface: backendAlert.interface_name || 'GigabitEthernet0/1',
                 interfaceAlias: backendAlert.interface_alias || 'Uplink to Core',
             },
-            similarEvents: backendAlert.similar_count || backendAlert.similar_events || Math.floor(Math.random() * 15) + 1,
-            history: backendAlert.history || [
-                {
-                    id: 'hist-1',
-                    timestamp: new Date(Date.now() - 86400000 * 3).toISOString().split('T')[0],
-                    title: 'Similar Interface Alert',
-                    severity: 'major',
-                    resolution: 'Auto-resolved after interface recovery',
-                },
-                {
-                    id: 'hist-2',
-                    timestamp: new Date(Date.now() - 86400000 * 7).toISOString().split('T')[0],
-                    title: 'Related Device Issue',
-                    severity: 'minor',
-                    resolution: 'Resolved by network team',
-                },
-            ],
+            similarEvents: backendAlert.similar_count || backendAlert.similar_events || (() => {
+                // Deterministic fallback based on severity instead of Math.random()
+                const severityFallback: Record<string, number> = { critical: 5, high: 3, medium: 2, low: 1, info: 0 };
+                return severityFallback[backendAlert.severity || 'info'] ?? 0;
+            })(),
+            history: (backendAlert.history || []).map(h => ({
+                ...h,
+                severity: h.severity as Severity,
+            })),
         };
     }
 
     async getAlerts(period?: string): Promise<PriorityAlert[]> {
-        let endpoint = API_ENDPOINTS.ALERTS;
+        let endpoint: string = API_ENDPOINTS.ALERTS;
 
         // Build time range query params from period (24h, 7d, 30d, 90d)
-        if (period) {
+        // Only apply filter for known period values (not 'all' or unknown)
+        const KNOWN_PERIODS = ['24h', '7d', '30d', '90d'] as const;
+        if (period && (KNOWN_PERIODS as readonly string[]).includes(period)) {
             const now = new Date();
             const from = new Date();
             switch (period) {
@@ -250,29 +311,24 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
                 case '90d':
                     from.setDate(from.getDate() - 90);
                     break;
-                default:
-                    // Unknown period, don't apply time filter
-                    break;
             }
-            if (from.getTime() !== now.getTime()) {
-                const params = new URLSearchParams();
-                params.set('from', from.toISOString());
-                params.set('to', now.toISOString());
-                endpoint = `${endpoint}?${params.toString()}`;
-            }
+            const params = new URLSearchParams();
+            params.set('from', from.toISOString());
+            params.set('to', now.toISOString());
+            endpoint = `${endpoint}?${params.toString()}`;
         }
 
         // Backend returns array directly, not { alerts: [...] }
-        const response = await this.get<any>(endpoint);
-        const alerts = Array.isArray(response) ? response : (response.alerts || []);
-        return alerts.map((alert: any) => this.transformAlert(alert));
+        const response = await this.get<BackendAlert[] | { alerts: BackendAlert[] }>(endpoint);
+        const alerts: BackendAlert[] = Array.isArray(response) ? response : ((response as { alerts: BackendAlert[] }).alerts || []);
+        return alerts.map((alert) => this.transformAlert(alert));
     }
 
     async getNocAlerts(): Promise<SummaryAlert[]> {
         // Backend returns array directly, not { alerts: [...] }
-        const response = await this.get<any>(API_ENDPOINTS.ALERTS);
-        const alerts = Array.isArray(response) ? response : (response.alerts || []);
-        return alerts.map((alert: any) => this.transformAlert(alert));
+        const response = await this.get<BackendAlert[] | { alerts: BackendAlert[] }>(API_ENDPOINTS.ALERTS);
+        const alerts: BackendAlert[] = Array.isArray(response) ? response : ((response as { alerts: BackendAlert[] }).alerts || []);
+        return alerts.map((alert) => this.transformAlert(alert));
     }
 
     async getAlertsSummary(): Promise<AlertSummary> {
@@ -289,7 +345,7 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
 
     async getAlertById(id: string): Promise<DetailedAlert | null> {
         try {
-            const backendAlert = await this.get<any>(API_ENDPOINTS.ALERT_BY_ID(id));
+            const backendAlert = await this.get<BackendAlert>(API_ENDPOINTS.ALERT_BY_ID(id));
             return this.transformAlert(backendAlert);
         } catch {
             return null;
@@ -352,16 +408,19 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
                 };
             });
         } catch (error) {
-            console.warn('[AlertService] Failed to fetch noisy devices:', error);
+            alertLogger.warn('Failed to fetch noisy devices', error);
             return [];
         }
     }
 
     async getAIMetrics(): Promise<AIMetric[]> {
         const response = await this.get<any>(API_ENDPOINTS.AI_METRICS);
-        // Backend returns single object like {total_processed, success_rate, alerts_enriched, ...}
-        // Transform to AIMetric[] array with {id, label, value} format
+        // Backend returns: {total_processed, success_rate, alerts_enriched, ...}
+        // success_rate is already a percentage (0-100), convert counts to percentages for display
         const successRate = response.success_rate ?? response.successRate ?? 0;
+        const totalProcessed = response.total_processed ?? response.totalProcessed ?? 0;
+        const alertsEnriched = response.alerts_enriched ?? response.alertsEnriched ?? 0;
+        const enrichmentRate = totalProcessed > 0 ? Math.round((alertsEnriched / totalProcessed) * 100) : 0;
         return [
             {
                 id: 'ai-accuracy',
@@ -372,12 +431,14 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
             {
                 id: 'total-processed',
                 label: 'Total Processed',
-                value: response.total_processed ?? response.totalProcessed ?? 0,
+                value: totalProcessed,
+                description: `${totalProcessed} alerts`,
             },
             {
                 id: 'alerts-enriched',
                 label: 'Alerts Enriched',
-                value: response.alerts_enriched ?? response.alertsEnriched ?? 0,
+                value: enrichmentRate,
+                description: `${alertsEnriched} of ${totalProcessed}`,
             },
         ];
     }
@@ -485,7 +546,7 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
     }
 
     async createTicket(id: string, details?: { title: string; description: string; priority: string }): Promise<void> {
-        return this.post<void>(API_ENDPOINTS.TICKETS, { alertId: id, ...details });
+        return this.post<void>(API_ENDPOINTS.TICKETS, { alert_id: id, ...details });
     }
 
     async exportReport(format: 'csv' | 'pdf'): Promise<void> {
@@ -500,7 +561,7 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
         const downloadUrl = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = downloadUrl;
-        a.download = `alerts-report-${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `alerts-report-${new Date().toISOString().split('T')[0]}.${format}`;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -513,7 +574,7 @@ class ApiAlertDataService extends HttpService implements IAlertDataService {
 // ==========================================
 
 function createAlertDataService(): IAlertDataService {
-    console.info('[AlertDataService] Using API:', env.apiBaseUrl);
+    alertLogger.info('Using API: ' + env.apiBaseUrl);
     return new ApiAlertDataService();
 }
 

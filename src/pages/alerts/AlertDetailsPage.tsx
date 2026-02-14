@@ -70,6 +70,7 @@ export function AlertDetailsPage() {
                 title: ticketData.title,
                 description: ticketData.description,
                 priority: ticketData.priority as 'critical' | 'high' | 'medium' | 'low',
+                category: alert?.category || 'general',
                 deviceName: alert?.device.name,
             });
             addToast('success', 'Ticket Created', `Ticket ${newTicket.ticketNumber} created for alert ${id}`);

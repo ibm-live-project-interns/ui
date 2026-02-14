@@ -61,6 +61,29 @@
         @include react.type-style('label-01');
         color: $text-secondary;
         white-space: nowrap;
+        display: flex;
+        align-items: center;
+        gap: $spacing-02;
+      }
+
+      .live-pulse {
+        display: inline-block;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: $support-success;
+        animation: pulse-glow 2s ease-in-out infinite;
+      }
+
+      @keyframes pulse-glow {
+        0%, 100% {
+          opacity: 1;
+          box-shadow: 0 0 4px rgba(36, 161, 72, 0.6);
+        }
+        50% {
+          opacity: 0.4;
+          box-shadow: 0 0 8px rgba(36, 161, 72, 0.2);
+        }
       }
     }
   }

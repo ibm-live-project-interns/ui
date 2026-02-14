@@ -163,7 +163,7 @@ export function PriorityAlertsPage() {
 
     const handleExportCSV = async () => {
         try {
-            const token = localStorage.getItem('auth_token');
+            const token = localStorage.getItem('noc_token');
             const response = await fetch(`${API_BASE_URL}/api/v1/reports/export?type=alerts`, {
                 headers: { 'Authorization': `Bearer ${token}` },
             });
@@ -249,8 +249,17 @@ export function PriorityAlertsPage() {
         }
 
         if (activeQuickFilters.includes('My Devices')) {
-            const myDevices = ['Core-SW-01', 'FW-DMZ-03', 'RTR-EDGE-05'];
-            result = result.filter((alert) => myDevices.includes(alert.device?.name));
+            // Derive top devices dynamically from the alerts with most activity
+            const deviceCounts = new Map<string, number>();
+            alerts.forEach(a => {
+                const name = a.device?.name;
+                if (name) deviceCounts.set(name, (deviceCounts.get(name) || 0) + 1);
+            });
+            const topDevices = [...deviceCounts.entries()]
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5)
+                .map(([name]) => name);
+            result = result.filter((alert) => topDevices.includes(alert.device?.name));
         }
 
         if (activeQuickFilters.includes('Repeated Alerts')) {

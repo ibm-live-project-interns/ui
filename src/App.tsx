@@ -1,6 +1,7 @@
-import { lazy, Suspense } from 'react';
-import { createBrowserRouter, RouterProvider } from 'react-router-dom';
-import { Loading } from '@carbon/react';
+import { lazy, Suspense, Component } from 'react';
+import type { ReactNode, ErrorInfo } from 'react';
+import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom';
+import { Loading, Button } from '@carbon/react';
 
 // Providers
 import { RoleProvider } from '@/features/roles/hooks';
@@ -9,6 +10,9 @@ import { ToastProvider } from '@/contexts';
 // Layouts - keep these eager as they're needed immediately
 import { AppLayout, AuthLayout, PublicLayout } from './components/layout';
 import { ProtectedRoute } from './components/auth';
+
+// Auth service for RBAC checks
+import { authService } from '@/features/auth/services/authService';
 
 // Lazy load all pages - they'll be loaded on-demand
 const WelcomePage = lazy(() => import('./pages/welcome').then(m => ({ default: m.WelcomePage })));
@@ -34,7 +38,95 @@ const SLAReportsPage = lazy(() => import('./pages/reports/SLAReportsPage'));
 const OnCallPage = lazy(() => import('./pages/oncall/OnCallPage'));
 const TopologyPage = lazy(() => import('./pages/topology/TopologyPage'));
 const RunbooksPage = lazy(() => import('./pages/runbooks/RunbooksPage'));
+const DeviceGroupsPage = lazy(() => import('./pages/devices/DeviceGroupsPage'));
 const ServiceStatusPage = lazy(() => import('./pages/service-status').then(m => ({ default: m.ServiceStatusPage })));
+
+// ==========================================
+// Error Boundary for lazy-loaded components
+// ==========================================
+
+interface ErrorBoundaryProps {
+  children: ReactNode;
+}
+
+interface ErrorBoundaryState {
+  hasError: boolean;
+  error: Error | null;
+}
+
+class RouteErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
+  constructor(props: ErrorBoundaryProps) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
+    console.error('[RouteErrorBoundary] Caught rendering error:', error, errorInfo);
+  }
+
+  handleReload = (): void => {
+    this.setState({ hasError: false, error: null });
+    window.location.reload();
+  };
+
+  render(): ReactNode {
+    if (this.state.hasError) {
+      return (
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center',
+          alignItems: 'center',
+          height: '100vh',
+          background: '#161616',
+          color: '#f4f4f4',
+          gap: '1rem',
+          padding: '2rem',
+          textAlign: 'center',
+        }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Something went wrong</h2>
+          <p style={{ color: '#c6c6c6', maxWidth: '480px' }}>
+            An unexpected error occurred while loading this page. Please try reloading.
+          </p>
+          {this.state.error && (
+            <p style={{ color: '#ff8389', fontSize: '0.875rem', fontFamily: 'monospace', maxWidth: '600px', wordBreak: 'break-word' }}>
+              {this.state.error.message}
+            </p>
+          )}
+          <Button kind="primary" onClick={this.handleReload} style={{ marginTop: '1rem' }}>
+            Reload Page
+          </Button>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// ==========================================
+// Role-based route guard
+// ==========================================
+
+interface RequireRoleProps {
+  allowedRoles: string[];
+  children: ReactNode;
+}
+
+function RequireRole({ allowedRoles, children }: RequireRoleProps) {
+  const user = authService.getCurrentUser();
+  const userRole = user?.role || '';
+
+  if (!allowedRoles.includes(userRole)) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+}
 
 // Loading fallback component
 const PageLoader = () => (
@@ -49,11 +141,13 @@ const PageLoader = () => (
   </div>
 );
 
-// Wrap lazy components with Suspense
+// Wrap lazy components with Suspense and ErrorBoundary
 const withSuspense = (Component: React.LazyExoticComponent<React.ComponentType>) => (
-  <Suspense fallback={<PageLoader />}>
-    <Component />
-  </Suspense>
+  <RouteErrorBoundary>
+    <Suspense fallback={<PageLoader />}>
+      <Component />
+    </Suspense>
+  </RouteErrorBoundary>
 );
 
 const router = createBrowserRouter([
@@ -144,8 +238,13 @@ const router = createBrowserRouter([
         element: withSuspense(ProfilePage),
       },
       {
+        // Audit log restricted to sysadmin role
         path: 'admin/audit-log',
-        element: withSuspense(AuditLogPage),
+        element: (
+          <RequireRole allowedRoles={['sysadmin']}>
+            {withSuspense(AuditLogPage)}
+          </RequireRole>
+        ),
       },
       {
         path: 'reports',
@@ -162,6 +261,10 @@ const router = createBrowserRouter([
       {
         path: 'topology',
         element: withSuspense(TopologyPage),
+      },
+      {
+        path: 'device-groups',
+        element: withSuspense(DeviceGroupsPage),
       },
       {
         path: 'runbooks',
@@ -190,4 +293,3 @@ function App() {
 }
 
 export default App;
-

@@ -204,8 +204,8 @@ export function ConfigAuditLog() {
                         {[1, 2, 3].map(i => (
                             <div key={i} style={{ paddingLeft: '2rem' }}>
                                 <SkeletonText width="30%" />
-                                <SkeletonText width="70%" style={{ marginTop: '0.25rem' }} />
-                                <SkeletonText width="40%" style={{ marginTop: '0.25rem' }} />
+                                <div style={{ marginTop: '0.25rem' }}><SkeletonText width="70%" /></div>
+                                <div style={{ marginTop: '0.25rem' }}><SkeletonText width="40%" /></div>
                             </div>
                         ))}
                     </div>

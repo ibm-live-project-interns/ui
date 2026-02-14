@@ -15,6 +15,7 @@ import {
 } from '@carbon/react';
 import { Password, ArrowLeft, ArrowRight } from '@carbon/icons-react';
 import { authService } from '@/shared/services';
+import { env } from '@/shared/config';
 import '@/styles/pages/_auth.scss';
 
 export function ForgotPasswordPage() {
@@ -51,7 +52,7 @@ export function ForgotPasswordPage() {
             <Tile className="auth-card">
                 <div className="auth-logo">
                     <Password size={32} />
-                    <span>IBM watsonx Alerts</span>
+                    <span>{env.appName}</span>
                 </div>
 
                 <h1 className="auth-title">Reset Password</h1>

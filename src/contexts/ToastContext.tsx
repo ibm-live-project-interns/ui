@@ -137,15 +137,18 @@ export function ToastProvider({ children }: ToastProviderProps) {
                 >
                     {toasts.map(toast => (
                         <div key={toast.id} style={{ pointerEvents: 'auto' }}>
+                            {/*
+                             * Removed Carbon's `timeout` prop to avoid double auto-dismiss.
+                             * Our custom setTimeout in addToast() handles auto-dismiss.
+                             * Carbon's built-in timeout was causing a race condition where both
+                             * timers could fire, leading to stale state.
+                             */}
                             <ToastNotification
                                 kind={toast.kind}
                                 title={toast.title}
                                 subtitle={toast.subtitle}
-                                timeout={AUTO_DISMISS_MS}
                                 onClose={() => {
                                     removeToast(toast.id);
-                                    // Return false to prevent Carbon's internal removal
-                                    // since we handle it ourselves
                                     return false;
                                 }}
                             />

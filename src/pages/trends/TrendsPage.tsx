@@ -119,6 +119,9 @@ export function TrendsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const { addToast } = useToast();
 
+  // Track when data was last fetched for the "Updated X ago" display
+  const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
+
   // Recurring alerts filter state
   const [recurringAlertsSeverityFilter, setRecurringAlertsSeverityFilter] = useState(SEVERITY_FILTER_OPTIONS[0]);
   const [isRecurringFilterOpen, setIsRecurringFilterOpen] = useState(false);
@@ -249,12 +252,21 @@ export function TrendsPage() {
         setAiImpactOverTime([]);
       } finally {
         setIsLoading(false);
+        setLastFetchTime(new Date()); // Track actual fetch time
       }
     };
 
     fetchData();
-    const interval = setInterval(fetchData, 60000);
-    return () => clearInterval(interval);
+
+    // Respect auto-refresh setting from Settings page
+    const autoRefreshSetting = localStorage.getItem('settings_autoRefresh');
+    const autoRefreshEnabled = autoRefreshSetting !== 'false';
+    let interval: ReturnType<typeof setInterval> | null = null;
+    if (autoRefreshEnabled) {
+      const refreshMs = parseInt(localStorage.getItem('settings_refreshInterval') || '60', 10) * 1000;
+      interval = setInterval(fetchData, refreshMs > 0 ? refreshMs : 60000);
+    }
+    return () => { if (interval) clearInterval(interval); };
   }, [selectedTimePeriod]);
 
   // Chart options
@@ -386,6 +398,17 @@ export function TrendsPage() {
     return fallback;
   }, [alertsOverTime, detailsDistribution]);
 
+  // Derive system status from actual alert data
+  const systemStatus = useMemo(() => {
+    // Check if any KPI indicates critical issues
+    const alertVolumeKpi = trendsKPI.find(k => k.id === 'alert-volume');
+    const alertVolume = alertVolumeKpi ? parseInt(String(alertVolumeKpi.value), 10) : 0;
+    if (alertVolume > 200) return { text: 'Degraded', color: '#da1e28' };
+    if (alertVolume > 50) return { text: 'Under Pressure', color: '#ff832b' };
+    if (trendsKPI.length === 0 && !isLoading) return { text: 'No Data', color: '#525252' };
+    return { text: 'Operational', color: '#24a148' };
+  }, [trendsKPI, isLoading]);
+
   // Skeleton loading state
   if (isLoading && trendsKPI.length === 0) {
     return (
@@ -393,7 +416,7 @@ export function TrendsPage() {
         <PageHeader
           title="Trends & Insights"
           subtitle="Loading..."
-          badges={[{ text: 'System Operational', color: '#24a148' }]}
+          badges={[{ text: systemStatus.text, color: systemStatus.color }]}
         />
         <div className="kpi-row">
           {[1, 2, 3, 4].map((i) => (
@@ -420,7 +443,7 @@ export function TrendsPage() {
         <PageHeader
           title="Trends & Insights"
           subtitle="Historical analysis and pattern detection powered by AI"
-          badges={[{ text: 'System Operational', color: '#24a148' }]}
+          badges={[{ text: systemStatus.text, color: systemStatus.color }]}
         />
         <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--cds-text-secondary)' }}>
           <h3>No trends data available</h3>
@@ -436,7 +459,7 @@ export function TrendsPage() {
       <PageHeader
         title="Trends & Insights"
         subtitle="Historical analysis and pattern detection powered by AI"
-        badges={[{ text: 'System Operational', color: '#24a148' }]}
+        badges={[{ text: systemStatus.text, color: systemStatus.color }]}
         rightContent={
           <div style={{ display: 'flex', gap: '0.5rem' }}>
             <Dropdown
@@ -451,7 +474,7 @@ export function TrendsPage() {
               }
               size="md"
             />
-            <Button kind="primary" size="md" renderIcon={Download} onClick={() => alertDataService.exportReport('pdf')}>
+            <Button kind="primary" size="md" renderIcon={Download} onClick={() => addToast('info', 'Coming soon', 'PDF export is not yet implemented. CSV export is available from the Reports Hub.')}>
               Export Report
             </Button>
           </div>
@@ -695,7 +718,18 @@ export function TrendsPage() {
               <p className="ai-insights-subtitle">Automated pattern detection and recommendations</p>
             </div>
           </div>
-          <Tag type="blue" size="md">Updated 5m ago</Tag>
+          <Tag type="blue" size="md">
+            {lastFetchTime
+              ? `Updated ${(() => {
+                  const diffMs = Date.now() - lastFetchTime.getTime();
+                  const diffSec = Math.floor(diffMs / 1000);
+                  if (diffSec < 60) return 'just now';
+                  const diffMin = Math.floor(diffSec / 60);
+                  if (diffMin < 60) return `${diffMin}m ago`;
+                  return `${Math.floor(diffMin / 60)}h ago`;
+                })()}`
+              : 'Loading...'}
+          </Tag>
         </div>
 
         <div className="ai-insights-grid">

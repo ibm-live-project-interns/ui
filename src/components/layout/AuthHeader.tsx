@@ -15,6 +15,7 @@ import {
     Logout,
     ChevronDown,
 } from '@carbon/icons-react';
+import { env } from '@/shared/config';
 
 // Mock logged-in state - replace with actual auth context
 const mockUser = null; // Set to user object if logged in, null if not
@@ -45,10 +46,10 @@ export function AuthHeader() {
     };
 
     return (
-        <Header aria-label="IBM watsonx Alerts">
+        <Header aria-label={env.appName}>
             <SkipToContent />
-            <HeaderName as={Link} to="/" prefix="IBM">
-                watsonx Alerts
+            <HeaderName as={Link} to="/" prefix="">
+                {env.appName}
             </HeaderName>
 
             <HeaderGlobalBar>

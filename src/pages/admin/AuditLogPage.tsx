@@ -293,8 +293,11 @@ export function AuditLogPage() {
         { id: 'all', text: 'All Actions' },
     ]);
     const [isLoading, setIsLoading] = useState(true);
+    // Error state for retry banner
+    const [loadError, setLoadError] = useState<string | null>(null);
 
     // Filter state
+    const [searchInput, setSearchInput] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedAction, setSelectedAction] = useState<FilterOption>({ id: 'all', text: 'All Actions' });
     const [selectedResource, setSelectedResource] = useState<FilterOption>(RESOURCE_FILTER_OPTIONS[0]);
@@ -305,6 +308,17 @@ export function AuditLogPage() {
     // Pagination state
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(25);
+
+    // Debounce search to avoid firing API call on every keystroke
+    useEffect(() => {
+        const timer = setTimeout(() => setSearchQuery(searchInput), 300);
+        return () => clearTimeout(timer);
+    }, [searchInput]);
+
+    // Reset pagination to page 1 when any filter changes
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery, selectedAction, selectedResource, selectedResult, startDate, endDate]);
 
     // Fetch available actions on mount
     useEffect(() => {
@@ -342,8 +356,10 @@ export function AuditLogPage() {
             if (response.stats) {
                 setStats(response.stats);
             }
+            setLoadError(null);
         } catch (error) {
             console.error('Failed to fetch audit logs:', error);
+            setLoadError(error instanceof Error ? error.message : 'Failed to load audit logs');
         } finally {
             setIsLoading(false);
         }
@@ -427,6 +443,7 @@ export function AuditLogPage() {
 
     // Clear all filters
     const clearAllFilters = () => {
+        setSearchInput('');
         setSearchQuery('');
         setSelectedAction({ id: 'all', text: 'All Actions' });
         setSelectedResource(RESOURCE_FILTER_OPTIONS[0]);
@@ -585,6 +602,16 @@ export function AuditLogPage() {
                 ]}
             />
 
+            {/* Error state with retry */}
+            {loadError && (
+                <div style={{ padding: '2rem', textAlign: 'center' }}>
+                    <p style={{ color: 'var(--cds-text-error)', marginBottom: '1rem' }}>
+                        Failed to load audit logs: {loadError}
+                    </p>
+                    <Button kind="tertiary" size="sm" onClick={fetchAuditLogs}>Retry</Button>
+                </div>
+            )}
+
             <div className="audit-log-page__content">
                 {/* KPI Row */}
                 <div className="kpi-row">
@@ -599,14 +626,13 @@ export function AuditLogPage() {
                         size="lg"
                         placeholder="Search by user, action, or resource..."
                         labelText="Search audit logs"
-                        value={searchQuery}
+                        value={searchInput}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            setSearchQuery(e.target.value);
-                            setCurrentPage(1);
+                            setSearchInput(e.target.value);
                         }}
                         onClear={() => {
+                            setSearchInput('');
                             setSearchQuery('');
-                            setCurrentPage(1);
                         }}
                         className="audit-log-page__search"
                     />
