@@ -7,6 +7,7 @@ import {
     Select,
     SelectItem,
     FormGroup,
+    Tooltip,
 } from '@carbon/react';
 import {
     Checkmark,
@@ -29,14 +30,19 @@ import { useToast } from '@/contexts';
 import '@/styles/pages/_settings.scss';
 
 // --- Configuration Constants ---
+
+/** localStorage key for the auto-refresh enabled flag */
+const AUTO_REFRESH_KEY = 'settings_autoRefresh';
+/** localStorage key for the auto-refresh interval in seconds */
+const REFRESH_INTERVAL_KEY = 'settings_refreshInterval';
 const GENERAL_OPTS = {
     languages: [
         { value: 'en', text: 'English' },
-        { value: 'es', text: 'Español' },
-        { value: 'fr', text: 'Français' },
+        { value: 'es', text: 'Espa\u00f1ol' },
+        { value: 'fr', text: 'Fran\u00e7ais' },
         { value: 'de', text: 'Deutsch' },
-        { value: 'ja', text: '日本語' },
-        { value: 'zh', text: '中文' },
+        { value: 'ja', text: '\u65e5\u672c\u8a9e' },
+        { value: 'zh', text: '\u4e2d\u6587' },
     ],
     timezones: [
         { value: 'UTC', text: 'UTC' },
@@ -61,7 +67,7 @@ const GENERAL_OPTS = {
 const NOTIFICATION_OPTS = [
     { key: 'emailAlerts', label: 'Email Alerts', desc: 'Receive alert notifications via email', icon: Email },
     { key: 'pushNotifications', label: 'Push Notifications', desc: 'Receive browser push notifications', icon: Notification },
-    { key: 'soundEnabled', label: 'Sound Effects', desc: 'Play sound for new alerts', icon: VolumeUp },
+    { key: 'soundEnabled', label: 'Sound Effects', desc: 'Play sound for new alerts (Coming soon)', icon: VolumeUp, comingSoon: true },
     { key: 'criticalOnly', label: 'Critical Alerts Only', desc: 'Only notify for critical severity alerts', icon: Events }
 ];
 
@@ -109,11 +115,26 @@ export function SettingsPage() {
             const stored = localStorage.getItem(key);
             return stored ? (key === 'theme-setting' ? stored : JSON.parse(stored)) : defaultVal;
         };
-        setSettings(prev => ({
-            theme: load('theme-setting', 'system'),
-            notifications: { ...prev.notifications, ...load('notification-settings', {}) },
-            general: { ...prev.general, ...load('general-settings', {}) },
-        }));
+
+        // Load auto-refresh from dedicated localStorage key
+        const autoRefreshStored = localStorage.getItem(AUTO_REFRESH_KEY);
+        const refreshIntervalStored = localStorage.getItem(REFRESH_INTERVAL_KEY);
+
+        setSettings(prev => {
+            const generalSettings = { ...prev.general, ...load('general-settings', {}) };
+            // If dedicated keys exist, they take precedence
+            if (autoRefreshStored !== null) {
+                generalSettings.autoRefresh = autoRefreshStored !== 'false';
+            }
+            if (refreshIntervalStored) {
+                generalSettings.refreshInterval = refreshIntervalStored;
+            }
+            return {
+                theme: load('theme-setting', 'system'),
+                notifications: { ...prev.notifications, ...load('notification-settings', {}) },
+                general: generalSettings,
+            };
+        });
         loadNotificationPreferences();
     }, [loadNotificationPreferences]);
 
@@ -136,6 +157,11 @@ export function SettingsPage() {
         localStorage.setItem('theme-setting', settings.theme);
         localStorage.setItem('notification-settings', JSON.stringify(settings.notifications));
         localStorage.setItem('general-settings', JSON.stringify(settings.general));
+
+        // Persist auto-refresh to dedicated localStorage keys
+        // so other pages can read them without parsing the full settings blob
+        localStorage.setItem(AUTO_REFRESH_KEY, String(settings.general.autoRefresh));
+        localStorage.setItem(REFRESH_INTERVAL_KEY, settings.general.refreshInterval);
 
         // Persist notification preferences to backend
         try {
@@ -170,9 +196,14 @@ export function SettingsPage() {
                     render: () => (
                         <div className="settings-tile-content settings-tile-content--general">
                             <div className="settings-select-row">
-                                <Select id="lang" labelText="Language" value={settings.general.language} onChange={(e) => update('general', 'language', e.target.value)}>
-                                    {GENERAL_OPTS.languages.map(opt => <SelectItem key={opt.value} {...opt} />)}
-                                </Select>
+                                {/* Language selector -- i18n is not yet implemented */}
+                                <Tooltip align="bottom" label="i18n coming soon -- only English is currently supported">
+                                    <div>
+                                        <Select id="lang" labelText="Language" value={settings.general.language} onChange={(e) => update('general', 'language', e.target.value)} helperText="Only English is currently supported">
+                                            {GENERAL_OPTS.languages.map(opt => <SelectItem key={opt.value} {...opt} />)}
+                                        </Select>
+                                    </div>
+                                </Tooltip>
                                 <Select id="tz" labelText="Timezone" value={settings.general.timezone} onChange={(e) => update('general', 'timezone', e.target.value)}>
                                     {GENERAL_OPTS.timezones.map(opt => <SelectItem key={opt.value} {...opt} />)}
                                 </Select>
@@ -182,7 +213,7 @@ export function SettingsPage() {
                                     <div className="settings-toggle-info">
                                         <div className="settings-toggle-text">
                                             <span className="settings-toggle-label">Auto-refresh Dashboard</span>
-                                            <span className="settings-toggle-description">Automatically refresh alert data</span>
+                                            <span className="settings-toggle-description">Automatically refresh alert data across all pages</span>
                                         </div>
                                     </div>
                                     <Toggle id="auto-refresh" labelA="" labelB="" size="sm" toggled={settings.general.autoRefresh} onToggle={() => update('general', 'autoRefresh', !settings.general.autoRefresh)} />
@@ -249,19 +280,31 @@ export function SettingsPage() {
                     render: () => (
                         <div className="settings-tile-content">
                             <div className="settings-toggle-group">
-                                {NOTIFICATION_OPTS.map((item) => (
-                                    <div className="settings-toggle-item" key={item.key}>
-                                        <div className="settings-toggle-info">
-                                            <item.icon size={16} className="settings-toggle-icon" />
-                                            <div className="settings-toggle-text">
-                                                <span className="settings-toggle-label">{item.label}</span>
-                                                <span className="settings-toggle-description">{item.desc}</span>
+                                {NOTIFICATION_OPTS.map((item) => {
+                                    const toggleContent = (
+                                        <div className="settings-toggle-item" key={item.key}>
+                                            <div className="settings-toggle-info">
+                                                <item.icon size={16} className="settings-toggle-icon" />
+                                                <div className="settings-toggle-text">
+                                                    <span className="settings-toggle-label">{item.label}</span>
+                                                    <span className="settings-toggle-description">{item.desc}</span>
+                                                </div>
                                             </div>
+                                            {/* @ts-ignore */}
+                                            <Toggle id={item.key} labelA="" labelB="" size="sm" toggled={settings.notifications[item.key]} onToggle={() => update('notifications', item.key, !settings.notifications[item.key])} />
                                         </div>
-                                        {/* @ts-ignore */}
-                                        <Toggle id={item.key} labelA="" labelB="" size="sm" toggled={settings.notifications[item.key]} onToggle={() => update('notifications', item.key, !settings.notifications[item.key])} />
-                                    </div>
-                                ))}
+                                    );
+
+                                    // Sound notifications are not yet implemented
+                                    if ('comingSoon' in item && item.comingSoon) {
+                                        return (
+                                            <Tooltip key={item.key} align="bottom" label="Coming soon">
+                                                {toggleContent}
+                                            </Tooltip>
+                                        );
+                                    }
+                                    return toggleContent;
+                                })}
                             </div>
                         </div>
                     )

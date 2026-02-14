@@ -344,7 +344,7 @@ export function SeniorEngineerView({ config: _config }: SeniorEngineerViewProps)
                             </Tile>
                         ))}
                     </div>
-                    <Tile className="chart-tile" style={{ marginBottom: 'var(--cds-spacing-06)' }}>
+                    <Tile className="chart-tile section-tile">
                         <SkeletonText heading width="200px" />
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '1rem', marginTop: '1rem' }}>
                             {[1, 2, 3].map(i => (
@@ -398,7 +398,7 @@ export function SeniorEngineerView({ config: _config }: SeniorEngineerViewProps)
                 </div>
 
                 {/* Section 1: System Architecture Health */}
-                <Tile className="chart-tile" style={{ marginBottom: 'var(--cds-spacing-06)' }}>
+                <Tile className="chart-tile section-tile">
                     <div className="chart-header">
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <NetworkEnterprise size={20} />
@@ -411,12 +411,7 @@ export function SeniorEngineerView({ config: _config }: SeniorEngineerViewProps)
                         )}
                     </div>
                     {infrastructureHealth.length > 0 ? (
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                            gap: 'var(--cds-spacing-05)',
-                            marginTop: 'var(--cds-spacing-05)',
-                        }}>
+                        <div className="auto-fill-grid">
                             {infrastructureHealth.map((infra) => (
                                 <div
                                     key={infra.type}
@@ -643,7 +638,7 @@ export function SeniorEngineerView({ config: _config }: SeniorEngineerViewProps)
                 </div>
 
                 {/* Section 4: AI-Powered Insights */}
-                <Tile className="chart-tile" style={{ marginBottom: 'var(--cds-spacing-06)' }}>
+                <Tile className="chart-tile section-tile">
                     <div className="chart-header">
                         <h3 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                             <IbmWatsonxCodeAssistant size={20} />
@@ -652,12 +647,7 @@ export function SeniorEngineerView({ config: _config }: SeniorEngineerViewProps)
                         <Tag type="purple" size="sm">watsonx</Tag>
                     </div>
                     {insights.length > 0 ? (
-                        <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
-                            gap: 'var(--cds-spacing-05)',
-                            marginTop: 'var(--cds-spacing-05)',
-                        }}>
+                        <div className="auto-fill-grid">
                             {insights.map((insight) => (
                                 <div
                                     key={insight.id}
@@ -707,7 +697,7 @@ export function SeniorEngineerView({ config: _config }: SeniorEngineerViewProps)
                 </Tile>
 
                 {/* Section 5: Noisy Devices (problem areas for engineering review) */}
-                <div className="bottom-row" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--cds-spacing-05)' }}>
+                <div className="bottom-row">
                     {noisyDevices.length > 0 ? (
                         <NoisyDevicesCard title="Problem Devices" devices={noisyDevices} variant="gradient" showViewAll onViewAll={() => navigate('/devices')} />
                     ) : (

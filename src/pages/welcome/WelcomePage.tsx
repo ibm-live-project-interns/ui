@@ -1,6 +1,7 @@
 import { Grid, Column, Button, Tile, Stack } from '@carbon/react';
 import { ArrowRight, Activity, Network_2 as Network, IbmWatsonxCodeAssistant } from '@carbon/icons-react';
 import { Link } from 'react-router-dom';
+import { env } from '@/shared/config';
 
 export function WelcomePage() {
     return (
@@ -17,7 +18,7 @@ export function WelcomePage() {
             >
                 <Stack gap={6}>
                     <h1 className="cds--type-display-03">
-                        IBM watsonx Alerts
+                        {env.appName}
                     </h1>
                     <p className="cds--type-body-02" style={{ maxWidth: '42rem' }}>
                         AI-powered analysis of SNMP traps and syslogs. Get intelligent explanations,

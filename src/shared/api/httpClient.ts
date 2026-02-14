@@ -2,7 +2,7 @@
  * Base HTTP Service
  *
  * Provides common HTTP methods with error handling, JWT authentication,
- * request timeout support, and comprehensive logging.
+ * request timeout support, retry logic for server errors, and comprehensive logging.
  * All API services should extend this class.
  */
 
@@ -10,6 +10,12 @@ import { API_TIMEOUT, DEFAULT_HEADERS } from '@/shared/config';
 import { apiLogger } from '@/shared/utils/logger';
 
 const TOKEN_KEY = 'noc_token';
+const USER_KEY = 'noc_user';
+
+/** Maximum number of retries for server errors (502, 503, 504) */
+const MAX_RETRIES = 1;
+/** Delay in ms before retrying a failed request */
+const RETRY_DELAY_MS = 1000;
 
 export class HttpService {
   protected baseUrl: string;
@@ -51,7 +57,21 @@ export class HttpService {
   }
 
   /**
-   * Make an authenticated HTTP request with timeout, error handling, and logging
+   * Sleep helper for retry delay
+   */
+  private static sleep(ms: number): Promise<void> {
+    return new Promise(resolve => setTimeout(resolve, ms));
+  }
+
+  /**
+   * Check if status code is a retryable server error
+   */
+  private static isRetryableStatus(status: number): boolean {
+    return status === 502 || status === 503 || status === 504;
+  }
+
+  /**
+   * Make an authenticated HTTP request with timeout, error handling, retry, and logging
    */
   protected async request<T>(
     endpoint: string,
@@ -88,21 +108,47 @@ export class HttpService {
     const timeoutId = setTimeout(() => controller.abort(), API_TIMEOUT);
 
     try {
-      const response = await fetch(url, {
+      let response = await fetch(url, {
         ...config,
         signal: controller.signal,
       });
+
+      // Retry once on 502/503/504 server errors after a 1s delay
+      if (HttpService.isRetryableStatus(response.status)) {
+        const retryStatus = response.status;
+        apiLogger.warn(`${method} ${endpoint} returned ${retryStatus}, retrying in ${RETRY_DELAY_MS}ms`, {
+          status: retryStatus,
+          retryAttempt: 1,
+          maxRetries: MAX_RETRIES,
+        });
+
+        await HttpService.sleep(RETRY_DELAY_MS);
+
+        // Create new AbortController for retry
+        const retryController = new AbortController();
+        const retryTimeoutId = setTimeout(() => retryController.abort(), API_TIMEOUT);
+        try {
+          response = await fetch(url, {
+            ...config,
+            signal: retryController.signal,
+          });
+        } finally {
+          clearTimeout(retryTimeoutId);
+        }
+      }
 
       clearTimeout(timeoutId);
       const duration = Math.round(performance.now() - startTime);
 
       // Handle 401 Unauthorized - token expired or invalid
+      // Also clear cached user data from localStorage
       if (response.status === 401) {
         apiLogger.warn(`${method} ${endpoint} returned 401 - session expired`, {
           duration,
           status: 401,
         });
         HttpService.clearToken();
+        localStorage.removeItem(USER_KEY);
         if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
           window.location.href = '/login';
         }

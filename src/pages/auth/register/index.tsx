@@ -1,10 +1,10 @@
 /**
  * Register Page
  *
- * New user registration with form validation.
+ * New user registration with form validation and password complexity requirements.
  */
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
     TextInput,
@@ -16,7 +16,51 @@ import {
 } from '@carbon/react';
 import { UserFollow, ArrowRight } from '@carbon/icons-react';
 import { authService } from '@/shared/services';
+import { env } from '@/shared/config';
 import '@/styles/pages/_auth.scss';
+
+// ==========================================
+// Username derivation from email
+// ==========================================
+
+/** Derive a clean username from an email address.
+ *  - Strips +tag suffixes (e.g., user+test@example.com -> user)
+ *  - Truncates to 32 characters max
+ *  - Replaces non-alphanumeric characters with hyphens
+ */
+function deriveUsername(email: string): string {
+    const localPart = email.split('@')[0] || '';
+    // Strip +tag suffix
+    const stripped = localPart.split('+')[0];
+    // Replace non-alphanumeric (except hyphens and underscores) with hyphens
+    const cleaned = stripped.replace(/[^a-zA-Z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+    // Truncate to 32 characters
+    return cleaned.substring(0, 32);
+}
+
+// ==========================================
+// Password complexity validation
+// ==========================================
+
+interface PasswordCheck {
+    hasMinLength: boolean;
+    hasUppercase: boolean;
+    hasLowercase: boolean;
+    hasNumber: boolean;
+}
+
+function checkPasswordComplexity(password: string): PasswordCheck {
+    return {
+        hasMinLength: password.length >= 8,
+        hasUppercase: /[A-Z]/.test(password),
+        hasLowercase: /[a-z]/.test(password),
+        hasNumber: /[0-9]/.test(password),
+    };
+}
+
+function isPasswordValid(checks: PasswordCheck): boolean {
+    return checks.hasMinLength && checks.hasUppercase && checks.hasLowercase && checks.hasNumber;
+}
 
 export function RegisterPage() {
     const navigate = useNavigate();
@@ -30,6 +74,21 @@ export function RegisterPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState('');
     const [success, setSuccess] = useState('');
+    // Track the redirect timeout so we can clean it up on unmount
+    const redirectTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Cleanup redirect timeout on unmount
+    useEffect(() => {
+        return () => {
+            if (redirectTimerRef.current !== null) {
+                clearTimeout(redirectTimerRef.current);
+            }
+        };
+    }, []);
+
+    // Real-time password complexity state
+    const passwordChecks = checkPasswordComplexity(formData.password);
+    const showPasswordHints = formData.password.length > 0;
 
     const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
         setFormData({ ...formData, [field]: e.target.value });
@@ -47,13 +106,14 @@ export function RegisterPage() {
             return;
         }
 
-        if (formData.password !== formData.confirmPassword) {
-            setError('Passwords do not match');
+        // Password complexity validation — require uppercase, lowercase, and number
+        if (!isPasswordValid(passwordChecks)) {
+            setError('Password must be at least 8 characters with 1 uppercase, 1 lowercase, and 1 number');
             return;
         }
 
-        if (formData.password.length < 8) {
-            setError('Password must be at least 8 characters');
+        if (formData.password !== formData.confirmPassword) {
+            setError('Passwords do not match');
             return;
         }
 
@@ -62,7 +122,8 @@ export function RegisterPage() {
         try {
             const response = await authService.register({
                 email: formData.email,
-                username: formData.email.split('@')[0],
+                // Derive username with edge case handling
+                username: deriveUsername(formData.email),
                 password: formData.password,
                 first_name: formData.firstName,
                 last_name: formData.lastName,
@@ -70,8 +131,8 @@ export function RegisterPage() {
 
             setSuccess(response.message);
 
-            // Redirect to login after successful registration
-            setTimeout(() => {
+            // Store timeout ref so it can be cleaned up on unmount
+            redirectTimerRef.current = setTimeout(() => {
                 navigate('/login');
             }, 2000);
         } catch (err: unknown) {
@@ -88,7 +149,7 @@ export function RegisterPage() {
             <Tile className="auth-card">
                 <div className="auth-logo">
                     <UserFollow size={32} />
-                    <span>IBM watsonx Alerts</span>
+                    <span>{env.appName}</span>
                 </div>
 
                 <h1 className="auth-title">Create Account</h1>
@@ -149,8 +210,33 @@ export function RegisterPage() {
                         value={formData.password}
                         onChange={handleChange('password')}
                         disabled={isLoading}
-                        helperText="Minimum 8 characters"
+                        helperText="Min 8 chars, 1 uppercase, 1 lowercase, 1 number"
                     />
+
+                    {/* Password complexity indicators */}
+                    {showPasswordHints && (
+                        <div style={{
+                            fontSize: '0.75rem',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '0.25rem',
+                            marginTop: '-0.5rem',
+                            marginBottom: '0.5rem',
+                        }}>
+                            <span style={{ color: passwordChecks.hasMinLength ? '#42be65' : '#fa4d56' }}>
+                                {passwordChecks.hasMinLength ? '\u2713' : '\u2717'} At least 8 characters
+                            </span>
+                            <span style={{ color: passwordChecks.hasUppercase ? '#42be65' : '#fa4d56' }}>
+                                {passwordChecks.hasUppercase ? '\u2713' : '\u2717'} At least 1 uppercase letter
+                            </span>
+                            <span style={{ color: passwordChecks.hasLowercase ? '#42be65' : '#fa4d56' }}>
+                                {passwordChecks.hasLowercase ? '\u2713' : '\u2717'} At least 1 lowercase letter
+                            </span>
+                            <span style={{ color: passwordChecks.hasNumber ? '#42be65' : '#fa4d56' }}>
+                                {passwordChecks.hasNumber ? '\u2713' : '\u2717'} At least 1 number
+                            </span>
+                        </div>
+                    )}
 
                     <PasswordInput
                         id="confirmPassword"

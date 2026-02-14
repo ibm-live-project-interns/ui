@@ -294,17 +294,25 @@ export function OnCallPage() {
         severity: pendingOverrides > 0 ? 'major' as const : 'success' as const,
         subtitle: `${approvedOverrides} approved`,
       },
-      {
-        id: 'schedule-coverage',
-        label: 'Schedule Coverage',
-        value: '100%',
-        icon: CalendarHeatMap,
-        iconColor: '#198038',
-        severity: 'success' as const,
-        subtitle: weekOf ? `Week of ${formatShortDate(weekOf)}` : 'This week',
-      },
+      // Calculate schedule coverage from actual data
+      (() => {
+        // Count how many of the 7 days in the schedule have assigned on-call
+        const scheduledDays = schedule ? schedule.filter((e) => e.primary_oncall).length : 0;
+        const totalDays = schedule ? Math.max(schedule.length, 7) : 7;
+        const coveragePct = totalDays > 0 ? Math.round((scheduledDays / totalDays) * 100) : 0;
+        const coverageStr = schedule ? `${coveragePct}%` : 'N/A';
+        return {
+          id: 'schedule-coverage',
+          label: 'Schedule Coverage',
+          value: coverageStr,
+          icon: CalendarHeatMap,
+          iconColor: coveragePct >= 100 ? '#198038' : coveragePct >= 70 ? '#ff832b' : '#da1e28',
+          severity: (coveragePct >= 100 ? 'success' : coveragePct >= 70 ? 'major' : 'critical') as 'success' | 'major' | 'critical',
+          subtitle: weekOf ? `Week of ${formatShortDate(weekOf)}` : 'This week',
+        };
+      })(),
     ];
-  }, [currentOnCall, overrides, weekOf]);
+  }, [currentOnCall, overrides, weekOf, schedule]);
 
   // ==========================================
   // Weekly Schedule DataTable

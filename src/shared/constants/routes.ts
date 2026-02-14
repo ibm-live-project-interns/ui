@@ -31,6 +31,7 @@ export const ROUTES = {
     ON_CALL: '/on-call',
     TOPOLOGY: '/topology',
     RUNBOOKS: '/runbooks',
+    DEVICE_GROUPS: '/device-groups',
     SERVICE_STATUS: '/service-status',
 } as const;
 

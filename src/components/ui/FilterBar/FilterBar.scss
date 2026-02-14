@@ -1,0 +1,78 @@
+// FilterBar Styles
+// Reusable filter toolbar with Carbon design tokens
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as *;
+
+.filter-bar {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-04;
+    width: 100%;
+
+    // Primary row: search + dropdowns + clear button
+    &__primary {
+        display: flex;
+        align-items: flex-end;
+        gap: $spacing-04;
+        flex-wrap: wrap;
+    }
+
+    // Search takes available space
+    &__search {
+        flex: 1;
+        min-width: 200px;
+    }
+
+    // Dropdowns sit side-by-side
+    &__dropdowns {
+        display: flex;
+        gap: $spacing-04;
+        flex-shrink: 0;
+        flex-wrap: wrap;
+
+        // Fixed width per dropdown so they don't stretch
+        .cds--dropdown__wrapper {
+            min-width: 180px;
+        }
+    }
+
+    // Clear button
+    &__clear {
+        flex-shrink: 0;
+        white-space: nowrap;
+    }
+
+    // Quick-filter tags row
+    &__quick-filters {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+        flex-wrap: wrap;
+    }
+
+    &__quick-filters-label {
+        @include type-style('label-01');
+        color: $text-secondary;
+        margin-right: $spacing-02;
+    }
+
+    // Make tags appear clickable
+    &__tag {
+        cursor: pointer;
+        user-select: none;
+        transition: opacity 120ms ease;
+
+        &:hover {
+            opacity: 0.85;
+        }
+    }
+
+    // Results summary
+    &__results-summary {
+        @include type-style('helper-text-01');
+        color: $text-secondary;
+        margin: 0;
+    }
+}

@@ -304,10 +304,25 @@ class Logger {
     // ==========================================
 
     /**
-     * Log API request
+     * Log API request (sensitive fields like passwords are redacted)
      */
     request(method: string, url: string, data?: unknown): void {
-        this.debug(`API Request: ${method} ${url}`, data);
+        this.debug(`API Request: ${method} ${url}`, this.sanitizeRequestData(data));
+    }
+
+    /**
+     * Redact sensitive fields from request data before logging
+     */
+    private sanitizeRequestData(data: unknown): unknown {
+        if (!data || typeof data !== 'object') return data;
+        const sensitiveKeys = ['password', 'current_password', 'new_password', 'confirm_password', 'token', 'secret', 'api_key', 'authorization'];
+        const sanitized = { ...(data as Record<string, unknown>) };
+        for (const key of Object.keys(sanitized)) {
+            if (sensitiveKeys.includes(key.toLowerCase())) {
+                sanitized[key] = '[REDACTED]';
+            }
+        }
+        return sanitized;
     }
 
     /**

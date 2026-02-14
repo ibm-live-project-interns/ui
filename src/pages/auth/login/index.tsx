@@ -19,6 +19,43 @@ import { authService } from '@/shared/services';
 import { env } from '@/shared/config';
 import '@/styles/pages/_auth.scss';
 
+// Known OAuth error strings — only show these to users, not arbitrary URL content
+const KNOWN_OAUTH_ERRORS: Record<string, string> = {
+    'access_denied': 'Access was denied. Please try again or use email login.',
+    'invalid_request': 'The login request was invalid. Please try again.',
+    'server_error': 'The authentication server encountered an error. Please try again later.',
+    'temporarily_unavailable': 'The authentication service is temporarily unavailable. Please try again later.',
+    'invalid_scope': 'Invalid authentication scope. Please contact your administrator.',
+    'unauthorized_client': 'This application is not authorized for Google login. Please contact your administrator.',
+    'interaction_required': 'Additional interaction is required. Please try again.',
+    'login_required': 'Please log in to continue.',
+    'consent_required': 'User consent is required. Please try again and grant the requested permissions.',
+    'google_oauth_not_configured': 'Google OAuth is not configured. Please contact your administrator.',
+    'oauth_failed': 'OAuth authentication failed. Please try again.',
+    'token_exchange_failed': 'Failed to complete authentication. Please try again.',
+    'user_info_failed': 'Failed to retrieve user information. Please try again.',
+};
+
+/** Sanitize OAuth error — only show known error strings to prevent URL parameter injection */
+function sanitizeOAuthError(rawError: string): string {
+    const decoded = decodeURIComponent(rawError).trim();
+    // Check if the error matches a known error key
+    if (KNOWN_OAUTH_ERRORS[decoded]) {
+        return KNOWN_OAUTH_ERRORS[decoded];
+    }
+    // Check if the decoded value matches a known message value (backend might send the message directly)
+    for (const msg of Object.values(KNOWN_OAUTH_ERRORS)) {
+        if (decoded.toLowerCase() === msg.toLowerCase()) {
+            return msg;
+        }
+    }
+    // For unknown errors, show a generic message instead of arbitrary URL content
+    return 'Authentication failed. Please try again or use email login.';
+}
+
+/** sessionStorage key for preserving redirect path through OAuth flow */
+const OAUTH_REDIRECT_KEY = 'noc_oauth_from';
+
 export function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -33,8 +70,16 @@ export function LoginPage() {
     // Check if Google OAuth is enabled - require both the feature flag AND a non-empty client ID
     const isGoogleAuthEnabled = env.enableGoogleAuth && typeof env.googleClientId === 'string' && env.googleClientId.trim().length > 0;
 
-    // Get the page user was trying to access before being redirected to login
-    const from = (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
+    // Get the page user was trying to access. First check sessionStorage (OAuth return),
+    // then location state (normal redirect), then default to dashboard.
+    const from = (() => {
+        const storedFrom = sessionStorage.getItem(OAUTH_REDIRECT_KEY);
+        if (storedFrom) {
+            sessionStorage.removeItem(OAUTH_REDIRECT_KEY);
+            return storedFrom;
+        }
+        return (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
+    })();
 
     // Handle OAuth callback - token or error from URL params
     useEffect(() => {
@@ -42,15 +87,19 @@ export function LoginPage() {
         const oauthError = searchParams.get('error');
 
         if (oauthError) {
-            setError(decodeURIComponent(oauthError));
+            // Sanitize error parameter — only show known error strings
+            setError(sanitizeOAuthError(oauthError));
             // Clean up URL
             searchParams.delete('error');
             setSearchParams(searchParams, { replace: true });
         } else if (token) {
-            // Set the token from OAuth callback
-            authService.setOAuthToken(token);
-            // Clean up URL and redirect to destination
-            navigate(from, { replace: true });
+            // Set the token from OAuth callback (now async, loads user profile)
+            authService.setOAuthToken(token).then(() => {
+                // Clean up URL and redirect to destination
+                navigate(from, { replace: true });
+            }).catch(() => {
+                setError('Failed to complete sign in. Please try again.');
+            });
         }
     }, [searchParams, setSearchParams, navigate, from]);
 
@@ -79,6 +128,10 @@ export function LoginPage() {
     const handleGoogleLogin = async () => {
         setError('');
         setIsGoogleLoading(true);
+
+        // Store the redirect path in sessionStorage so it survives the OAuth page navigation
+        sessionStorage.setItem(OAUTH_REDIRECT_KEY, from);
+
         try {
             // Preflight check: verify the backend has Google OAuth configured
             // before redirecting. This avoids the user seeing raw JSON on a 501 page.
@@ -110,6 +163,7 @@ export function LoginPage() {
                 }
                 setError(errorMessage);
                 setIsGoogleLoading(false);
+                sessionStorage.removeItem(OAUTH_REDIRECT_KEY);
                 return;
             }
 
@@ -119,6 +173,7 @@ export function LoginPage() {
             console.error('Google login failed:', err);
             setError('Google login failed. Please try again.');
             setIsGoogleLoading(false);
+            sessionStorage.removeItem(OAUTH_REDIRECT_KEY);
         }
     };
 
@@ -127,7 +182,7 @@ export function LoginPage() {
             <Tile className="auth-card">
                 <div className="auth-logo">
                     <LoginIcon size={32} />
-                    <span>IBM watsonx Alerts</span>
+                    <span>{env.appName}</span>
                 </div>
 
                 <h1 className="auth-title">Sign In</h1>

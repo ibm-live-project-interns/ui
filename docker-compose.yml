@@ -180,7 +180,7 @@ services:
       SMTP_USERNAME: "${SMTP_USERNAME:-ujjwalsidhu123@gmail.com}"
       SMTP_PASSWORD: "${SMTP_PASSWORD:-aftovybpmgmgqxor}"
       SMTP_FROM: "${SMTP_FROM:-ujjwalsidhu123@gmail.com}"
-      SMTP_FROM_NAME: "NOC Alert System"
+      SMTP_FROM_NAME: "${SMTP_FROM_NAME:-Sentrix}"
     depends_on:
       postgres:
         condition: service_healthy

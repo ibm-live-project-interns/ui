@@ -163,7 +163,7 @@ export function PriorityAlertsPage() {
 
     const handleExportCSV = async () => {
         try {
-            const token = localStorage.getItem('auth_token');
+            const token = localStorage.getItem('noc_token');
             const response = await fetch(`${API_BASE_URL}/api/v1/reports/export?type=alerts`, {
                 headers: { 'Authorization': `Bearer ${token}` },
             });

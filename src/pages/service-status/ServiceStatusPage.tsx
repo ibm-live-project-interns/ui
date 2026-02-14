@@ -18,7 +18,6 @@ import {
   Modal,
   Loading,
   Dropdown,
-  ToastNotification,
 } from '@carbon/react';
 import {
   Renew,
@@ -49,6 +48,9 @@ import { KPICard, PageHeader } from '@/components';
 // Config
 import { env, API_ENDPOINTS } from '@/shared/config';
 import { HttpService } from '@/shared/api';
+
+// Context
+import { useToast } from '@/contexts';
 
 // Constants
 import { ROUTES } from '@/shared/constants/routes';
@@ -230,7 +232,8 @@ function formatTimeAgo(dateStr: string | null | undefined): string {
     if (isNaN(d.getTime())) return '';
     const diffMs = Date.now() - d.getTime();
     const diffSeconds = Math.floor(diffMs / 1000);
-    if (diffSeconds < 60) return 'just now';
+    if (diffSeconds < 5) return 'just now';
+    if (diffSeconds < 60) return `${diffSeconds}s ago`;
     const diffMinutes = Math.floor(diffSeconds / 60);
     if (diffMinutes < 60) return `${diffMinutes}m ago`;
     const diffHours = Math.floor(diffMinutes / 60);
@@ -281,9 +284,9 @@ function getDockerHealthTagType(health: string): 'green' | 'red' | 'warm-gray' |
 }
 
 // ==========================================
-// Auto-refresh interval (15 seconds)
+// Auto-refresh interval (10 seconds)
 // ==========================================
-const REFRESH_INTERVAL_MS = 15_000;
+const REFRESH_INTERVAL_MS = 10_000;
 
 const LOG_LINE_OPTIONS = [
   { id: '50', text: '50 lines' },
@@ -298,6 +301,8 @@ const LOG_LINE_OPTIONS = [
 // ==========================================
 
 export function ServiceStatusPage() {
+  const { addToast } = useToast();
+
   // Application-level service status
   const [data, setData] = useState<ServiceStatusResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -320,8 +325,12 @@ export function ServiceStatusPage() {
   const [logsDockerUnavailable, setLogsDockerUnavailable] = useState(false);
   const [logLines, setLogLines] = useState('100');
 
-  // Toast notification
-  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  // Live tick — re-renders timestamps every second so "Updated Xs ago" stays accurate
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    const tickInterval = setInterval(() => setTick((t) => t + 1), 1000);
+    return () => clearInterval(tickInterval);
+  }, []);
 
   // Fetch application-level service status
   const fetchAppStatus = useCallback(async () => {
@@ -364,13 +373,17 @@ export function ServiceStatusPage() {
     [fetchAppStatus, fetchDockerStatus]
   );
 
-  // Initial fetch + auto-refresh
+  // Initial fetch + auto-refresh (respects user's auto-refresh setting)
   useEffect(() => {
     fetchAll();
 
-    intervalRef.current = setInterval(() => {
-      fetchAll();
-    }, REFRESH_INTERVAL_MS);
+    const autoRefreshSetting = localStorage.getItem('settings_autoRefresh');
+    const autoRefreshEnabled = autoRefreshSetting !== 'false';
+    if (autoRefreshEnabled) {
+      intervalRef.current = setInterval(() => {
+        fetchAll();
+      }, REFRESH_INTERVAL_MS);
+    }
 
     return () => {
       if (intervalRef.current) {
@@ -432,12 +445,10 @@ export function ServiceStatusPage() {
     }
   }, [logsServiceName, logLines]);
 
-  // Restart button handler (placeholder toast)
+  // Restart requires Docker socket access which is not yet available
   const handleRestart = useCallback((serviceName: string) => {
-    setToastMessage(`Restart requested for "${serviceName}". This action requires Docker socket access and is not yet implemented.`);
-    // Clear toast after 5 seconds
-    setTimeout(() => setToastMessage(null), 5000);
-  }, []);
+    addToast('info', 'Not Available', `Restart for "${serviceName}" requires Docker socket access and is not yet implemented.`);
+  }, [addToast]);
 
   // ==========================================
   // Loading State
@@ -573,6 +584,7 @@ export function ServiceStatusPage() {
           <div className="banner-actions">
             {lastRefresh && (
               <span className="last-refresh">
+                <span className="live-pulse" />
                 Updated {formatTimeAgo(lastRefresh.toISOString())}
               </span>
             )}
@@ -742,6 +754,8 @@ export function ServiceStatusPage() {
                         size="sm"
                         renderIcon={Restart}
                         onClick={() => handleRestart(svc.name)}
+                        disabled
+                        title="Restart is not available -- requires Docker socket access"
                       >
                         Restart
                       </Button>
@@ -855,7 +869,13 @@ export function ServiceStatusPage() {
       {/* ============================================ */}
       <Modal
         open={logsModalOpen}
-        onRequestClose={() => setLogsModalOpen(false)}
+        onRequestClose={() => {
+          setLogsModalOpen(false);
+          // Clear logs state when modal closes to avoid stale data on reopen
+          setLogsContent('');
+          setLogsServiceName('');
+          setLogsDockerUnavailable(false);
+        }}
         modalHeading={`Logs: ${logsServiceName}`}
         passiveModal
         size="lg"
@@ -921,18 +941,7 @@ export function ServiceStatusPage() {
         </div>
       </Modal>
 
-      {/* Toast notification */}
-      {toastMessage && (
-        <div className="service-status-page__toast-container">
-          <ToastNotification
-            kind="info"
-            title="Action"
-            subtitle={toastMessage}
-            timeout={5000}
-            onClose={() => setToastMessage(null)}
-          />
-        </div>
-      )}
+      {/* Toast notifications handled by shared ToastProvider */}
     </div>
   );
 }

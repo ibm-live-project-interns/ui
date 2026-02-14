@@ -158,6 +158,19 @@ body {
 }
 
 // ==========================================
+// Global Tile / Card Visual Containment
+// Adds subtle border so cards are visually distinct from the background
+// ==========================================
+.cds--tile {
+  border: 1px solid $border-subtle-01;
+}
+
+// DataTable containers inside pages get card treatment
+.cds--data-table-container {
+  border: 1px solid $border-subtle-01;
+}
+
+// ==========================================
 // App Content - Main content area below header
 // Carbon's Content component uses .cds--content class
 // ==========================================
@@ -166,7 +179,7 @@ body {
   // Margin-left to offset from expanded SideNav (256px)
   margin-left: 256px;
   // Global padding for consistent spacing across all pages
-  padding: $spacing-05;
+  padding: $spacing-07;
   min-height: calc(100vh - 48px);
   background-color: $background;
 

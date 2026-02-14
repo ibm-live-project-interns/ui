@@ -38,5 +38,12 @@ export {
     type EmptyStateSize
 } from './EmptyState';
 
+export {
+    FilterBar,
+    type FilterBarProps,
+    type DropdownFilterConfig,
+    type FilterOption
+} from './FilterBar';
+
 export { WidgetErrorBoundary } from './WidgetErrorBoundary';
 

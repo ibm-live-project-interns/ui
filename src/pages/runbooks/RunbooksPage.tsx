@@ -191,6 +191,10 @@ const EMPTY_FORM: RunbookFormData = {
     related_alert_types: [],
 };
 
+// Counter for unique step IDs -- array indices cause reconciliation issues when reordering
+let stepIdCounter = 0;
+const nextStepId = () => `step-${++stepIdCounter}`;
+
 // ==========================================
 // Helpers
 // ==========================================
@@ -254,8 +258,15 @@ export function RunbooksPage() {
     const [errorMessage, setErrorMessage] = useState('');
 
     // Filter state
+    const [searchInput, setSearchInput] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState<FilterOption>(CATEGORY_FILTER_OPTIONS[0]);
+
+    // Debounce search to avoid firing API call on every keystroke
+    useEffect(() => {
+        const timer = setTimeout(() => setSearchQuery(searchInput), 300);
+        return () => clearTimeout(timer);
+    }, [searchInput]);
 
     // Modal state
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -265,8 +276,12 @@ export function RunbooksPage() {
     const [viewingRunbook, setViewingRunbook] = useState<Runbook | null>(null);
     const [deletingRunbook, setDeletingRunbook] = useState<Runbook | null>(null);
     const [formData, setFormData] = useState<RunbookFormData>({ ...EMPTY_FORM });
+    // Stable step IDs for React key (instead of array index)
+    const [stepIds, setStepIds] = useState<string[]>([nextStepId()]);
     const [formErrors, setFormErrors] = useState<Record<string, string>>({});
     const [isSaving, setIsSaving] = useState(false);
+    // Track delete operation loading state
+    const [isDeleting, setIsDeleting] = useState(false);
 
     // ==========================================
     // Data Fetching
@@ -373,6 +388,7 @@ export function RunbooksPage() {
     const handleOpenCreateModal = () => {
         setEditingRunbook(null);
         setFormData({ ...EMPTY_FORM });
+        setStepIds([nextStepId()]);
         setFormErrors({});
         setIsCreateModalOpen(true);
     };
@@ -386,6 +402,7 @@ export function RunbooksPage() {
             steps: runbook.steps.map((s) => s.instruction),
             related_alert_types: runbook.related_alert_types || [],
         });
+        setStepIds(runbook.steps.map(() => nextStepId()));
         setFormErrors({});
         setIsCreateModalOpen(true);
     };
@@ -394,7 +411,9 @@ export function RunbooksPage() {
         setIsCreateModalOpen(false);
         setEditingRunbook(null);
         setFormData({ ...EMPTY_FORM });
+        setStepIds([nextStepId()]);
         setFormErrors({});
+        setIsSaving(false);
     };
 
     const handleSaveRunbook = async () => {
@@ -434,6 +453,7 @@ export function RunbooksPage() {
             ...prev,
             steps: [...prev.steps, ''],
         }));
+        setStepIds((prev) => [...prev, nextStepId()]);
     };
 
     const handleRemoveStep = (index: number) => {
@@ -441,6 +461,7 @@ export function RunbooksPage() {
             ...prev,
             steps: prev.steps.filter((_, i) => i !== index),
         }));
+        setStepIds((prev) => prev.filter((_, i) => i !== index));
     };
 
     const handleStepChange = (index: number, value: string) => {
@@ -485,6 +506,7 @@ export function RunbooksPage() {
         if (!deletingRunbook) return;
 
         setErrorMessage('');
+        setIsDeleting(true);
         try {
             await runbookService.deleteRunbook(deletingRunbook.id);
             setIsDeleteModalOpen(false);
@@ -501,6 +523,8 @@ export function RunbooksPage() {
             setErrorMessage(
                 error instanceof Error ? error.message : 'Failed to delete runbook. Please try again.'
             );
+        } finally {
+            setIsDeleting(false);
         }
     };
 
@@ -603,11 +627,12 @@ export function RunbooksPage() {
                         size="lg"
                         placeholder="Search runbooks by title, description, or author..."
                         labelText="Search runbooks"
-                        value={searchQuery}
+                        value={searchInput}
                         onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                            setSearchQuery(e.target.value);
+                            setSearchInput(e.target.value);
                         }}
                         onClear={() => {
+                            setSearchInput('');
                             setSearchQuery('');
                         }}
                         className="runbooks-page__search"
@@ -807,7 +832,7 @@ export function RunbooksPage() {
                         </div>
 
                         {formData.steps.map((step, index) => (
-                            <div key={index} className="runbooks-page__form-step-row">
+                            <div key={stepIds[index] || `fallback-${index}`} className="runbooks-page__form-step-row">
                                 <span className="runbooks-page__form-step-number">
                                     {index + 1}.
                                 </span>
@@ -952,11 +977,13 @@ export function RunbooksPage() {
                 onRequestClose={() => {
                     setIsDeleteModalOpen(false);
                     setDeletingRunbook(null);
+                    setIsDeleting(false);
                 }}
                 onRequestSubmit={handleConfirmDelete}
                 danger
                 modalHeading="Delete Runbook"
-                primaryButtonText="Delete"
+                primaryButtonText={isDeleting ? 'Deleting...' : 'Delete'}
+                primaryButtonDisabled={isDeleting}
                 secondaryButtonText="Cancel"
                 size="sm"
             >

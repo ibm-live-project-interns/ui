@@ -53,6 +53,9 @@ import ChartWrapper from '@/components/ui/ChartWrapper';
 import { alertDataService, ticketDataService } from '@/shared/services';
 import type { TicketInfo } from '@/shared/services';
 
+// Context
+import { useToast } from '@/contexts';
+
 // Constants
 import { ROUTES } from '@/shared/constants/routes';
 
@@ -285,6 +288,7 @@ function derivePreventionActions(incidents: ResolvedIncident[]): PreventionActio
 
 export function IncidentHistoryPage() {
   const navigate = useNavigate();
+  const { addToast } = useToast();
 
   // State
   const [currentTheme, setCurrentTheme] = useState('g100');
@@ -358,12 +362,14 @@ export function IncidentHistoryPage() {
             ? alert.timestamp
             : alert.timestamp?.absolute || new Date().toISOString();
 
-          // Use resolved_at if available, otherwise estimate
+          // Use resolved_at if available; show "Unknown" instead of fabricating timestamps
           const resolvedAtStr = alert.resolvedAt
             || alert.resolved_at
-            || new Date(new Date(timestampStr).getTime() + Math.random() * 3600000 + 300000).toISOString();
+            || null;
 
-          const { text: durationText, minutes: durationMinutes } = computeDuration(timestampStr, resolvedAtStr);
+          const { text: durationText, minutes: durationMinutes } = resolvedAtStr
+            ? computeDuration(timestampStr, resolvedAtStr)
+            : { text: 'Unknown', minutes: 0 };
 
           const category = alert.category
             || alert.rootCauseCategory
@@ -376,7 +382,7 @@ export function IncidentHistoryPage() {
           return {
             id: alert.id || `INC-${Math.random().toString(36).slice(2, 8)}`,
             date: formatDate(timestampStr),
-            summary: alert.aiTitle || alert.aiSummary || 'Resolved Incident',
+            summary: alert.title || alert.ai_summary || alert.description || 'Resolved Incident',
             rootCause: category || rootCauseCategory,
             rootCauseCategory,
             duration: durationText,
@@ -1004,6 +1010,7 @@ export function IncidentHistoryPage() {
                             size="sm"
                             renderIcon={ArrowRight}
                             className="prevention-item__action"
+                            onClick={() => addToast('info', 'Coming soon', `"${action.actionLabel}" action is not yet implemented.`)}
                           >
                             {action.actionLabel}
                           </Button>

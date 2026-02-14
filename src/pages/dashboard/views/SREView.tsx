@@ -390,11 +390,7 @@ export function SREView({ config: _config }: SREViewProps) {
                         <h3>Service Health Status</h3>
                     </div>
                     {serviceHealth.length > 0 ? (
-                        <div className="service-health-grid" style={{
-                            display: 'grid',
-                            gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                            gap: 'var(--cds-spacing-05)'
-                        }}>
+                        <div className="service-health-grid auto-fill-grid">
                             {serviceHealth.map((service, index) => (
                                 <div
                                     key={index}

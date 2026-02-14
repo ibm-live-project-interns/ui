@@ -16,6 +16,7 @@
 
 import { HttpService } from '@/shared/api';
 import { API_ENDPOINTS, env } from '@/shared/config';
+import { deviceLogger } from '@/shared/utils/logger';
 import type {
     Device,
     DeviceDetails,
@@ -286,15 +287,47 @@ class ApiDeviceService extends HttpService implements IDeviceService {
         super(apiPath);
     }
 
+    /**
+     * Determine if an error is a network/connectivity error (suitable for mock fallback)
+     * vs an auth or server error (should be thrown to the caller).
+     */
+    private isNetworkError(error: unknown): boolean {
+        if (error instanceof TypeError && error.message.includes('fetch')) return true;
+        if (error instanceof Error) {
+            const msg = error.message.toLowerCase();
+            if (msg.includes('unable to connect') || msg.includes('timed out') || msg.includes('network')) return true;
+        }
+        return false;
+    }
+
+    /**
+     * Determine if an error is an auth error (401/403) that must not be swallowed.
+     */
+    private isAuthOrServerError(error: unknown): boolean {
+        if (error instanceof Error) {
+            const msg = error.message;
+            // HttpService throws "Session expired" for 401 and "HTTP Error: 4xx/5xx" for others
+            if (msg.includes('Session expired') || msg.includes('403') || msg.includes('401')) return true;
+            if (msg.includes('500') || msg.includes('502') || msg.includes('503')) return true;
+        }
+        return false;
+    }
+
     async getDevices(): Promise<Device[]> {
         try {
-            const apiDevices = await this.get<DeviceAPIResponse[]>(API_ENDPOINTS.DEVICES);
+            const response = await this.get<{ devices: DeviceAPIResponse[]; total: number } | DeviceAPIResponse[]>(API_ENDPOINTS.DEVICES);
+            // API returns {devices: [...], total: N} wrapper - extract the array
+            const apiDevices = Array.isArray(response) ? response : (response.devices ?? []);
             return apiDevices.map(transformDevice);
         } catch (error) {
-            // Fallback to mock data if endpoint not implemented
-            console.warn('[DeviceService] /devices endpoint not available, using mock data');
-            const mockService = new MockDeviceService();
-            return mockService.getDevices();
+            // Re-throw auth and server errors -- only fall back to mock on network errors or when mock mode is enabled
+            if (this.isAuthOrServerError(error)) throw error;
+            if (env.useMockData || this.isNetworkError(error)) {
+                deviceLogger.warn('/devices endpoint not available, using mock data');
+                const mockService = new MockDeviceService();
+                return mockService.getDevices();
+            }
+            throw error;
         }
     }
 
@@ -303,10 +336,13 @@ class ApiDeviceService extends HttpService implements IDeviceService {
             const apiDevice = await this.get<DeviceDetailsAPIResponse>(API_ENDPOINTS.DEVICE_BY_ID(id));
             return transformDeviceDetails(apiDevice);
         } catch (error) {
-            // Fallback to mock data if endpoint not implemented
-            console.warn('[DeviceService] /devices/:id endpoint not available, using mock data');
-            const mockService = new MockDeviceService();
-            return mockService.getDeviceById(id);
+            if (this.isAuthOrServerError(error)) throw error;
+            if (env.useMockData || this.isNetworkError(error)) {
+                deviceLogger.warn('/devices/:id endpoint not available, using mock data');
+                const mockService = new MockDeviceService();
+                return mockService.getDeviceById(id);
+            }
+            throw error;
         }
     }
 
@@ -335,9 +371,13 @@ class ApiDeviceService extends HttpService implements IDeviceService {
                 };
             }).slice(0, limit);
         } catch (error) {
-            console.warn('[DeviceService] /devices/noisy endpoint error, using mock data');
-            const mockService = new MockDeviceService();
-            return mockService.getNoisyDevices(limit);
+            if (this.isAuthOrServerError(error)) throw error;
+            if (env.useMockData || this.isNetworkError(error)) {
+                deviceLogger.warn('/devices/noisy endpoint error, using mock data');
+                const mockService = new MockDeviceService();
+                return mockService.getNoisyDevices(limit);
+            }
+            throw error;
         }
     }
 
@@ -360,10 +400,10 @@ class ApiDeviceService extends HttpService implements IDeviceService {
  */
 function createDeviceService(): IDeviceService {
     if (env.useMockData) {
-        console.info('[DeviceService] Using Mock implementation');
+        deviceLogger.info('Using Mock implementation');
         return new MockDeviceService();
     }
-    console.info('[DeviceService] Using API:', env.apiBaseUrl);
+    deviceLogger.info('Using API: ' + env.apiBaseUrl);
     return new ApiDeviceService();
 }
 
