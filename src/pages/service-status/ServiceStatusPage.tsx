@@ -4,50 +4,31 @@
  * Service Status / Health Page
  * Displays comprehensive health and status information for all platform services,
  * including real Docker container status with log viewing capability.
- * Auto-refreshes every 15 seconds with a manual refresh button.
+ * Auto-refreshes every 10 seconds with a manual refresh button.
  */
 
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import {
-  Tile,
-  Button,
-  ProgressBar,
-  SkeletonPlaceholder,
-  InlineNotification,
-  Tag,
-  Modal,
-  Loading,
-  Dropdown,
-} from '@carbon/react';
-import {
-  Renew,
-  CheckmarkFilled,
-  WarningAltFilled,
-  ErrorFilled,
-  Activity,
-  Time,
-  EventSchedule,
-  ChartLineData,
-  DataBase,
-  CloudServiceManagement,
-  Network_2,
-  MachineLearning,
-  MailAll,
-  Catalog,
-  Terminal,
-  Restart,
-  ContainerSoftware,
-  Application,
-  ViewFilled,
-  Dashboard,
-} from '@carbon/icons-react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { InlineNotification } from '@carbon/react';
+import { Renew } from '@carbon/icons-react';
 
 // Reusable components
-import { KPICard, PageHeader } from '@/components';
+import { PageHeader, ComingSoonModal, useComingSoon } from '@/components';
+import { PageLayout } from '@/components/layout';
 
-// Config
-import { env, API_ENDPOINTS } from '@/shared/config';
-import { HttpService } from '@/shared/api';
+// Child components
+import { DockerContainerGrid } from './components/DockerContainerGrid';
+import { ServiceHealthCards } from './components/ServiceHealthCards';
+import { ContainerLogModal } from './components/ContainerLogModal';
+import { ServiceStatusSkeleton } from './components/ServiceStatusSkeleton';
+import { StatusBanner } from './components/StatusBanner';
+import { SystemMetricsKPIs } from './components/SystemMetricsKPIs';
+
+// Types and client
+import type { ServiceStatusResponse, DockerServiceInfo } from './components/serviceStatus.types';
+import { statusClient, REFRESH_INTERVAL_MS } from './components/serviceStatus.types';
+
+// Hooks
+import { useFetchData } from '@/shared/hooks';
 
 // Context
 import { useToast } from '@/contexts';
@@ -59,262 +40,35 @@ import { ROUTES } from '@/shared/constants/routes';
 import '@/styles/pages/_service-status.scss';
 
 // ==========================================
-// Types
-// ==========================================
-
-interface ServiceInfo {
-  name: string;
-  status: 'operational' | 'degraded' | 'down';
-  response_time_ms: number;
-  uptime_percent: number;
-  last_check: string;
-  details: string;
-}
-
-interface SystemMetrics {
-  total_alerts_24h: number;
-  total_events_24h: number;
-  avg_response_time_ms: number;
-  error_rate_percent: number;
-}
-
-interface LastIncident {
-  title: string;
-  occurred_at: string | null;
-  resolved_at: string | null;
-  duration_minutes: number;
-}
-
-interface ServiceStatusResponse {
-  overall_status: 'operational' | 'degraded' | 'outage';
-  services: ServiceInfo[];
-  system_metrics: SystemMetrics;
-  last_incident: LastIncident | null;
-}
-
-/** Docker container info from GET /api/v1/services/status */
-interface DockerServiceInfo {
-  name: string;
-  status: string; // "running", "stopped", "restarting", "paused"
-  health: string; // "healthy", "unhealthy", "starting", "none"
-  uptime: string;
-  port: string;
-  container: string;
-  image: string;
-}
-
-interface DockerStatusResponse {
-  services: DockerServiceInfo[];
-  timestamp: string;
-}
-
-interface DockerLogsResponse {
-  service: string;
-  logs: string;
-  error?: string;
-  docker_unavailable?: boolean;
-  lines: string;
-}
-
-// ==========================================
-// HTTP Client
-// ==========================================
-
-class ServiceStatusClient extends HttpService {
-  constructor() {
-    super(`${env.apiBaseUrl}/api/${env.apiVersion}`, 'ServiceStatus');
-  }
-
-  async getServiceStatus(): Promise<ServiceStatusResponse> {
-    return this.get<ServiceStatusResponse>(API_ENDPOINTS.SERVICE_STATUS);
-  }
-
-  async getDockerStatus(): Promise<DockerStatusResponse> {
-    return this.get<DockerStatusResponse>(API_ENDPOINTS.DOCKER_SERVICES_STATUS);
-  }
-
-  async getDockerLogs(serviceName: string, lines: number = 100): Promise<DockerLogsResponse> {
-    return this.get<DockerLogsResponse>(
-      `${API_ENDPOINTS.DOCKER_SERVICE_LOGS(serviceName)}?lines=${lines}`
-    );
-  }
-}
-
-const statusClient = new ServiceStatusClient();
-
-// ==========================================
-// Service Icon Map (for application services)
-// ==========================================
-
-const SERVICE_ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  'API Gateway': CloudServiceManagement,
-  'Database (PostgreSQL)': DataBase,
-  'Event Router': Network_2,
-  'Ingestor Core': Activity,
-  'AI Analysis Engine': MachineLearning,
-  'Email Service': MailAll,
-  'Kafka Message Broker': Catalog,
-};
-
-// Icon map for Docker services (matched by container/service name)
-const DOCKER_SERVICE_ICON_MAP: Record<string, React.ComponentType<{ size?: number; className?: string }>> = {
-  'api-gateway': CloudServiceManagement,
-  'postgres': DataBase,
-  'kafka': Catalog,
-  'zookeeper': ContainerSoftware,
-  'event-router': Network_2,
-  'ingestor-core': Activity,
-  'ai-core': MachineLearning,
-  'ui': Application,
-  'kafka-ui': Dashboard,
-  'pgadmin': ViewFilled,
-  'datasource': ChartLineData,
-};
-
-// ==========================================
-// Helper Functions
-// ==========================================
-
-function getOverallStatusConfig(status: string) {
-  switch (status) {
-    case 'operational':
-      return {
-        title: 'All Systems Operational',
-        subtitle: 'All services are running normally. No issues detected.',
-        icon: CheckmarkFilled,
-        iconColor: '#24a148',
-      };
-    case 'degraded':
-      return {
-        title: 'Partial System Degradation',
-        subtitle: 'Some services are experiencing issues. Monitoring in progress.',
-        icon: WarningAltFilled,
-        iconColor: '#f5a524',
-      };
-    case 'outage':
-    case 'down':
-      return {
-        title: 'System Outage Detected',
-        subtitle: 'One or more critical services are down. The team is investigating.',
-        icon: ErrorFilled,
-        iconColor: '#da1e28',
-      };
-    default:
-      return {
-        title: 'Status Unknown',
-        subtitle: 'Unable to determine system status.',
-        icon: Activity,
-        iconColor: '#525252',
-      };
-  }
-}
-
-function formatDateTime(dateStr: string | null | undefined): string {
-  if (!dateStr) return 'N/A';
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return 'N/A';
-    return d.toLocaleString(undefined, {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  } catch {
-    return 'N/A';
-  }
-}
-
-function formatTimeAgo(dateStr: string | null | undefined): string {
-  if (!dateStr) return '';
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return '';
-    const diffMs = Date.now() - d.getTime();
-    const diffSeconds = Math.floor(diffMs / 1000);
-    if (diffSeconds < 5) return 'just now';
-    if (diffSeconds < 60) return `${diffSeconds}s ago`;
-    const diffMinutes = Math.floor(diffSeconds / 60);
-    if (diffMinutes < 60) return `${diffMinutes}m ago`;
-    const diffHours = Math.floor(diffMinutes / 60);
-    if (diffHours < 24) return `${diffHours}h ago`;
-    return `${Math.floor(diffHours / 24)}d ago`;
-  } catch {
-    return '';
-  }
-}
-
-function formatDuration(minutes: number): string {
-  if (!minutes || minutes <= 0) return 'N/A';
-  if (minutes < 1) return '< 1m';
-  const h = Math.floor(minutes / 60);
-  const m = Math.round(minutes % 60);
-  if (h > 0) return `${h}h ${m}m`;
-  return `${m}m`;
-}
-
-/** Map Docker status to a color-coded tag type */
-function getDockerStatusTagType(status: string): 'green' | 'red' | 'warm-gray' | 'cyan' | 'gray' {
-  switch (status) {
-    case 'running':
-      return 'green';
-    case 'stopped':
-      return 'red';
-    case 'restarting':
-      return 'warm-gray';
-    case 'paused':
-      return 'cyan';
-    default:
-      return 'gray';
-  }
-}
-
-/** Map Docker health to a color-coded tag type */
-function getDockerHealthTagType(health: string): 'green' | 'red' | 'warm-gray' | 'gray' {
-  switch (health) {
-    case 'healthy':
-      return 'green';
-    case 'unhealthy':
-      return 'red';
-    case 'starting':
-      return 'warm-gray';
-    default:
-      return 'gray';
-  }
-}
-
-// ==========================================
-// Auto-refresh interval (10 seconds)
-// ==========================================
-const REFRESH_INTERVAL_MS = 10_000;
-
-const LOG_LINE_OPTIONS = [
-  { id: '50', text: '50 lines' },
-  { id: '100', text: '100 lines' },
-  { id: '200', text: '200 lines' },
-  { id: '500', text: '500 lines' },
-  { id: '1000', text: '1000 lines' },
-];
-
-// ==========================================
 // Component
 // ==========================================
 
 export function ServiceStatusPage() {
   const { addToast } = useToast();
+  const { open: comingSoonOpen, feature: comingSoonFeature, showComingSoon, hideComingSoon } = useComingSoon();
 
-  // Application-level service status
-  const [data, setData] = useState<ServiceStatusResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // Additional UI state
   const [lastRefresh, setLastRefresh] = useState<Date | null>(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  // Docker container status
-  const [dockerServices, setDockerServices] = useState<DockerServiceInfo[]>([]);
-  const [dockerTimestamp, setDockerTimestamp] = useState<string>('');
-  const [dockerError, setDockerError] = useState<string | null>(null);
+  // Application-level service status via useFetchData
+  const { data, isLoading: appLoading, error, refetch: refetchApp } = useFetchData<ServiceStatusResponse>(
+    async (_signal) => statusClient.getServiceStatus(),
+    [],
+  );
+
+  // Docker container status via useFetchData
+  const { data: dockerData, error: dockerError, refetch: refetchDocker } = useFetchData(
+    async (_signal) => statusClient.getDockerStatus(),
+    [],
+  );
+
+  const dockerServices: DockerServiceInfo[] = dockerData?.services ?? [];
+  const dockerTimestamp: string = dockerData?.timestamp ?? '';
+
+  // Derive combined loading from both fetches (only for initial load)
+  const isLoading = appLoading && !data;
 
   // Log viewing modal
   const [logsModalOpen, setLogsModalOpen] = useState(false);
@@ -325,63 +79,22 @@ export function ServiceStatusPage() {
   const [logsDockerUnavailable, setLogsDockerUnavailable] = useState(false);
   const [logLines, setLogLines] = useState('100');
 
-  // Live tick — re-renders timestamps every second so "Updated Xs ago" stays accurate
-  const [, setTick] = useState(0);
-  useEffect(() => {
-    const tickInterval = setInterval(() => setTick((t) => t + 1), 1000);
-    return () => clearInterval(tickInterval);
-  }, []);
-
-  // Fetch application-level service status
-  const fetchAppStatus = useCallback(async () => {
-    try {
-      const response = await statusClient.getServiceStatus();
-      setData(response);
-      setError(null);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch service status';
-      setError(message);
-    }
-  }, []);
-
-  // Fetch Docker container status
-  const fetchDockerStatus = useCallback(async () => {
-    try {
-      const response = await statusClient.getDockerStatus();
-      setDockerServices(response.services ?? []);
-      setDockerTimestamp(response.timestamp ?? '');
-      setDockerError(null);
-    } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to fetch Docker status';
-      setDockerError(message);
-    }
-  }, []);
-
-  // Combined fetch
-  const fetchAll = useCallback(
-    async (showRefreshState = false) => {
-      if (showRefreshState) {
-        setIsRefreshing(true);
-      }
-
-      await Promise.allSettled([fetchAppStatus(), fetchDockerStatus()]);
-
-      setLastRefresh(new Date());
-      setIsLoading(false);
-      setIsRefreshing(false);
-    },
-    [fetchAppStatus, fetchDockerStatus]
-  );
+  // Combined refetch for both data sources
+  const refetchAll = useCallback(() => {
+    refetchApp();
+    refetchDocker();
+    setLastRefresh(new Date());
+  }, [refetchApp, refetchDocker]);
 
   // Initial fetch + auto-refresh (respects user's auto-refresh setting)
   useEffect(() => {
-    fetchAll();
+    setLastRefresh(new Date());
 
     const autoRefreshSetting = localStorage.getItem('settings_autoRefresh');
     const autoRefreshEnabled = autoRefreshSetting !== 'false';
     if (autoRefreshEnabled) {
       intervalRef.current = setInterval(() => {
-        fetchAll();
+        refetchAll();
       }, REFRESH_INTERVAL_MS);
     }
 
@@ -390,12 +103,15 @@ export function ServiceStatusPage() {
         clearInterval(intervalRef.current);
       }
     };
-  }, [fetchAll]);
+  }, [refetchAll]);
 
   // Manual refresh handler
   const handleRefresh = useCallback(() => {
-    fetchAll(true);
-  }, [fetchAll]);
+    setIsRefreshing(true);
+    refetchAll();
+    // Clear refreshing state after a brief delay since refetch is sync
+    setTimeout(() => setIsRefreshing(false), 500);
+  }, [refetchAll]);
 
   // Open logs modal for a service
   const handleViewLogs = useCallback(async (serviceName: string) => {
@@ -445,44 +161,27 @@ export function ServiceStatusPage() {
     }
   }, [logsServiceName, logLines]);
 
+  // Close logs modal
+  const handleCloseLogsModal = useCallback(() => {
+    setLogsModalOpen(false);
+    setLogsContent('');
+    setLogsServiceName('');
+    setLogsDockerUnavailable(false);
+  }, []);
+
   // Restart requires Docker socket access which is not yet available
   const handleRestart = useCallback((serviceName: string) => {
-    addToast('info', 'Not Available', `Restart for "${serviceName}" requires Docker socket access and is not yet implemented.`);
-  }, [addToast]);
+    showComingSoon({
+      name: 'Service Restart',
+      description: `Restarting "${serviceName}" requires Docker socket access and is currently under development. Use the Docker CLI or Docker Desktop to restart services manually.`,
+    });
+  }, [showComingSoon]);
 
   // ==========================================
   // Loading State
   // ==========================================
   if (isLoading && !data) {
-    return (
-      <div className="service-status-page">
-        <PageHeader
-          breadcrumbs={[
-            { label: 'Dashboard', href: ROUTES.DASHBOARD },
-            { label: 'Service Status', active: true },
-          ]}
-          title="Service Status"
-          subtitle="Real-time health monitoring for all platform services."
-          showBorder
-        />
-
-        <div style={{ padding: '0 1rem' }}>
-          <SkeletonPlaceholder className="service-status-page__skeleton-banner" />
-
-          <div className="kpi-row">
-            {[1, 2, 3, 4].map((i) => (
-              <KPICard key={i} label="" value="" loading />
-            ))}
-          </div>
-
-          <div className="service-status-page__skeleton-grid">
-            {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-              <SkeletonPlaceholder key={i} className="skeleton-card" />
-            ))}
-          </div>
-        </div>
-      </div>
-    );
+    return <ServiceStatusSkeleton />;
   }
 
   // ==========================================
@@ -490,6 +189,7 @@ export function ServiceStatusPage() {
   // ==========================================
   if (error && !data && dockerServices.length === 0) {
     return (
+      <PageLayout>
       <div className="service-status-page">
         <PageHeader
           breadcrumbs={[
@@ -509,7 +209,7 @@ export function ServiceStatusPage() {
           showBorder
         />
 
-        <div style={{ padding: '0 1rem' }}>
+        <div className="service-status-page__content">
           <InlineNotification
             kind="error"
             title="Unable to load service status"
@@ -519,29 +219,26 @@ export function ServiceStatusPage() {
           />
         </div>
       </div>
+      </PageLayout>
     );
   }
 
   // ==========================================
   // Render
   // ==========================================
-  const statusConfig = getOverallStatusConfig(data?.overall_status ?? 'operational');
-  const StatusIcon = statusConfig.icon;
-  const metrics = data?.system_metrics;
   const services = data?.services ?? [];
-  const lastIncident = data?.last_incident;
+  const lastIncident = data?.last_incident ?? null;
 
-  // Count services by status
   const operationalCount = services.filter((s) => s.status === 'operational').length;
   const degradedCount = services.filter((s) => s.status === 'degraded').length;
   const downCount = services.filter((s) => s.status === 'down').length;
 
-  // Docker service counts
   const dockerRunning = dockerServices.filter((s) => s.status === 'running').length;
   const dockerStopped = dockerServices.filter((s) => s.status === 'stopped').length;
   const dockerTotal = dockerServices.length;
 
   return (
+    <PageLayout>
     <div className="service-status-page">
       <PageHeader
         breadcrumbs={[
@@ -562,7 +259,7 @@ export function ServiceStatusPage() {
         showBorder
       />
 
-      <div style={{ padding: '0 1rem' }}>
+      <div className="service-status-page__content">
         {/* Error notification (non-blocking, shown alongside stale data) */}
         {error && data && (
           <InlineNotification
@@ -570,379 +267,63 @@ export function ServiceStatusPage() {
             title="Refresh failed"
             subtitle={`Showing cached data. ${error}`}
             lowContrast
-            style={{ marginBottom: '1rem' }}
+            className="service-status-page__stale-warning"
           />
         )}
 
         {/* Overall Status Banner */}
-        <div className={`service-status-page__banner service-status-page__banner--${data?.overall_status ?? 'operational'}`}>
-          <StatusIcon size={32} className="banner-icon" style={{ color: statusConfig.iconColor }} />
-          <div className="banner-content">
-            <h2 className="banner-title">{statusConfig.title}</h2>
-            <p className="banner-subtitle">{statusConfig.subtitle}</p>
-          </div>
-          <div className="banner-actions">
-            {lastRefresh && (
-              <span className="last-refresh">
-                <span className="live-pulse" />
-                Updated {formatTimeAgo(lastRefresh.toISOString())}
-              </span>
-            )}
-            <Tag type={data?.overall_status === 'operational' ? 'green' : data?.overall_status === 'degraded' ? 'warm-gray' : 'red'} size="sm">
-              {operationalCount}/{services.length} Healthy
-            </Tag>
-          </div>
-        </div>
+        <StatusBanner
+          overallStatus={data?.overall_status ?? 'operational'}
+          totalServices={services.length}
+          operationalCount={operationalCount}
+          lastRefresh={lastRefresh}
+        />
 
         {/* System Metrics KPI Row */}
-        <div className="kpi-row">
-          <KPICard
-            label="Alerts (24h)"
-            value={metrics?.total_alerts_24h ?? 0}
-            icon={Activity}
-            iconColor="#da1e28"
-            severity={
-              (metrics?.total_alerts_24h ?? 0) > 200
-                ? 'critical'
-                : (metrics?.total_alerts_24h ?? 0) > 100
-                  ? 'major'
-                  : 'info'
-            }
-            subtitle="Active alerts in last 24 hours"
-          />
-          <KPICard
-            label="Events (24h)"
-            value={(metrics?.total_events_24h ?? 0).toLocaleString()}
-            icon={ChartLineData}
-            iconColor="#0f62fe"
-            severity="info"
-            subtitle="Total events processed"
-          />
-          <KPICard
-            label="Avg Response Time"
-            value={`${metrics?.avg_response_time_ms ?? 0}ms`}
-            icon={Time}
-            iconColor="#42be65"
-            severity={
-              (metrics?.avg_response_time_ms ?? 0) > 500
-                ? 'critical'
-                : (metrics?.avg_response_time_ms ?? 0) > 200
-                  ? 'major'
-                  : 'success'
-            }
-            subtitle="API response latency"
-          />
-          <KPICard
-            label="Error Rate"
-            value={`${(metrics?.error_rate_percent ?? 0).toFixed(2)}%`}
-            icon={EventSchedule}
-            iconColor={
-              (metrics?.error_rate_percent ?? 0) > 5 ? '#da1e28' : '#42be65'
-            }
-            severity={
-              (metrics?.error_rate_percent ?? 0) > 5
-                ? 'critical'
-                : (metrics?.error_rate_percent ?? 0) > 1
-                  ? 'major'
-                  : 'success'
-            }
-            subtitle="Critical alert ratio"
-          />
-        </div>
+        <SystemMetricsKPIs metrics={data?.system_metrics} />
 
-        {/* ============================================ */}
-        {/* Docker Container Status Section              */}
-        {/* ============================================ */}
-        <div className="service-status-page__docker-section">
-          <div className="section-title-row">
-            <h3 className="section-title">
-              <ContainerSoftware size={20} style={{ marginRight: '0.5rem', verticalAlign: 'text-bottom' }} />
-              Docker Containers
-              {dockerTotal > 0 && (
-                <Tag type={dockerStopped > 0 ? 'red' : 'green'} size="sm" style={{ marginLeft: '0.75rem' }}>
-                  {dockerRunning}/{dockerTotal} Running
-                </Tag>
-              )}
-            </h3>
-            {dockerTimestamp && (
-              <span className="docker-timestamp">
-                Queried {formatTimeAgo(dockerTimestamp)}
-              </span>
-            )}
-          </div>
+        {/* Docker Container Status Section */}
+        <DockerContainerGrid
+          dockerServices={dockerServices}
+          dockerTimestamp={dockerTimestamp}
+          dockerError={dockerError}
+          dockerStopped={dockerStopped}
+          dockerRunning={dockerRunning}
+          dockerTotal={dockerTotal}
+          onViewLogs={handleViewLogs}
+          onRestart={handleRestart}
+        />
 
-          {dockerError && dockerServices.length === 0 && (
-            <InlineNotification
-              kind="info"
-              title="Docker status unavailable"
-              subtitle={dockerError}
-              lowContrast
-              hideCloseButton
-              style={{ marginBottom: '1rem' }}
-            />
-          )}
-
-          {dockerServices.length > 0 && (
-            <div className="service-status-page__docker-grid">
-              {dockerServices.map((svc) => {
-                const SvcIcon = DOCKER_SERVICE_ICON_MAP[svc.name] ?? ContainerSoftware;
-                return (
-                  <Tile
-                    key={svc.container || svc.name}
-                    className={`service-status-page__docker-card service-status-page__docker-card--${svc.status}`}
-                  >
-                    <div className="docker-card-header">
-                      <div className="docker-name-row">
-                        <span className={`status-dot status-dot--${svc.status}`} />
-                        <SvcIcon size={16} />
-                        <h4 className="docker-name">{svc.name}</h4>
-                      </div>
-                      <div className="docker-tags">
-                        <Tag type={getDockerStatusTagType(svc.status)} size="sm">
-                          {svc.status}
-                        </Tag>
-                        {svc.health !== 'none' && (
-                          <Tag type={getDockerHealthTagType(svc.health)} size="sm">
-                            {svc.health}
-                          </Tag>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="docker-card-meta">
-                      {svc.image && (
-                        <div className="docker-meta-row">
-                          <span className="meta-label">Image</span>
-                          <span className="meta-value" title={svc.image}>
-                            {svc.image.length > 35 ? `...${svc.image.slice(-32)}` : svc.image}
-                          </span>
-                        </div>
-                      )}
-                      {svc.port && (
-                        <div className="docker-meta-row">
-                          <span className="meta-label">Port</span>
-                          <span className="meta-value">{svc.port}</span>
-                        </div>
-                      )}
-                      {svc.uptime && (
-                        <div className="docker-meta-row">
-                          <span className="meta-label">Uptime</span>
-                          <span className="meta-value">{svc.uptime}</span>
-                        </div>
-                      )}
-                      {svc.container && (
-                        <div className="docker-meta-row">
-                          <span className="meta-label">Container</span>
-                          <span className="meta-value" title={svc.container}>
-                            {svc.container.length > 28 ? `${svc.container.slice(0, 25)}...` : svc.container}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    <div className="docker-card-actions">
-                      <Button
-                        kind="ghost"
-                        size="sm"
-                        renderIcon={Terminal}
-                        onClick={() => handleViewLogs(svc.name)}
-                      >
-                        View Logs
-                      </Button>
-                      <Button
-                        kind="ghost"
-                        size="sm"
-                        renderIcon={Restart}
-                        onClick={() => handleRestart(svc.name)}
-                        disabled
-                        title="Restart is not available -- requires Docker socket access"
-                      >
-                        Restart
-                      </Button>
-                    </div>
-                  </Tile>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* Application Services Grid */}
-        <div className="service-status-page__services-section">
-          <h3 className="section-title">
-            Application Health ({operationalCount} operational
-            {degradedCount > 0 ? `, ${degradedCount} degraded` : ''}
-            {downCount > 0 ? `, ${downCount} down` : ''})
-          </h3>
-          <div className="service-status-page__services-grid">
-            {services.map((service) => {
-              const ServiceIcon = SERVICE_ICON_MAP[service.name] ?? CloudServiceManagement;
-              return (
-                <Tile
-                  key={service.name}
-                  className={`service-status-page__service-card service-status-page__service-card--${service.status}`}
-                >
-                  <div className="service-card-header">
-                    <div className="service-name-row">
-                      <span className={`status-indicator status-indicator--${service.status}`} />
-                      <ServiceIcon size={16} />
-                      <h4 className="service-name">{service.name}</h4>
-                    </div>
-                    <span className={`status-badge status-badge--${service.status}`}>
-                      {service.status}
-                    </span>
-                  </div>
-
-                  <p className="service-details">{service.details}</p>
-
-                  <div className="service-metrics">
-                    <div className="service-metric-row">
-                      <span className="metric-label">Response Time</span>
-                      <span className="metric-value">{service.response_time_ms}ms</span>
-                    </div>
-                    <div className="service-metric-row">
-                      <span className="metric-label">Uptime</span>
-                      <span className="metric-value">{service.uptime_percent.toFixed(2)}%</span>
-                    </div>
-                    <div className="service-metric-row">
-                      <span className="metric-label">Last Check</span>
-                      <span className="metric-value">{formatTimeAgo(service.last_check)}</span>
-                    </div>
-                    <div className="uptime-bar">
-                      <ProgressBar
-                        label=""
-                        value={service.uptime_percent}
-                        max={100}
-                        size="small"
-                      />
-                    </div>
-                  </div>
-                </Tile>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Last Incident */}
-        <div className="service-status-page__incident-section">
-          <h3 className="section-title">Last Incident</h3>
-          {lastIncident ? (
-            <Tile className="service-status-page__incident-card">
-              <WarningAltFilled size={24} className="incident-icon" />
-              <div className="incident-content">
-                <h4 className="incident-title">{lastIncident.title}</h4>
-                <div className="incident-meta">
-                  <div className="incident-meta-item">
-                    <span className="meta-label">Occurred</span>
-                    <span className="meta-value">{formatDateTime(lastIncident.occurred_at)}</span>
-                  </div>
-                  <div className="incident-meta-item">
-                    <span className="meta-label">Resolved</span>
-                    <span className="meta-value">{formatDateTime(lastIncident.resolved_at)}</span>
-                  </div>
-                  <div className="incident-meta-item">
-                    <span className="meta-label">Duration</span>
-                    <span className="meta-value">{formatDuration(lastIncident.duration_minutes)}</span>
-                  </div>
-                  <div className="incident-meta-item">
-                    <span className="meta-label">Status</span>
-                    <Tag type="green" size="sm">Resolved</Tag>
-                  </div>
-                </div>
-              </div>
-            </Tile>
-          ) : (
-            <Tile className="service-status-page__no-incident">
-              <div className="no-incident-content">
-                <CheckmarkFilled size={24} className="no-incident-icon" />
-                <p className="no-incident-text">
-                  No recent incidents recorded. All systems have been stable.
-                </p>
-              </div>
-            </Tile>
-          )}
-        </div>
+        {/* Application Services + Last Incident */}
+        <ServiceHealthCards
+          services={services}
+          operationalCount={operationalCount}
+          degradedCount={degradedCount}
+          downCount={downCount}
+          lastIncident={lastIncident}
+        />
       </div>
 
-      {/* ============================================ */}
-      {/* Logs Modal                                   */}
-      {/* ============================================ */}
-      <Modal
+      {/* Logs Modal */}
+      <ContainerLogModal
         open={logsModalOpen}
-        onRequestClose={() => {
-          setLogsModalOpen(false);
-          // Clear logs state when modal closes to avoid stale data on reopen
-          setLogsContent('');
-          setLogsServiceName('');
-          setLogsDockerUnavailable(false);
-        }}
-        modalHeading={`Logs: ${logsServiceName}`}
-        passiveModal
-        size="lg"
-        className="service-status-page__logs-modal"
-      >
-        <div className="logs-modal-controls">
-          <Dropdown
-            id="log-lines-dropdown"
-            titleText="Lines"
-            label="Select line count"
-            items={LOG_LINE_OPTIONS}
-            itemToString={(item: { id: string; text: string } | null) => item?.text ?? ''}
-            selectedItem={LOG_LINE_OPTIONS.find((o) => o.id === logLines) ?? LOG_LINE_OPTIONS[1]}
-            onChange={({ selectedItem }: { selectedItem: { id: string; text: string } | null }) => {
-              if (selectedItem) {
-                setLogLines(selectedItem.id);
-              }
-            }}
-            size="sm"
-          />
-          <Button
-            kind="ghost"
-            size="sm"
-            renderIcon={Renew}
-            onClick={handleRefreshLogs}
-            disabled={logsLoading}
-          >
-            Refresh
-          </Button>
-        </div>
-
-        {logsDockerUnavailable && (
-          <InlineNotification
-            kind="info"
-            title="Docker not available"
-            subtitle="Log retrieval requires Docker socket access. To enable, mount /var/run/docker.sock into the api-gateway container."
-            lowContrast
-            hideCloseButton
-            style={{ marginBottom: '0.5rem' }}
-          />
-        )}
-
-        {logsError && !logsDockerUnavailable && (
-          <InlineNotification
-            kind="warning"
-            title="Log retrieval issue"
-            subtitle={logsError}
-            lowContrast
-            hideCloseButton
-            style={{ marginBottom: '0.5rem' }}
-          />
-        )}
-
-        <div className="logs-modal-content">
-          {logsLoading ? (
-            <div className="logs-loading">
-              <Loading withOverlay={false} small description="Loading logs..." />
-              <span>Fetching logs...</span>
-            </div>
-          ) : (
-            <pre className="logs-output">{logsContent || 'No log output available.'}</pre>
-          )}
-        </div>
-      </Modal>
+        serviceName={logsServiceName}
+        logsContent={logsContent}
+        logsLoading={logsLoading}
+        logsError={logsError}
+        logsDockerUnavailable={logsDockerUnavailable}
+        logLines={logLines}
+        onClose={handleCloseLogsModal}
+        onLogLinesChange={setLogLines}
+        onRefreshLogs={handleRefreshLogs}
+      />
 
       {/* Toast notifications handled by shared ToastProvider */}
+
+      {/* Coming Soon Modal */}
+      <ComingSoonModal open={comingSoonOpen} onClose={hideComingSoon} feature={comingSoonFeature} />
     </div>
+    </PageLayout>
   );
 }
 

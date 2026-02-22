@@ -1,0 +1,181 @@
+/**
+ * Post-Mortems Page Styles
+ *
+ * Styles for the post-mortem list page with DataTable,
+ * expandable rows, and status/category tags.
+ */
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as *;
+@use '@carbon/react/scss/colors' as *;
+
+.post-mortems-page {
+  width: 100%;
+
+  // KPI row
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $spacing-05;
+    margin-bottom: $spacing-05;
+
+    @media (max-width: 1056px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 672px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .kpi-card-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-03;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-05;
+  }
+
+  // Table wrapper
+  &__table-tile {
+
+    .cds--data-table-container {
+    }
+  }
+
+  // Alert ID link
+  &__alert-link {
+    color: $link-primary;
+    cursor: pointer;
+    background: none;
+    border: none;
+    font: inherit;
+    text-decoration: underline;
+
+    &:hover {
+      color: $link-primary-hover;
+    }
+
+    &:focus {
+      outline: 2px solid $focus;
+      outline-offset: 2px;
+    }
+  }
+
+  // Status tag colors
+  &__status-tag {
+    text-transform: capitalize;
+  }
+
+  // Category tag
+  &__category-tag {
+    text-transform: capitalize;
+  }
+
+  // Expandable row content
+  &__detail {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-05;
+    background-color: $layer-02;
+  }
+
+  &__detail-section {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-03;
+  }
+
+  &__detail-label {
+    @include type-style('label-01');
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.32px;
+    font-weight: 600;
+  }
+
+  &__detail-text {
+    @include type-style('body-long-01');
+    color: $text-primary;
+    white-space: pre-wrap;
+    line-height: 1.5;
+  }
+
+  // Timeline list
+  &__timeline {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-03;
+    padding-left: $spacing-05;
+    border-left: 2px solid $border-subtle-01;
+  }
+
+  &__timeline-entry {
+    display: flex;
+    gap: $spacing-03;
+    align-items: flex-start;
+  }
+
+  &__timeline-time {
+    @include type-style('label-01');
+    color: $text-secondary;
+    font-family: 'IBM Plex Mono', monospace;
+    flex-shrink: 0;
+    min-width: 60px;
+  }
+
+  &__timeline-event {
+    @include type-style('body-compact-01');
+    color: $text-primary;
+  }
+
+  // Action items list
+  &__action-items {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-03;
+  }
+
+  &__action-item {
+    display: flex;
+    align-items: center;
+    gap: $spacing-03;
+    background-color: $layer-01;
+    border: 1px solid $border-subtle-01;
+  }
+
+  &__action-item-text {
+    @include type-style('body-compact-01');
+    color: $text-primary;
+    flex: 1;
+  }
+
+  &__action-item-assignee {
+    @include type-style('label-01');
+    color: $text-secondary;
+  }
+
+  // Prevention measures
+  &__prevention {
+    @include type-style('body-long-01');
+    color: $text-primary;
+    background-color: $layer-01;
+    border-left: 3px solid $support-success;
+  }
+
+  // Detail grid for impact + root cause
+  &__detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-05;
+
+    @media (max-width: 672px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}

@@ -2,7 +2,7 @@
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as *;
-@use '@carbon/react' as react;
+@use '@carbon/react/scss/type' as react;
 @use '@carbon/colors' as *;
 
 .incident-history-page {
@@ -10,7 +10,6 @@
 
   // KPI Card Skeleton
   .kpi-card-skeleton {
-    padding: $spacing-05;
     display: flex;
     flex-direction: column;
     gap: $spacing-03;
@@ -67,7 +66,6 @@
 
   // Chart Tile
   &__chart-tile {
-    padding: $spacing-05;
 
     .chart-header {
       display: flex;
@@ -112,6 +110,18 @@
         height: 8px;
         border-radius: 50%;
         flex-shrink: 0;
+
+        &--critical {
+          background-color: $support-error;
+        }
+
+        &--major {
+          background-color: $support-warning;
+        }
+
+        &--minor {
+          background-color: $interactive;
+        }
       }
     }
 
@@ -122,13 +132,11 @@
 
   // Table Tile
   &__table-tile {
-    padding: 0;
 
     .table-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      padding: $spacing-04 $spacing-05;
       border-bottom: 1px solid $border-subtle-01;
       gap: $spacing-04;
       flex-wrap: wrap;
@@ -175,7 +183,6 @@
 
     // Expanded Row
     .incident-expanded-content {
-      padding: $spacing-04 $spacing-05;
       border-left: 3px solid $link-primary;
       display: flex;
       flex-direction: column;
@@ -206,7 +213,6 @@
 
   // Donut Tile
   &__donut-tile {
-    padding: $spacing-05;
 
     .tile-title {
       @include react.type-style('heading-compact-02');
@@ -220,10 +226,8 @@
 
   // Prevention Tile
   &__prevention-tile {
-    padding: 0;
 
     .prevention-header {
-      padding: $spacing-05;
       border-bottom: 1px solid $border-subtle-01;
 
       &__title-row {
@@ -250,7 +254,6 @@
     }
 
     .prevention-list {
-      padding: $spacing-05;
       display: flex;
       flex-direction: column;
       gap: $spacing-04;
@@ -260,7 +263,6 @@
       @include react.type-style('body-compact-01');
       color: $text-secondary;
       text-align: center;
-      padding: $spacing-05;
     }
 
     .prevention-divider {
@@ -289,6 +291,7 @@
         color: $white-0;
         @include react.type-style('label-01');
         font-weight: 700;
+        background-color: var(--badge-bg, $interactive);
       }
 
       &__content {
@@ -323,7 +326,6 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: $spacing-05;
     background: linear-gradient(135deg, $layer-01 0%, $layer-02 100%);
     border: 1px solid $border-subtle-01;
 

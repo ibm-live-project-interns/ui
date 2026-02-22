@@ -1,15 +1,64 @@
 // SLA Compliance Reports Page Styles
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as react;
 
 .sla-reports-page {
   width: 100%;
-  padding-bottom: $spacing-07;
 
   .kpi-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
     gap: $spacing-05;
-    margin-top: $spacing-06;
+    margin-top: $spacing-05;
+  }
+
+  // ==========================================
+  // Skeleton Loading States
+  // ==========================================
+  &__skeleton-tile {
+    margin-top: $spacing-05;
+  }
+
+  &__skeleton-chart-placeholder {
+    width: 100%;
+    height: 400px;
+  }
+
+  &__skeleton-table {
+    margin-top: $spacing-05;
+  }
+
+  // ==========================================
+  // Empty State
+  // ==========================================
+  &__empty-state {
+    text-align: center;
+    color: $text-secondary;
+  }
+
+  &__empty-icon {
+    margin-bottom: $spacing-05;
+    opacity: 0.5;
+  }
+
+  &__empty-title {
+    @include react.type-style('heading-compact-02');
+    margin-bottom: $spacing-03;
+  }
+
+  &__empty-description {
+    @include react.type-style('body-compact-01');
+    color: $text-secondary;
+  }
+
+  // ==========================================
+  // Two-Column Grid (severity table + violations)
+  // ==========================================
+  &__two-column-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(480px, 100%), 1fr));
+    gap: $spacing-05;
+    margin-top: $spacing-05;
   }
 }

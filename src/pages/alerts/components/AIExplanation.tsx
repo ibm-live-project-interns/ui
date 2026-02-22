@@ -8,6 +8,7 @@
  * - Recommended Actions (numbered list)
  */
 
+import React from 'react';
 import { Tile, OrderedList, ListItem } from '@carbon/react';
 import {
     IbmWatsonxCodeAssistant,
@@ -32,20 +33,12 @@ interface AIExplanationProps {
     recommendedActions: string[];
 }
 
-export function AIExplanation({
+export const AIExplanation = React.memo(function AIExplanation({
     summary,
     rootCauseAnalysis,
     businessImpact,
     recommendedActions,
 }: AIExplanationProps) {
-    const impactColors = {
-        high: { bg: 'rgba(218, 30, 40, 0.15)', border: '#da1e28', icon: '#da1e28' },
-        medium: { bg: 'rgba(255, 131, 43, 0.15)', border: '#ff832b', icon: '#ff832b' },
-        low: { bg: 'rgba(241, 194, 27, 0.15)', border: '#f1c21b', icon: '#f1c21b' },
-    };
-
-    const impactStyle = impactColors[businessImpact.level];
-
     return (
         <Tile className="ai-explanation">
             {/* Header */}
@@ -84,14 +77,8 @@ export function AIExplanation({
                 <h5 className="ai-explanation__section-title ai-explanation__section-title--impact">
                     Business Impact
                 </h5>
-                <div
-                    className="ai-explanation__impact-box"
-                    style={{
-                        backgroundColor: impactStyle.bg,
-                        borderLeftColor: impactStyle.border,
-                    }}
-                >
-                    <WarningFilled size={16} style={{ color: impactStyle.icon }} />
+                <div className={`ai-explanation__impact-box ai-explanation__impact-box--${businessImpact.level}`}>
+                    <WarningFilled size={16} className={`ai-explanation__impact-icon ai-explanation__impact-icon--${businessImpact.level}`} />
                     <span>
                         <strong>{businessImpact.level.charAt(0).toUpperCase() + businessImpact.level.slice(1)}</strong>
                         {' - '}
@@ -116,6 +103,6 @@ export function AIExplanation({
             </div>
         </Tile>
     );
-}
+});
 
 export default AIExplanation;

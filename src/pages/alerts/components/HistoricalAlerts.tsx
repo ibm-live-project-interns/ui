@@ -9,6 +9,7 @@
  * - View All button
  */
 
+import React from 'react';
 import { Tile, Button, Tag } from '@carbon/react';
 import { ArrowRight } from '@carbon/icons-react';
 import { SEVERITY_CONFIG, type Severity } from '@/shared/constants/severity';
@@ -28,7 +29,7 @@ interface HistoricalAlertsProps {
     maxDisplay?: number;
 }
 
-export function HistoricalAlerts({
+export const HistoricalAlerts = React.memo(function HistoricalAlerts({
     alerts,
     onViewAll,
     maxDisplay = 3,
@@ -47,7 +48,7 @@ export function HistoricalAlerts({
                     return (
                         <div key={alert.id} className="historical-alerts__item">
                             <div className="historical-alerts__item-header">
-                                <span className="historical-alerts__timestamp">{typeof alert.timestamp === 'string' ? alert.timestamp : (alert.timestamp as any)?.relative || 'N/A'}</span>
+                                <span className="historical-alerts__timestamp">{alert.timestamp || 'N/A'}</span>
                                 <Tag type={config.tagType} size="sm">
                                     {config.label}
                                 </Tag>
@@ -72,6 +73,6 @@ export function HistoricalAlerts({
             )}
         </Tile>
     );
-}
+});
 
 export default HistoricalAlerts;

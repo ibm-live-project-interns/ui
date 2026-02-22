@@ -11,6 +11,7 @@
 import { useState, useMemo } from 'react';
 import React from 'react';
 import { Tile, IconButton, Tooltip, Tag } from '@carbon/react';
+import { logger } from '@/shared/utils/logger';
 import { Copy, Checkmark, Terminal, CalendarHeatMap, DataFormat } from '@carbon/icons-react';
 import '@/styles/pages/_alert-details.scss';
 
@@ -149,7 +150,7 @@ function formatValue(value: string): React.ReactNode {
     return <span>{trimmed}</span>;
 }
 
-export function RawTrapData({ data, sourceIp, timestamp }: RawTrapDataProps) {
+export const RawTrapData = React.memo(function RawTrapData({ data, sourceIp, timestamp }: RawTrapDataProps) {
     const [copied, setCopied] = useState(false);
     const [formatted, setFormatted] = useState(true);
 
@@ -161,7 +162,7 @@ export function RawTrapData({ data, sourceIp, timestamp }: RawTrapDataProps) {
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch (err) {
-            console.error('Failed to copy:', err);
+            logger.warn('Failed to copy to clipboard', err);
         }
     };
 
@@ -169,7 +170,7 @@ export function RawTrapData({ data, sourceIp, timestamp }: RawTrapDataProps) {
         <Tile className="raw-trap-data">
             <div className="raw-trap-data__header">
                 <h4 className="raw-trap-data__title">Raw SNMP Trap Data</h4>
-                <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <div className="u-flex-row-gap">
                     <Tag type={formatted ? 'green' : 'gray'} size="sm">
                         {formatted ? 'Formatted' : 'Raw'}
                     </Tag>
@@ -214,6 +215,6 @@ export function RawTrapData({ data, sourceIp, timestamp }: RawTrapDataProps) {
             </div>
         </Tile>
     );
-}
+});
 
 export default RawTrapData;

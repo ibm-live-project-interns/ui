@@ -1,0 +1,93 @@
+// Compliance Table & Chart Styles (SLA Reports sub-components)
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as react;
+
+// ==========================================
+// Shared Tile Header (title + description)
+// Used by ComplianceBySeverityTable and ComplianceTrendChart
+// ==========================================
+.compliance-tile {
+  padding: $spacing-06;
+}
+
+.compliance-tile__header {
+  margin-bottom: $spacing-05;
+}
+
+.compliance-tile__title {
+  @include react.type-style('heading-compact-02');
+  font-weight: 600;
+  color: $text-primary;
+  margin: 0;
+}
+
+.compliance-tile__description {
+  @include react.type-style('body-compact-01');
+  color: $text-secondary;
+  margin-top: $spacing-02;
+}
+
+// ==========================================
+// ComplianceBySeverityTable - Cell Styles
+// ==========================================
+.compliance-table__met-value {
+  color: $support-success;
+  font-weight: 600;
+}
+
+.compliance-table__compliance-cell {
+  display: flex;
+  align-items: center;
+  gap: $spacing-03;
+}
+
+.compliance-table__violated-value {
+  color: $text-secondary;
+  font-weight: 400;
+
+  &--active {
+    color: $support-error;
+    font-weight: 600;
+  }
+}
+
+.compliance-table__percent-label {
+  @include react.type-style('body-compact-01');
+  font-weight: 600;
+  min-width: 3.5rem;
+  text-align: right;
+
+  &--excellent {
+    color: $support-success;
+  }
+
+  &--good {
+    color: $support-warning;
+  }
+
+  &--fair {
+    color: var(--cds-orange-40, #ff832b);
+  }
+
+  &--poor {
+    color: $support-error;
+  }
+}
+
+.compliance-table__empty-row {
+  text-align: center;
+  padding: $spacing-05;
+  color: $text-secondary;
+}
+
+// ==========================================
+// ComplianceTrendChart
+// ==========================================
+.compliance-tile--chart {
+  margin-top: $spacing-05;
+}
+
+.compliance-trend-chart__container {
+  height: 400px;
+}

@@ -33,7 +33,7 @@ export interface DataTableWrapperProps {
  * - Optional filter/refresh buttons
  * - Consistent dark theme styling
  */
-export function DataTableWrapper({
+export const DataTableWrapper = React.memo(function DataTableWrapper({
     title,
     children,
     onSearch,
@@ -98,12 +98,12 @@ export function DataTableWrapper({
                     ))}
                 </div>
             </div>
-            <div className="data-table-wrapper__content">
+            <div className="data-table-wrapper__content" aria-live="polite">
                 {children}
             </div>
         </div>
     );
-}
+});
 
 export default DataTableWrapper;
 

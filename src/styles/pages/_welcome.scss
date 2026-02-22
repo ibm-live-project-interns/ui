@@ -1,0 +1,39 @@
+// Welcome Page Styles
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+
+.welcome-page {
+  // ==========================================
+  // Hero Section
+  // ==========================================
+  &__hero {
+    margin-top: $spacing-10;
+    margin-bottom: $spacing-09;
+  }
+
+  &__description {
+    max-width: 42rem;
+  }
+
+  &__actions {
+    display: flex;
+    gap: $spacing-05;
+    flex-wrap: wrap;
+    margin-top: $spacing-05;
+  }
+
+  // ==========================================
+  // Feature Cards
+  // ==========================================
+  &__feature-col {
+    margin-bottom: $spacing-06;
+  }
+
+  &__feature-tile {
+    height: 100%;
+  }
+
+  &__feature-icon {
+    color: $icon-primary;
+  }
+}

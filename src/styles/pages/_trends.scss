@@ -2,7 +2,7 @@
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as *;
-@use '@carbon/react' as react;
+@use '@carbon/react/scss/type' as react;
 @use '@carbon/colors' as *;
 
 .trends-insights-page {
@@ -12,7 +12,6 @@
     // Filter Popover Simple - for recurring alerts filter
     .filter-popover-simple {
         min-width: 180px;
-        padding: $spacing-06;
 
         &__header {
             display: flex;
@@ -34,7 +33,6 @@
         .filter-option {
             display: block;
             width: 100%;
-            padding: $spacing-03;
             text-align: left;
             background: transparent;
             border: none;
@@ -57,7 +55,6 @@
 
     // KPI Card Skeleton
     .kpi-card-skeleton {
-        padding: $spacing-05;
         display: flex;
         flex-direction: column;
         gap: $spacing-03;
@@ -77,6 +74,30 @@
         @media (max-width: 672px) {
             grid-template-columns: 1fr;
         }
+    }
+
+    // Empty state text for no trends data
+    .trends-empty-state {
+        text-align: center;
+        color: $text-secondary;
+    }
+
+    // Header right content flex container
+    .trends-header-actions {
+        display: flex;
+        gap: $spacing-03;
+    }
+
+    // KPI row empty fallback
+    .trends-kpi-empty {
+        width: 100%;
+        text-align: center;
+    }
+
+    // Skeleton placeholder full-width
+    .trends-skeleton-chart {
+        width: 100%;
+        height: 400px;
     }
 
     // Page Header - using shared PageHeader component, no overrides needed
@@ -123,7 +144,6 @@
     // Charts Section
     .chart-section,
     .alerts-chart-tile {
-        padding: $spacing-05;
         margin-bottom: $spacing-05;
 
         .section-controls {
@@ -188,7 +208,6 @@
 
     // Recurring Alert Types
     .recurring-alerts-tile {
-        padding: $spacing-05;
 
         .alert-types-list {
             display: flex;
@@ -201,6 +220,11 @@
             flex-direction: column;
             gap: $spacing-05;
             flex: 1; // Allow list to expand
+        }
+
+        .recurring-alerts-empty {
+            color: $text-secondary;
+            text-align: center;
         }
 
         .alert-type-item,
@@ -262,7 +286,36 @@
                     height: 100%;
                     border-radius: 4px;
                     transition: width 0.3s ease;
+                    width: var(--bar-width, 0%);
                 }
+
+                .progress-fill--critical {
+                    background-color: $red-60;
+                }
+
+                .progress-fill--high,
+                .progress-fill--major {
+                    background-color: $orange-40;
+                }
+
+                .progress-fill--medium,
+                .progress-fill--minor {
+                    background-color: $purple-60;
+                }
+
+                .progress-fill--low {
+                    background-color: $teal-50;
+                }
+
+                .progress-fill--info {
+                    background-color: $blue-60;
+                }
+            }
+
+            // Clickable alert name link
+            .alert-name--link {
+                cursor: pointer;
+                color: $link-primary;
             }
 
             .alert-type-meta,
@@ -280,7 +333,6 @@
     // Time Distribution
     .time-distribution-tile,
     .distribution-tile {
-        padding: $spacing-05;
 
         .pie-chart-container,
         .chart-container {
@@ -337,7 +389,6 @@
 
     // AI Impact Tile
     .ai-impact-tile {
-        padding: $spacing-05;
 
         .chart-container {
             min-height: 240px;
@@ -358,7 +409,6 @@
                 flex: 1;
                 display: flex;
                 flex-direction: column;
-                padding: $spacing-03;
                 border-radius: 4px;
 
                 &.summary-item--blue,
@@ -401,7 +451,6 @@
     // AI Generated Insights
     .ai-insights-section,
     .ai-insights-tile {
-        padding: $spacing-05;
 
         .ai-insights-header,
         .insights-header {
@@ -468,7 +517,6 @@
         .insight-card {
             background: $layer-02;
             border-radius: 8px;
-            padding: $spacing-05;
             display: flex;
             flex-direction: column;
             gap: $spacing-04;
@@ -478,6 +526,12 @@
             &:hover {
                 background: $layer-hover-02;
                 border-color: $border-strong-01;
+            }
+
+            .ai-insight-card__icon {
+                display: flex;
+                align-items: center;
+                color: var(--icon-color, inherit);
             }
 
             .ai-insight-card-header,
@@ -499,18 +553,18 @@
                 font-size: 14px;
 
                 &.pattern {
-                    background: #da1e28;
-                    color: #fff;
+                    background: $support-error;
+                    color: $white-0;
                 }
 
                 &.optimization {
-                    background: #24a148;
-                    color: #fff;
+                    background: $support-success;
+                    color: $white-0;
                 }
 
                 &.recommendation {
-                    background: #a56eff;
-                    color: #fff;
+                    background: $support-info;
+                    color: $white-0;
                 }
             }
 

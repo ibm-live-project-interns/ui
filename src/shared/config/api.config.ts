@@ -104,6 +104,7 @@ export const API_ENDPOINTS = {
   DEVICES: '/devices',
   DEVICES_NOISY: '/devices/noisy',
   DEVICE_BY_ID: (id: string) => `/devices/${id}`,
+  DEVICE_METRICS: (id: string) => `/devices/${id}/metrics`,
 
   // ==========================================
   // Tickets Endpoints
@@ -184,6 +185,33 @@ export const API_ENDPOINTS = {
   // ==========================================
   DOCKER_SERVICES_STATUS: '/services/status',
   DOCKER_SERVICE_LOGS: (name: string) => `/services/${name}/logs`,
+
+  // ==========================================
+  // Alert Enrichment Endpoints
+  // ==========================================
+  ALERTS_BULK_ACTION: '/alerts/bulk-action',
+  ALERTS_TICKETS: (id: string) => `/alerts/${id}/tickets`,
+  ALERTS_POST_MORTEM: (id: string) => `/alerts/${id}/post-mortem`,
+
+  // ==========================================
+  // Runbook Suggestions
+  // ==========================================
+  RUNBOOKS_SUGGEST: '/runbooks/suggest',
+
+  // ==========================================
+  // On-Call Schedules & Overrides
+  // ==========================================
+  ON_CALL_SCHEDULES: '/on-call/schedules',
+  ON_CALL_SCHEDULE_BY_ID: (id: number) => `/on-call/schedules/${id}`,
+  ON_CALL_OVERRIDES: '/on-call/overrides',
+  ON_CALL_OVERRIDE_BY_ID: (id: number) => `/on-call/overrides/${id}`,
+  ON_CALL_CURRENT: '/on-call/current',
+
+  // ==========================================
+  // Post-Mortems
+  // ==========================================
+  POST_MORTEMS: '/post-mortems',
+  POST_MORTEM_BY_ID: (id: number) => `/post-mortems/${id}`,
 } as const;
 
 // HTTP request timeout (ms)

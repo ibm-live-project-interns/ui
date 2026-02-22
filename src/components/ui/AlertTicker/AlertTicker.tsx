@@ -5,6 +5,7 @@
  * Displays a scrolling ticker of critical alerts with click-to-navigate functionality
  */
 
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Warning } from '@carbon/icons-react';
 import './AlertTicker.scss';
@@ -42,7 +43,7 @@ export interface AlertTickerProps {
  * />
  * ```
  */
-export function AlertTicker({
+export const AlertTicker = React.memo(function AlertTicker({
     alerts,
     onAlertClick,
     speed = 30,
@@ -81,7 +82,7 @@ export function AlertTicker({
             <div className="alert-ticker__container">
                 <div
                     className="alert-ticker__content"
-                    style={{ animationDuration: `${speed}s` }}
+                    style={{ '--ticker-speed': `${speed}s` } as React.CSSProperties}
                 >
                     {/* Duplicate alerts for seamless loop */}
                     {[...alerts, ...alerts].map((alert, index) => (
@@ -92,7 +93,7 @@ export function AlertTicker({
                             type="button"
                         >
                             <span className={`alert-ticker__time ${alert.severity === 'major' ? 'alert-ticker__time--major' : ''}`}>
-                                [{typeof alert.timestamp === 'string' ? alert.timestamp : (alert.timestamp as any)?.relative || 'Now'}]
+                                [{alert.timestamp || 'Now'}]
                             </span>
                             {alert.deviceName && (
                                 <span className="alert-ticker__device">
@@ -108,6 +109,6 @@ export function AlertTicker({
             </div>
         </div>
     );
-}
+});
 
 export default AlertTicker;

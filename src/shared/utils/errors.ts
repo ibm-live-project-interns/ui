@@ -7,6 +7,7 @@
  */
 
 import type { APIError } from '@/shared/types';
+import { logger } from '@/shared/utils/logger';
 
 /** Error codes that can be returned from the API */
 export const ERROR_CODES = {
@@ -113,6 +114,6 @@ export function handleError(error: unknown): never {
  * Log error and return user-friendly message
  */
 export function logAndParseError(error: unknown, context: string): string {
-  console.error(`[${context}] Error:`, error);
+  logger.error(`[${context}] Error`, error instanceof Error ? error : undefined, error);
   return parseAPIError(error);
 }

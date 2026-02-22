@@ -8,6 +8,7 @@
  */
 
 import React from 'react';
+import { logger } from '@/shared/utils/logger';
 
 interface WidgetErrorBoundaryProps {
     /** Label shown in the fallback when the widget crashes */
@@ -34,46 +35,17 @@ export class WidgetErrorBoundary extends React.Component<
     }
 
     componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
-        console.error(
-            `[WidgetErrorBoundary] ${this.props.widgetName || 'Widget'} crashed:`,
-            error,
-            errorInfo,
-        );
+        logger.error(`Widget "${this.props.widgetName || 'Unknown'}" crashed`, error, errorInfo);
     }
 
     render() {
         if (this.state.hasError) {
             return (
-                <div
-                    style={{
-                        padding: '1.5rem',
-                        background: 'var(--cds-layer-01, #161616)',
-                        borderRadius: '4px',
-                        border: '1px solid var(--cds-border-subtle-01, #393939)',
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.5rem',
-                        textAlign: 'center',
-                    }}
-                >
-                    <span
-                        style={{
-                            fontSize: '0.875rem',
-                            fontWeight: 600,
-                            color: 'var(--cds-text-primary, #f4f4f4)',
-                        }}
-                    >
+                <div className="widget-error-boundary">
+                    <span className="widget-error-boundary__title">
                         {this.props.widgetName || 'Widget'} unavailable
                     </span>
-                    <span
-                        style={{
-                            fontSize: '0.75rem',
-                            color: 'var(--cds-text-secondary, #c6c6c6)',
-                        }}
-                    >
+                    <span className="widget-error-boundary__message">
                         This component encountered an error and could not render.
                     </span>
                 </div>

@@ -50,7 +50,7 @@ const ICON_SIZES: Record<EmptyStateSize, number> = {
  * - Three size variants (sm, md, lg) for different contexts
  * - Follows IBM Carbon g100 theme tokens
  */
-export function EmptyState({
+export const EmptyState = React.memo(function EmptyState({
     icon: Icon,
     title,
     description,
@@ -90,6 +90,6 @@ export function EmptyState({
             )}
         </div>
     );
-}
+});
 
 export default EmptyState;

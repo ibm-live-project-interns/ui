@@ -2,7 +2,7 @@
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as *;
-@use '@carbon/react' as react;
+@use '@carbon/react/scss/type' as react;
 @use '@carbon/colors' as *;
 @use '@carbon/react/scss/components/tabs';
 
@@ -13,7 +13,6 @@
     .configuration-header {
         background: $layer-01;
         border-bottom: 1px solid $border-subtle-01;
-        padding: $spacing-05 $spacing-06;
 
         .configuration-header__breadcrumb {
             display: flex;
@@ -105,13 +104,18 @@
 
     // Tab content area - global padding is applied in index.scss
     .configuration-content {
-        padding: 0;
-        display: grid;
-        grid-template-columns: 1fr 340px;
-        gap: $spacing-06;
+        width: 100%;
 
-        @media (max-width: 1056px) {
-            grid-template-columns: 1fr;
+        // Only the Threshold Rules tab uses a two-column layout (table + side panel).
+        // All other tabs render a single full-width DataTable.
+        &--with-sidebar {
+            display: grid;
+            grid-template-columns: 1fr 340px;
+            gap: $spacing-06;
+
+            @media (max-width: 1056px) {
+                grid-template-columns: 1fr;
+            }
         }
     }
 
@@ -144,7 +148,6 @@
             display: grid;
             grid-template-columns: 60px 2fr 1.5fr 100px 100px;
             gap: $spacing-04;
-            padding: $spacing-03 $spacing-04;
             font-size: 0.625rem;
             font-weight: 600;
             text-transform: uppercase;
@@ -189,7 +192,7 @@
             }
 
             &.border--warning {
-                background: #f1c21b;
+                background: $yellow-30;
             }
 
             &.border--info {
@@ -201,7 +204,6 @@
             display: grid;
             grid-template-columns: 60px 2fr 1.5fr 100px 100px;
             gap: $spacing-04;
-            padding: $spacing-04;
             align-items: center;
         }
 
@@ -233,7 +235,6 @@
                 font-family: 'IBM Plex Mono', monospace;
                 font-size: 0.75rem;
                 background: $layer-02;
-                padding: $spacing-01 $spacing-02;
                 color: $text-primary;
             }
 
@@ -248,7 +249,6 @@
                 display: inline-flex;
                 align-items: center;
                 gap: $spacing-02;
-                padding: $spacing-01 $spacing-03;
                 font-size: 0.6875rem;
                 font-weight: 500;
                 border-radius: 0;
@@ -279,12 +279,12 @@
                 }
 
                 &.severity--warning {
-                    background: rgba(#f1c21b, 0.15);
-                    color: #f1c21b;
-                    border: 1px solid rgba(#f1c21b, 0.5);
+                    background: rgba($yellow-30, 0.15);
+                    color: $yellow-30;
+                    border: 1px solid rgba($yellow-30, 0.5);
 
                     .severity-dot {
-                        background: #f1c21b;
+                        background: $yellow-30;
                     }
                 }
 
@@ -317,7 +317,6 @@
     .settings-panel {
         background: $layer-01;
         border: 1px solid $border-subtle-01;
-        padding: $spacing-05;
 
         .settings-panel__header {
             display: flex;
@@ -342,7 +341,6 @@
                 cursor: pointer;
                 background: transparent;
                 border: 1px solid $border-subtle-01;
-                padding: $spacing-02 $spacing-03;
                 border-radius: 4px;
                 transition: all 0.15s ease;
                 font-weight: 500;
@@ -395,7 +393,6 @@
     // Notification channel item
     .channel-item {
         background: $layer-02;
-        padding: $spacing-04;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -440,6 +437,27 @@
                 background: $text-helper;
             }
         }
+    }
+
+    // Configuration tab flex wrapper
+    .configuration-tab__content {
+        flex: 1;
+    }
+
+    // Configuration tab table name cell
+    .configuration-table__name-cell {
+        font-weight: 600;
+    }
+
+    // Modal form layout (shared between escalation/notification/maintenance tabs)
+    .configuration-modal__form {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-05;
+    }
+
+    // Modal delete confirmation text
+    .configuration-modal__confirm-text {
     }
 
     // Test configuration panel

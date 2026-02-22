@@ -123,20 +123,10 @@ export function ToastProvider({ children }: ToastProviderProps) {
                 <div
                     aria-live="polite"
                     aria-label="Notifications"
-                    style={{
-                        position: 'fixed',
-                        top: '3.5rem',
-                        right: '1rem',
-                        zIndex: 10000,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '0.5rem',
-                        maxWidth: '25rem',
-                        pointerEvents: 'none',
-                    }}
+                    className="toast-container"
                 >
                     {toasts.map(toast => (
-                        <div key={toast.id} style={{ pointerEvents: 'auto' }}>
+                        <div key={toast.id} className="toast-container__item">
                             {/*
                              * Removed Carbon's `timeout` prop to avoid double auto-dismiss.
                              * Our custom setTimeout in addToast() handles auto-dismiss.

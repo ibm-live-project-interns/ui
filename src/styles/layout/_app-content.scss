@@ -1,0 +1,107 @@
+/**
+ * App Content Layout
+ *
+ * Main content area positioning below the header, offset from the sidebar.
+ * Includes public layout (no sidebar) and auth layout (centered, no sidebar).
+ * Also includes dashboard and page layout helpers.
+ */
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as react;
+
+// ==========================================
+// App Content - Main content area below header
+// Carbon's Content component uses .cds--content class
+// ==========================================
+.cds--content,
+.app-main-content {
+  // Margin-left to offset from expanded SideNav (256px)
+  margin-left: 256px;
+  // Global padding for consistent spacing across all pages
+  padding: $spacing-07;
+  min-height: calc(100vh - 48px);
+  background-color: $background;
+
+  // Responsive: On smaller screens, no SideNav offset
+  @media (max-width: 1055px) {
+    margin-left: 0;
+  }
+}
+
+// ==========================================
+// Standard Page Layout
+// All main pages inherit this for consistent spacing
+// ==========================================
+.page-layout {
+  // No padding here - .cds--content already provides outer padding ($spacing-07)
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--page-gap);
+  min-height: 100%;
+}
+
+// ==========================================
+// Public Layout Content - No sidebar, full width
+// Used for home/landing page
+// ==========================================
+.public-layout-content {
+  margin-left: 0 !important;
+  padding: $spacing-05;
+  min-height: calc(100vh - 48px);
+  background-color: $background;
+}
+
+// ==========================================
+// Auth Layout Content - No sidebar, centered
+// Used for login, register, forgot password
+// ==========================================
+.auth-layout-content {
+  margin-left: 0 !important;
+  padding: 0;
+  min-height: calc(100vh - 48px);
+  background-color: $background;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+// ==========================================
+// Page Title and Description - Consistent styling
+// Uses Carbon typography
+// ==========================================
+.page-title {
+  @include react.type-style('productive-heading-05');
+  margin-bottom: $spacing-03;
+  color: $text-primary;
+}
+
+.page-description {
+  @include react.type-style('body-long-01');
+  color: $text-secondary;
+  margin-bottom: $spacing-07;
+  max-width: 600px;
+}
+
+// ==========================================
+// Dashboard and Page Layouts
+// ==========================================
+.dashboard-page,
+.alerts-page,
+.alert-detail-page,
+.noc-dashboard {
+  gap: $spacing-05;
+
+  .cds--grid {
+    padding: 0;
+  }
+}
+
+// ==========================================
+// Helper Mixins
+// ==========================================
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}

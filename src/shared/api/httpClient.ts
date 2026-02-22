@@ -160,11 +160,20 @@ export class HttpService {
         const errorData = await response.json().catch(() => ({}));
         const errorMessage = errorData.error || `HTTP Error: ${response.status} ${response.statusText}`;
 
-        apiLogger.error(`${method} ${endpoint} failed`, undefined, {
-          duration,
-          status: response.status,
-          error: errorMessage,
-        });
+        // 404 is a normal "not found" response, not a server error -- log at debug level
+        // to avoid noisy console.error spam for expected missing resources (e.g., post-mortems)
+        if (response.status === 404) {
+          apiLogger.debug(`${method} ${endpoint} not found (404)`, {
+            duration,
+            status: 404,
+          });
+        } else {
+          apiLogger.error(`${method} ${endpoint} failed`, undefined, {
+            duration,
+            status: response.status,
+            error: errorMessage,
+          });
+        }
 
         throw new Error(errorMessage);
       }

@@ -6,12 +6,13 @@
  * when no data is available.
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { ProgressBar, SkeletonText } from '@carbon/react';
 import { Network_3, Network_4 } from '@carbon/icons-react';
 import { deviceService } from '@/shared/services';
 import type { Device } from '@/shared/services';
 import { EmptyState } from '@/components/ui';
+import { logger } from '@/shared/utils/logger';
 import '@/styles/components/_kpi-card.scss';
 
 /** Color classes for the progress bars to give visual variety */
@@ -23,7 +24,7 @@ function getBarClass(index: number): string {
     return color ? `custom-progress-bar ${color}` : 'custom-progress-bar';
 }
 
-export function TopInterfaces() {
+export const TopInterfaces = React.memo(function TopInterfaces() {
     const [devices, setDevices] = useState<Device[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -46,7 +47,7 @@ export function TopInterfaces() {
 
                 setDevices(sorted);
             } catch (error) {
-                console.error('[TopInterfaces] Failed to fetch devices:', error);
+                logger.warn('Failed to fetch devices for TopInterfaces widget', error);
             } finally {
                 if (!cancelled) setIsLoading(false);
             }
@@ -66,23 +67,23 @@ export function TopInterfaces() {
         : 1;
 
     return (
-        <div className="kpi-card" style={{ height: '100%' }}>
+        <div className="kpi-card kpi-card--full-height">
             <div className="kpi-header">
                 <div className="kpi-title-group">
                     <span className="kpi-title">Top Interfaces</span>
                 </div>
                 <div className="kpi-icon-wrapper">
-                    <Network_4 size={20} />
+                    <Network_4 size={20} aria-label="Network interfaces" />
                 </div>
             </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', marginTop: '1rem' }}>
+            <div className="top-interfaces__list">
                 {isLoading ? (
                     <>
                         {[1, 2, 3].map(i => (
                             <div key={i}>
                                 <SkeletonText width="80%" />
-                                <div style={{ marginTop: '0.5rem' }}><SkeletonText width="100%" /></div>
+                                <div className="top-interfaces__skeleton-gap"><SkeletonText width="100%" /></div>
                             </div>
                         ))}
                     </>
@@ -98,7 +99,7 @@ export function TopInterfaces() {
                         const percentage = Math.round((device.recentAlerts / maxAlerts) * 100);
                         return (
                             <div key={device.id}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem', fontSize: '0.875rem' }}>
+                                <div className="top-interfaces__bar-header">
                                     <span>{device.name} ({device.ip})</span>
                                     <span>{device.recentAlerts} alert{device.recentAlerts !== 1 ? 's' : ''}</span>
                                 </div>
@@ -135,4 +136,4 @@ export function TopInterfaces() {
             `}</style>
         </div>
     );
-}
+});

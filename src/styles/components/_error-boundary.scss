@@ -1,0 +1,110 @@
+// Error Boundary & Toast Styles
+// Styles for App.tsx RouteErrorBoundary, main.tsx GlobalErrorBoundary,
+// and ToastContext.tsx toast container.
+// NOTE: These use hardcoded color values instead of Carbon tokens because
+// error boundaries render OUTSIDE the Carbon theme provider and must work
+// even when the Carbon CSS fails to load.
+
+// ==========================================
+// Shared error-boundary fullscreen layout
+// ==========================================
+.error-boundary {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #161616;
+  color: #f4f4f4;
+  gap: 1rem;
+  padding: 2rem;
+  text-align: center;
+
+  &__title {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  &__title--large {
+    font-size: 1.75rem;
+  }
+
+  &__description {
+    color: #c6c6c6;
+    max-width: 480px;
+    line-height: 1.5;
+    margin: 0;
+  }
+
+  &__error-message {
+    color: #ff8389;
+    font-size: 0.875rem;
+    font-family: 'IBM Plex Mono', monospace;
+    max-width: 600px;
+    word-break: break-word;
+    margin: 0;
+  }
+
+  &__error-message--boxed {
+    padding: 0.75rem 1rem;
+    background: #262626;
+    border-radius: 4px;
+    border: 1px solid #393939;
+  }
+
+  &__reload-btn {
+    margin-top: 1rem;
+  }
+
+  // Plain HTML button version (for main.tsx where Carbon may not be loaded)
+  &__reload-btn--native {
+    margin-top: 1rem;
+    padding: 0.75rem 2rem;
+    background: #0f62fe;
+    color: #ffffff;
+    border: none;
+    cursor: pointer;
+    font-size: 0.875rem;
+    font-family: 'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif;
+
+    &:hover {
+      background: #0353e9;
+    }
+
+    &:focus {
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
+    }
+  }
+}
+
+// ==========================================
+// Page loader (lazy loading fallback)
+// ==========================================
+.page-loader {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: #161616;
+}
+
+// ==========================================
+// Toast notification container
+// ==========================================
+.toast-container {
+  position: fixed;
+  top: 3.5rem;
+  right: 1rem;
+  z-index: 10000;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  max-width: 25rem;
+  pointer-events: none;
+
+  &__item {
+    pointer-events: auto;
+  }
+}

@@ -1,0 +1,58 @@
+// Topology Page Styles
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+
+// ==========================================
+// Device Card Status Color Modifiers
+// ==========================================
+.topology-page__device-card-icon {
+  &--online {
+    color: var(--cds-support-success);
+  }
+
+  &--offline {
+    color: var(--cds-support-error);
+  }
+
+  &--warning {
+    color: var(--cds-support-warning);
+  }
+}
+
+.topology-page__device-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &--online {
+    background-color: var(--cds-support-success);
+  }
+
+  &--offline {
+    background-color: var(--cds-support-error);
+  }
+
+  &--warning {
+    background-color: var(--cds-support-warning);
+  }
+}
+
+// ==========================================
+// Connection Utilization Color Modifiers
+// ==========================================
+.topology-page__utilization-value {
+  font-weight: 600;
+
+  &--normal {
+    color: var(--cds-support-success);
+  }
+
+  &--warning {
+    color: var(--cds-support-warning);
+  }
+
+  &--critical {
+    color: var(--cds-support-error);
+  }
+}

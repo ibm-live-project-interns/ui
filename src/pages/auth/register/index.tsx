@@ -17,6 +17,7 @@ import {
 import { UserFollow, ArrowRight } from '@carbon/icons-react';
 import { authService } from '@/shared/services';
 import { env } from '@/shared/config';
+import { authLogger } from '@/shared/utils/logger';
 import '@/styles/pages/_auth.scss';
 
 // ==========================================
@@ -136,7 +137,7 @@ export function RegisterPage() {
                 navigate('/login');
             }, 2000);
         } catch (err: unknown) {
-            console.error('Registration failed:', err);
+            authLogger.error('Registration failed', err);
             const message = err instanceof Error ? err.message : 'Registration failed. Please try again.';
             setError(message);
         } finally {
@@ -215,24 +216,17 @@ export function RegisterPage() {
 
                     {/* Password complexity indicators */}
                     {showPasswordHints && (
-                        <div style={{
-                            fontSize: '0.75rem',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            gap: '0.25rem',
-                            marginTop: '-0.5rem',
-                            marginBottom: '0.5rem',
-                        }}>
-                            <span style={{ color: passwordChecks.hasMinLength ? '#42be65' : '#fa4d56' }}>
+                        <div className="auth-password-hints">
+                            <span className={`auth-password-hint ${passwordChecks.hasMinLength ? 'auth-password-hint--pass' : 'auth-password-hint--fail'}`}>
                                 {passwordChecks.hasMinLength ? '\u2713' : '\u2717'} At least 8 characters
                             </span>
-                            <span style={{ color: passwordChecks.hasUppercase ? '#42be65' : '#fa4d56' }}>
+                            <span className={`auth-password-hint ${passwordChecks.hasUppercase ? 'auth-password-hint--pass' : 'auth-password-hint--fail'}`}>
                                 {passwordChecks.hasUppercase ? '\u2713' : '\u2717'} At least 1 uppercase letter
                             </span>
-                            <span style={{ color: passwordChecks.hasLowercase ? '#42be65' : '#fa4d56' }}>
+                            <span className={`auth-password-hint ${passwordChecks.hasLowercase ? 'auth-password-hint--pass' : 'auth-password-hint--fail'}`}>
                                 {passwordChecks.hasLowercase ? '\u2713' : '\u2717'} At least 1 lowercase letter
                             </span>
-                            <span style={{ color: passwordChecks.hasNumber ? '#42be65' : '#fa4d56' }}>
+                            <span className={`auth-password-hint ${passwordChecks.hasNumber ? 'auth-password-hint--pass' : 'auth-password-hint--fail'}`}>
                                 {passwordChecks.hasNumber ? '\u2713' : '\u2717'} At least 1 number
                             </span>
                         </div>

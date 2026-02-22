@@ -1,0 +1,15 @@
+// PageLayout Styles
+// Consistent page-level padding and content spacing using Carbon tokens
+
+@use '@carbon/react/scss/spacing' as *;
+
+.page-layout {
+  // No padding here - .cds--content already provides outer padding ($spacing-07)
+  padding: 0;
+  width: 100%;
+  max-width: 100%;
+
+  &__content {
+    margin-top: $spacing-05;
+  }
+}

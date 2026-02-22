@@ -62,6 +62,7 @@
     height: 40px;
     border-radius: 6px;
     background-color: $layer-02;
+    color: var(--icon-color, $text-primary);
   }
 
   &__card-title-group {

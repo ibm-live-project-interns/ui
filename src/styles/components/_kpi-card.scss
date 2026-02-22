@@ -1,7 +1,7 @@
 @use '@carbon/colors' as *;
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
-@use '@carbon/react' as react;
+@use '@carbon/react/scss/type' as react;
 
 .kpi-row {
     display: grid;
@@ -30,41 +30,52 @@
     border-radius: 0;
     transition: box-shadow 0.2s ease;
 
+    &--full-height {
+        height: 100%;
+    }
+
     &:hover {
         box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
 
-    // Border colors
-    &--bordered {
-        border-left: 3px solid transparent;
+    // Severity accent line (bottom border)
+    // These map to the KPISeverity type values applied as kpi-card--${severity}
+    &--critical {
+        border-bottom: 3px solid $red-60;
     }
 
-    &--border-red {
-        border-left-color: $red-60;
+    &--major {
+        border-bottom: 3px solid $orange-40;
     }
 
-    &--border-orange {
-        border-left-color: $orange-40;
+    &--warning {
+        border-bottom: 3px solid $yellow-30;
     }
 
-    &--border-yellow {
-        border-left-color: $yellow-30;
+    &--minor {
+        border-bottom: 3px solid $blue-40;
     }
 
-    &--border-green {
-        border-left-color: $green-50;
+    &--info {
+        border-bottom: 3px solid $blue-60;
     }
 
-    &--border-blue {
-        border-left-color: $blue-60;
+    &--success {
+        border-bottom: 3px solid $green-50;
     }
 
-    &--border-purple {
-        border-left-color: $purple-50;
+    &--neutral {
+        border-bottom: 3px solid $border-subtle-01;
     }
 
-    &--border-teal {
-        border-left-color: $teal-50;
+    // Clickable card state
+    &--clickable {
+        cursor: pointer;
+
+        &:focus {
+            outline: 2px solid $focus;
+            outline-offset: -2px;
+        }
     }
 
     // TOP RIGHT BADGE

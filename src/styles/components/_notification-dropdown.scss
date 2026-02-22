@@ -1,0 +1,202 @@
+/**
+ * Notification Dropdown
+ *
+ * Dropdown panel triggered by the bell icon in the app header.
+ * Shows recent alerts with severity indicators, timestamps, and mark-read actions.
+ */
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as react;
+
+.notification-dropdown-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.notification-badge {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  background-color: $support-error;
+  color: $text-on-color;
+  border-radius: 8px;
+  font-size: 10px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  width: min(360px, calc(100vw - 2rem));
+  background-color: $layer-01;
+  border: 1px solid $border-subtle-01;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  z-index: 9999;
+  border-radius: 0 0 4px 4px;
+}
+
+.notification-dropdown-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: $spacing-04 $spacing-05;
+  border-bottom: 1px solid $border-subtle-01;
+  background-color: $layer-02;
+}
+
+.notification-dropdown-title {
+  @include react.type-style('heading-compact-01');
+  color: $text-primary;
+}
+
+.notification-dropdown-count {
+  @include react.type-style('label-01');
+  color: $text-secondary;
+}
+
+.notification-dropdown-list {
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.notification-dropdown-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-07;
+  gap: $spacing-03;
+  color: $text-secondary;
+
+  svg {
+    fill: $support-success;
+  }
+
+  span {
+    @include react.type-style('body-compact-01');
+  }
+}
+
+.notification-dropdown-item {
+  display: flex;
+  align-items: flex-start;
+  gap: $spacing-04;
+  width: 100%;
+  padding: $spacing-04 $spacing-05;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid $border-subtle-01;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: $layer-hover-01;
+  }
+
+  &:focus {
+    outline: 2px solid $focus;
+    outline-offset: -2px;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.notification-severity-indicator {
+  width: 4px;
+  min-height: 40px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  background-color: var(--indicator-color, $support-info);
+}
+
+.notification-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.notification-title {
+  @include react.type-style('body-compact-01');
+  color: $text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notification-device {
+  @include react.type-style('label-01');
+  color: $text-secondary;
+}
+
+.notification-time {
+  @include react.type-style('helper-text-01');
+  color: $text-helper;
+}
+
+.notification-dropdown-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: $spacing-04;
+  background-color: $layer-02;
+  border: none;
+  border-top: 1px solid $border-subtle-01;
+  cursor: pointer;
+  @include react.type-style('body-compact-01');
+  color: $link-primary;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: $layer-hover-02;
+  }
+
+  &:focus {
+    outline: 2px solid $focus;
+    outline-offset: -2px;
+  }
+}
+
+.notification-dropdown-mark-read {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-02;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  @include react.type-style('label-01');
+  color: $link-primary;
+  padding: 0;
+  transition: color 0.15s ease;
+
+  &:hover {
+    color: $link-primary-hover;
+  }
+
+  &:focus {
+    outline: 2px solid $focus;
+    outline-offset: 2px;
+  }
+}
+
+.notification-relative-time {
+  @include react.type-style('helper-text-01');
+  color: $text-helper;
+  white-space: nowrap;
+}

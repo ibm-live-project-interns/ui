@@ -1,0 +1,55 @@
+// Maintenance Windows Tab Styles
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as react;
+
+.maintenance-windows {
+    flex: 1;
+
+    // Table cell: bold window name
+    &__name-cell {
+        font-weight: 600;
+    }
+}
+
+// Modal form layout
+.maintenance-windows__form {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-05;
+    padding: $spacing-05 0;
+}
+
+// Schedule and Duration field groups share the same label+row pattern
+.maintenance-windows__field-group {
+    .maintenance-windows__field-label {
+        @include react.type-style('label-01');
+        display: block;
+        margin-bottom: $spacing-03;
+    }
+}
+
+.maintenance-windows__field-row {
+    display: flex;
+    gap: $spacing-03;
+    align-items: flex-start;
+}
+
+// The ":" separator between hour and minute inputs
+.maintenance-windows__time-separator {
+    padding: $spacing-03 0;
+    @include react.type-style('productive-heading-03');
+    font-weight: 600;
+}
+
+// The "UTC" timezone label next to time inputs
+.maintenance-windows__timezone-label {
+    padding: $spacing-03 0;
+    @include react.type-style('body-compact-01');
+    color: $text-secondary;
+}
+
+// Delete confirmation paragraph
+.maintenance-windows__delete-confirm {
+    padding: $spacing-05 0;
+}

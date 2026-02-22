@@ -1,0 +1,814 @@
+// Widget Component Styles
+// Shared styles for dashboard widget components
+// Uses Carbon Design System spacing and theme tokens
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as react;
+
+// ==========================================
+// Widget base styles
+// ==========================================
+.widget {
+  &__tile {
+    height: 100%;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $spacing-05;
+
+    h3 {
+      @include react.type-style('heading-compact-02');
+      display: flex;
+      align-items: center;
+      gap: $spacing-03;
+      margin: 0;
+    }
+  }
+
+  &__body {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-04;
+  }
+
+  &__footer--left {
+    display: flex;
+    justify-content: flex-start;
+    gap: $spacing-03;
+  }
+
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-06 0;
+    color: $text-secondary;
+    @include react.type-style('body-compact-01');
+    text-align: center;
+
+    &--inline {
+      gap: $spacing-03;
+    }
+  }
+}
+
+// ==========================================
+// SystemHealthWidget
+// ==========================================
+.system-health {
+  &__services {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-03;
+    margin-bottom: $spacing-05;
+  }
+
+  &__service-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-03;
+    background: var(--cds-layer-02);
+    border-radius: 2px;
+  }
+
+  &__service-name {
+    @include react.type-style('body-compact-01');
+    color: $text-primary;
+  }
+
+  &__service-status {
+    display: flex;
+    align-items: center;
+    gap: $spacing-02;
+  }
+
+  &__status-icon--ok {
+    color: $support-success;
+  }
+
+  &__status-icon--down {
+    color: $support-error;
+  }
+
+  &__status-label {
+    @include react.type-style('label-01');
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  &__runtime {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    @include react.type-style('label-01');
+    color: $text-secondary;
+  }
+
+  &__runtime-value {
+    color: $text-primary;
+  }
+
+  &__memory-section {
+    margin-top: $spacing-02;
+  }
+
+  &__memory-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: $spacing-02;
+  }
+}
+
+// ==========================================
+// ConfigAuditLog (timeline widget)
+// ==========================================
+.config-audit-log {
+  height: 100%;
+
+  &__body {
+    margin-top: $spacing-05;
+    position: relative;
+  }
+
+  &__skeleton-list {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-06;
+  }
+
+  &__skeleton-item {
+    padding-left: $spacing-07;
+  }
+
+  &__skeleton-line {
+    margin-top: $spacing-02;
+  }
+
+  &__empty {
+    color: $text-secondary;
+    @include react.type-style('body-compact-01');
+    text-align: center;
+    padding: $spacing-05 0;
+  }
+
+  &__timeline-line {
+    position: absolute;
+    left: 7px;
+    top: 8px;
+    bottom: 20px;
+    width: 2px;
+    background-color: $border-subtle-01;
+  }
+
+  &__entry {
+    display: flex;
+    gap: $spacing-05;
+  }
+
+  &__entry--spaced {
+    margin-bottom: $spacing-06;
+  }
+
+  &__dot {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background-color: $layer-01;
+    z-index: 1;
+    flex-shrink: 0;
+  }
+
+  &__dot--normal {
+    border: 2px solid $icon-secondary;
+  }
+
+  &__dot--failure {
+    border: 2px solid $support-error;
+  }
+
+  &__time {
+    @include react.type-style('label-01');
+    color: $text-helper;
+  }
+
+  &__description {
+    @include react.type-style('body-compact-01');
+    font-weight: 500;
+    margin: 2px 0;
+  }
+
+  &__resource-link {
+    color: $link-primary;
+  }
+
+  &__user {
+    @include react.type-style('label-01');
+    color: $text-helper;
+  }
+}
+
+// ==========================================
+// SLAComplianceWidget
+// ==========================================
+.sla-compliance {
+  &__summary {
+    display: flex;
+    align-items: center;
+    gap: $spacing-04;
+    margin-bottom: $spacing-05;
+  }
+
+  &__value {
+    @include react.type-style('productive-heading-04');
+    font-weight: 600;
+    color: $text-primary;
+  }
+
+  &__target {
+    @include react.type-style('label-01');
+    color: $text-secondary;
+  }
+
+  &__category-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: $spacing-02;
+  }
+
+  &__category-label {
+    @include react.type-style('body-compact-01');
+    color: $text-primary;
+  }
+
+  // Dynamic-colored percentage is kept inline
+
+  &__stat-row {
+    flex: 1;
+  }
+}
+
+// ==========================================
+// WidgetSkeleton
+// ==========================================
+.widget-skeleton {
+  &__kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $spacing-05;
+
+    @media (max-width: 672px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  &__kpi-tile {
+    padding: $spacing-05;
+  }
+
+  &__tile {
+    padding: $spacing-05;
+  }
+
+  &__skeleton-gap {
+    margin-top: $spacing-03;
+  }
+
+  &__placeholder {
+    width: 100%;
+    margin-top: $spacing-04;
+  }
+
+  &__placeholder--chart {
+    height: 280px;
+  }
+
+  &__placeholder--table {
+    height: 200px;
+  }
+}
+
+// ==========================================
+// RecentAlertsWidget
+// ==========================================
+.recent-alerts {
+  &__tile--flush {
+    padding: 0;
+  }
+
+  &__header-area {
+    padding: $spacing-05 $spacing-05 $spacing-03;
+  }
+
+  &__empty-cell {
+    text-align: center;
+    padding: $spacing-06;
+    color: $text-secondary;
+  }
+
+  &__timestamp-cell {
+    color: $text-secondary;
+    white-space: nowrap;
+    @include react.type-style('label-01');
+  }
+
+  &__device-cell {
+    font-weight: 500;
+  }
+
+  &__summary-truncate {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    display: block;
+  }
+
+  &__action-cell {
+    display: flex;
+    justify-content: flex-end;
+    gap: 2px;
+  }
+}
+
+// ==========================================
+// UserManagementWidget
+// ==========================================
+.user-management {
+  &__active-value {
+    color: $support-success;
+  }
+
+  // .user-management__locked-value color is DYNAMIC (conditional on stats.locked > 0)
+
+  &__roles-heading {
+    @include react.type-style('label-01');
+    font-weight: 600;
+    color: $text-secondary;
+    margin-bottom: $spacing-03;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+  }
+
+  &__roles-icon {
+    vertical-align: middle;
+    margin-right: $spacing-02;
+  }
+
+  &__roles-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-02;
+  }
+}
+
+// ==========================================
+// ActionRequiredWidget
+// ==========================================
+.action-required {
+  &__body--scrollable {
+    overflow-y: auto;
+    max-height: 400px;
+  }
+
+  // .action-item__age color is DYNAMIC (conditional on severity)
+
+  &__action-buttons {
+    display: flex;
+    gap: 2px;
+  }
+}
+
+// ==========================================
+// TopInterfaces
+// ==========================================
+.top-interfaces {
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-06;
+    margin-top: $spacing-05;
+  }
+
+  &__skeleton-gap {
+    margin-top: $spacing-03;
+  }
+
+  &__bar-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: $spacing-03;
+    @include react.type-style('body-compact-01');
+  }
+}
+
+// ==========================================
+// ErrorBudgetWidget
+// ==========================================
+.error-budget {
+  &__hero {
+    text-align: center;
+    margin: $spacing-05 0;
+  }
+
+  // .error-budget__value color is DYNAMIC (based on severity)
+
+  &__subtitle {
+    @include react.type-style('label-01');
+    color: $text-secondary;
+  }
+
+  &__footer-text {
+    @include react.type-style('label-01');
+    color: $text-secondary;
+    margin-top: $spacing-03;
+    text-align: center;
+  }
+}
+
+// ==========================================
+// DeviceHealthWidget
+// ==========================================
+.device-health {
+  &__tags {
+    display: flex;
+    gap: $spacing-04;
+    margin-bottom: $spacing-05;
+    flex-wrap: wrap;
+  }
+
+  &__bar {
+    display: flex;
+    align-items: center;
+    gap: $spacing-03;
+  }
+
+  &__label {
+    display: flex;
+    align-items: center;
+    gap: $spacing-02;
+    min-width: 80px;
+  }
+
+  // .device-health__icon color is DYNAMIC (from data item)
+
+  &__progress {
+    flex: 1;
+  }
+
+  &__count {
+    min-width: 24px;
+    text-align: right;
+  }
+}
+
+// ==========================================
+// WidgetError
+// ==========================================
+.widget--error {
+  padding: $spacing-06;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-04;
+  text-align: center;
+  min-height: 120px;
+}
+
+.widget-error {
+  &__icon {
+    color: $support-error;
+  }
+
+  &__message {
+    @include react.type-style('body-compact-01');
+    color: $text-secondary;
+    max-width: 300px;
+  }
+}
+
+// ==========================================
+// AuditActivityWidget
+// ==========================================
+.audit-activity {
+  &__tag-gap {
+    margin-right: $spacing-02;
+  }
+
+  &__resource-text {
+    @include react.type-style('body-compact-01');
+    font-size: 0.8125rem;
+    color: $text-secondary;
+  }
+}
+
+// ==========================================
+// WidgetErrorBoundary
+// ==========================================
+.widget-error-boundary {
+  padding: $spacing-06;
+  background: $layer-01;
+  border-radius: 4px;
+  border: 1px solid $border-subtle-01;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-03;
+  text-align: center;
+
+  &__title {
+    @include react.type-style('body-compact-01');
+    font-weight: 600;
+    color: $text-primary;
+  }
+
+  &__message {
+    @include react.type-style('label-01');
+    color: $text-secondary;
+  }
+}
+
+// ==========================================
+// ChartWrapper empty-state skeleton
+// (height is dynamic, kept inline)
+// ==========================================
+.chart-wrapper__empty-skeleton--full {
+  width: 100%;
+  height: 100%;
+  position: absolute;
+}
+
+// ==========================================
+// Shared utility classes for common patterns
+// Used across multiple page components to
+// eliminate repetitive static inline styles
+// ==========================================
+
+// Notification bottom margin (for InlineNotification spacing)
+.u-notification-gap {
+  margin-bottom: $spacing-03;
+}
+
+// Centered empty state / error container
+.u-centered-message {
+  padding: $spacing-07;
+  text-align: center;
+
+  &__text {
+    color: $text-secondary;
+    @include react.type-style('body-compact-01');
+  }
+
+  &__error-text {
+    color: $support-error;
+    margin-bottom: $spacing-05;
+  }
+
+  &__button {
+    margin-top: $spacing-05;
+  }
+}
+
+// Skeleton placeholder with fixed dimensions
+.u-skeleton-placeholder {
+  width: 100%;
+
+  &--280 {
+    height: 280px;
+  }
+
+  &--260 {
+    height: 260px;
+  }
+}
+
+// Success/error icon colors (reusable across pages)
+.u-icon-success {
+  color: $support-success;
+}
+
+.u-icon-error {
+  color: $support-error;
+}
+
+// AI insights empty state
+.u-empty-state-block {
+  padding: $spacing-07;
+  text-align: center;
+  width: 100%;
+  color: $text-secondary;
+}
+
+// Metric description text (trends pages)
+.u-metric-description {
+  @include react.type-style('label-01');
+  color: $text-secondary;
+  display: block;
+  margin-top: $spacing-02;
+}
+
+// Small icon with margin-right (arrow icons, inline icons)
+.u-icon-inline {
+  margin-right: $spacing-02;
+  flex-shrink: 0;
+}
+
+// ==========================================
+// SeverityDistWidget
+// ==========================================
+.severity-dist__chart-center {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+// ==========================================
+// AlertTrendWidget
+// ==========================================
+.alert-trend__period-buttons {
+  display: flex;
+  gap: $spacing-02;
+}
+
+// ==========================================
+// Shared action-bar (flex right-aligned button row)
+// Used by OnCall ScheduleTab, OverridesTab, etc.
+// ==========================================
+.u-action-bar-right {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: $spacing-03;
+}
+
+// Toggle row alignment (OnCallModals)
+.u-toggle-row {
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: $spacing-03;
+}
+
+// Inline clickable link-styled text
+.u-link-text {
+  cursor: pointer;
+  color: $link-primary;
+  text-decoration: underline;
+}
+
+// Clickable row
+.u-clickable {
+  cursor: pointer;
+}
+
+// Flex row with gap (RawTrapData header, etc.)
+.u-flex-row-gap {
+  display: flex;
+  gap: $spacing-03;
+  align-items: center;
+}
+
+// Skeleton spacing
+.u-skeleton-mt {
+  margin-top: $spacing-05;
+}
+
+// Section horizontal padding
+.u-section-padding {
+  padding: 0 $spacing-05;
+}
+
+// Google icon margin for OAuth button
+.u-google-icon {
+  margin-right: $spacing-03;
+}
+
+// Auth footer without border (forgot-password page variant)
+.auth-footer--borderless {
+  border-top: none;
+  margin-top: 0;
+  padding-top: 0;
+}
+
+// ==========================================
+// Severity Icon Color Modifiers
+// Used by getSeverityIcon() in shared/constants/severity.tsx
+// ==========================================
+.severity-icon {
+  &--critical {
+    color: $support-error;
+  }
+
+  &--high,
+  &--major {
+    color: $support-warning;
+  }
+
+  &--medium,
+  &--minor {
+    color: $support-warning;
+  }
+
+  &--low {
+    color: $interactive;
+  }
+
+  &--info {
+    color: $support-info;
+  }
+}
+
+// ==========================================
+// SLA Compliance Category Value
+// Used by SLAComplianceWidget
+// ==========================================
+.sla-compliance__category-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: $text-secondary;
+
+  &--met {
+    color: $support-success;
+  }
+
+  &--violated {
+    color: $support-error;
+  }
+}
+
+// ==========================================
+// Action Item Age
+// Used by ActionRequiredWidget
+// ==========================================
+.action-item__age {
+  margin-left: $spacing-03;
+  font-weight: 600;
+  color: $text-secondary;
+
+  &--critical {
+    color: $support-error;
+  }
+}
+
+// ==========================================
+// Error Budget Value
+// Used by ErrorBudgetWidget
+// ==========================================
+.error-budget__value {
+  font-size: 2rem;
+  font-weight: 700;
+
+  &--critical {
+    color: $support-error;
+  }
+
+  &--warning {
+    color: $support-warning;
+  }
+
+  &--safe {
+    color: $support-success;
+  }
+}
+
+// ==========================================
+// User Stat Value Modifiers
+// Used by UserManagementWidget
+// ==========================================
+.user-stat__value {
+  &--error {
+    color: $support-error;
+  }
+
+  &--muted {
+    color: $text-secondary;
+  }
+}
+
+// ==========================================
+// Device Health Icon Modifiers
+// Used by DeviceHealthWidget
+// ==========================================
+.device-health__icon {
+  &--online {
+    color: $support-success;
+  }
+
+  &--warning {
+    color: $support-warning;
+  }
+
+  &--critical {
+    color: $support-error;
+  }
+
+  &--offline {
+    color: $text-secondary;
+  }
+}

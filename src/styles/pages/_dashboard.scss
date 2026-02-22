@@ -3,7 +3,7 @@
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as *;
-@use '@carbon/react' as react;
+@use '@carbon/react/scss/type' as react;
 @use '@carbon/colors' as *;
 
 .dashboard-page {
@@ -19,7 +19,6 @@
 
     // Tab panel spacing
     .dashboard-tab-panel {
-        padding: $spacing-05 0 !important;
     }
 
     // Section spacing for groups of content
@@ -91,7 +90,6 @@
 
     // KPI Card Skeleton
     .kpi-card-skeleton {
-        padding: $spacing-05;
         display: flex;
         flex-direction: column;
         gap: $spacing-03;
@@ -131,7 +129,6 @@
         }
 
         .chart-tile {
-            padding: $spacing-05;
             height: 100%;
             display: flex;
             flex-direction: column;
@@ -310,7 +307,6 @@
         background: linear-gradient(90deg, rgba($red-60, 0.15) 0%, rgba($red-60, 0.05) 100%);
         border: 1px solid rgba($red-60, 0.3);
         border-radius: 4px;
-        padding: $spacing-03 $spacing-05;
         margin-bottom: $spacing-05;
 
         .ticker-label {
@@ -347,7 +343,6 @@
                 align-items: center;
                 gap: $spacing-04;
                 cursor: pointer;
-                padding: $spacing-02 $spacing-04;
                 border-radius: 4px;
                 transition: all 0.3s ease;
                 background: rgba($red-60, 0.05);
@@ -435,7 +430,6 @@
                 gap: $spacing-02;
                 @include react.type-style('body-compact-01');
                 color: $text-secondary;
-                padding: $spacing-02 $spacing-04;
 
                 .check-icon {
                     color: $green-50;
@@ -461,7 +455,6 @@
 
 
     .chart-tile {
-        padding: $spacing-05;
         height: 100%;
         min-width: 0; // prevent overflow in grid
         overflow: hidden; // clip chart overflow
@@ -505,7 +498,6 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: $spacing-05;
             border-bottom: 1px solid $border-subtle-01;
 
             .refined-table-title {
@@ -563,7 +555,6 @@
 
                 th {
                     background-color: $layer-accent-01;
-                    padding: $spacing-03 $spacing-05;
                     border-bottom: 1px solid $border-subtle-01;
 
                     // Header Text Logic
@@ -592,7 +583,6 @@
                     }
 
                     td {
-                        padding: $spacing-03 $spacing-05;
                         border-bottom: 1px solid $border-subtle-01;
                         background-color: $layer-01; // Dark content
                         @include react.type-style('body-compact-01');
@@ -674,7 +664,6 @@
     }
 
     .bottom-tile {
-        padding: $spacing-05;
         height: 100%;
 
         h3 {
@@ -692,7 +681,6 @@
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
-                padding: $spacing-03;
                 background: $layer-02;
                 border-radius: 4px;
 
@@ -882,13 +870,11 @@
         }
 
         th {
-            padding: $spacing-03 $spacing-05;
             font-weight: 600;
             white-space: nowrap;
         }
 
         td {
-            padding: $spacing-03 $spacing-05;
             border-bottom: 1px solid $border-subtle-01;
         }
 
@@ -917,7 +903,6 @@
 
     // Coming Soon Tile
     .coming-soon-tile {
-        padding: $spacing-07;
         text-align: center;
         margin-top: $spacing-05;
 
@@ -935,14 +920,12 @@
 
         ul {
             list-style: none;
-            padding: 0;
             margin: $spacing-05 auto;
             max-width: 500px;
             text-align: left;
 
             li {
                 @include react.type-style('body-01');
-                padding: $spacing-03 0;
                 border-bottom: 1px solid $border-subtle-01;
                 color: $text-primary;
 

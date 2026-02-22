@@ -1,18 +1,20 @@
 // Device Details Page Styles
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
-@use '@carbon/react' as react;
+@use '@carbon/react/scss/type' as react;
 
 .device-details-page {
-    padding: 0;
     width: 100%;
 
     &__content {
         // Global padding is applied in index.scss
-        padding: 0;
         display: flex;
         flex-direction: column;
         gap: $spacing-06;
+    }
+
+    &__error-notification {
+        margin-bottom: $spacing-05;
     }
 }
 
@@ -63,6 +65,10 @@
         &:last-child {
             border-bottom: none;
         }
+
+        &--skeleton {
+            margin: $spacing-05 0;
+        }
     }
 
     .info-label {
@@ -80,14 +86,48 @@
 }
 
 .chart-tile {
+    .chart-tile__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: $spacing-05;
+        flex-wrap: wrap;
+        gap: $spacing-03;
+    }
+
     h3 {
         @include react.type-style('productive-heading-02');
-        margin-bottom: $spacing-05;
+        margin: 0;
     }
 
     .chart-container {
         height: 300px;
     }
+
+    .chart-container__empty {
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: $text-secondary;
+    }
+
+    .chart-container__skeleton {
+        height: 300px;
+        width: 100%;
+    }
+}
+
+// Skeleton placeholders for loading state
+.device-details-page__skeleton-chart {
+    height: 300px;
+    width: 100%;
+    margin-top: $spacing-05;
+}
+
+.device-details-page__skeleton-table {
+    height: 200px;
+    width: 100%;
 }
 
 .incidents-tile {
@@ -105,6 +145,10 @@
             @include react.type-style('productive-heading-02');
             display: flex;
             align-items: center;
+
+            svg {
+                margin-right: $spacing-03;
+            }
         }
     }
 
@@ -125,4 +169,28 @@
             }
         }
     }
+
+    .incidents-table__row--clickable {
+        cursor: pointer;
+    }
+
+    .incidents-table__ticket-link {
+        cursor: pointer;
+        color: $link-primary;
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    .incidents-table__empty {
+        padding: $spacing-07;
+        text-align: center;
+        color: $text-secondary;
+    }
+}
+
+// Status icon inside Tag - small inline icon spacing
+.device-details__status-icon {
+    margin-right: $spacing-02;
 }

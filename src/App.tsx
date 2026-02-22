@@ -6,6 +6,7 @@ import { Loading, Button } from '@carbon/react';
 // Providers
 import { RoleProvider } from '@/features/roles/hooks';
 import { ToastProvider } from '@/contexts';
+import { logger } from '@/shared/utils/logger';
 
 // Layouts - keep these eager as they're needed immediately
 import { AppLayout, AuthLayout, PublicLayout } from './components/layout';
@@ -40,6 +41,7 @@ const TopologyPage = lazy(() => import('./pages/topology/TopologyPage'));
 const RunbooksPage = lazy(() => import('./pages/runbooks/RunbooksPage'));
 const DeviceGroupsPage = lazy(() => import('./pages/devices/DeviceGroupsPage'));
 const ServiceStatusPage = lazy(() => import('./pages/service-status').then(m => ({ default: m.ServiceStatusPage })));
+const PostMortemPage = lazy(() => import('./pages/incidents/PostMortemPage').then(m => ({ default: m.default || m.PostMortemPage })));
 
 // ==========================================
 // Error Boundary for lazy-loaded components
@@ -65,7 +67,7 @@ class RouteErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryStat
   }
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
-    console.error('[RouteErrorBoundary] Caught rendering error:', error, errorInfo);
+    logger.error('Route rendering error', error, errorInfo);
   }
 
   handleReload = (): void => {
@@ -76,28 +78,17 @@ class RouteErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryStat
   render(): ReactNode {
     if (this.state.hasError) {
       return (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          background: '#161616',
-          color: '#f4f4f4',
-          gap: '1rem',
-          padding: '2rem',
-          textAlign: 'center',
-        }}>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 600 }}>Something went wrong</h2>
-          <p style={{ color: '#c6c6c6', maxWidth: '480px' }}>
+        <div className="error-boundary">
+          <h2 className="error-boundary__title">Something went wrong</h2>
+          <p className="error-boundary__description">
             An unexpected error occurred while loading this page. Please try reloading.
           </p>
           {this.state.error && (
-            <p style={{ color: '#ff8389', fontSize: '0.875rem', fontFamily: 'monospace', maxWidth: '600px', wordBreak: 'break-word' }}>
+            <p className="error-boundary__error-message">
               {this.state.error.message}
             </p>
           )}
-          <Button kind="primary" onClick={this.handleReload} style={{ marginTop: '1rem' }}>
+          <Button kind="primary" onClick={this.handleReload} className="error-boundary__reload-btn">
             Reload Page
           </Button>
         </div>
@@ -130,13 +121,7 @@ function RequireRole({ allowedRoles, children }: RequireRoleProps) {
 
 // Loading fallback component
 const PageLoader = () => (
-  <div style={{
-    display: 'flex',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '100vh',
-    background: '#161616'
-  }}>
+  <div className="page-loader">
     <Loading withOverlay={false} description="Loading..." />
   </div>
 );
@@ -273,6 +258,10 @@ const router = createBrowserRouter([
       {
         path: 'service-status',
         element: withSuspense(ServiceStatusPage),
+      },
+      {
+        path: 'incidents/post-mortems',
+        element: withSuspense(PostMortemPage),
       },
       {
         path: '*',

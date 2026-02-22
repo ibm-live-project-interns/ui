@@ -3,6 +3,8 @@ import { ArrowRight, Activity, Network_2 as Network, IbmWatsonxCodeAssistant } f
 import { Link } from 'react-router-dom';
 import { env } from '@/shared/config';
 
+import '@/styles/pages/_welcome.scss';
+
 export function WelcomePage() {
     return (
         <Grid fullWidth className="cds--grid--narrow">
@@ -11,25 +13,17 @@ export function WelcomePage() {
                 lg={16}
                 md={8}
                 sm={4}
-                style={{
-                    marginTop: 'var(--cds-spacing-10)',
-                    marginBottom: 'var(--cds-spacing-09)'
-                }}
+                className="welcome-page__hero"
             >
                 <Stack gap={6}>
                     <h1 className="cds--type-display-03">
                         {env.appName}
                     </h1>
-                    <p className="cds--type-body-02" style={{ maxWidth: '42rem' }}>
+                    <p className="cds--type-body-02 welcome-page__description">
                         AI-powered analysis of SNMP traps and syslogs. Get intelligent explanations,
                         severity classification, and recommended actions for network events.
                     </p>
-                    <div style={{
-                        display: 'flex',
-                        gap: 'var(--cds-spacing-05)',
-                        flexWrap: 'wrap',
-                        marginTop: 'var(--cds-spacing-05)'
-                    }}>
+                    <div className="welcome-page__actions">
                         <Button
                             as={Link}
                             to="/dashboard"
@@ -56,16 +50,14 @@ export function WelcomePage() {
                 lg={5}
                 md={4}
                 sm={4}
-                style={{ marginBottom: 'var(--cds-spacing-06)' }}
+                className="welcome-page__feature-col"
             >
-                <Tile style={{
-                    height: '100%',
-                    padding: 'var(--cds-spacing-07)'
-                }}>
+                <Tile className="welcome-page__feature-tile">
                     <Stack gap={5}>
                         <IbmWatsonxCodeAssistant
                             size={32}
-                            style={{ color: 'var(--cds-icon-primary)' }}
+                            className="welcome-page__feature-icon"
+                            aria-label="AI explanations"
                         />
                         <h3 className="cds--type-heading-03">
                             AI Explanations
@@ -82,16 +74,14 @@ export function WelcomePage() {
                 lg={5}
                 md={4}
                 sm={4}
-                style={{ marginBottom: 'var(--cds-spacing-06)' }}
+                className="welcome-page__feature-col"
             >
-                <Tile style={{
-                    height: '100%',
-                    padding: 'var(--cds-spacing-07)'
-                }}>
+                <Tile className="welcome-page__feature-tile">
                     <Stack gap={5}>
                         <Activity
                             size={32}
-                            style={{ color: 'var(--cds-icon-primary)' }}
+                            className="welcome-page__feature-icon"
+                            aria-label="Severity classification"
                         />
                         <h3 className="cds--type-heading-03">
                             Severity Classification
@@ -108,16 +98,14 @@ export function WelcomePage() {
                 lg={6}
                 md={4}
                 sm={4}
-                style={{ marginBottom: 'var(--cds-spacing-06)' }}
+                className="welcome-page__feature-col"
             >
-                <Tile style={{
-                    height: '100%',
-                    padding: 'var(--cds-spacing-07)'
-                }}>
+                <Tile className="welcome-page__feature-tile">
                     <Stack gap={5}>
                         <Network
                             size={32}
-                            style={{ color: 'var(--cds-icon-primary)' }}
+                            className="welcome-page__feature-icon"
+                            aria-label="Recommended actions"
                         />
                         <h3 className="cds--type-heading-03">
                             Recommended Actions

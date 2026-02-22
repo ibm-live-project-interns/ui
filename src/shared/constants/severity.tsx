@@ -143,7 +143,7 @@ export function toDisplaySeverity(severity: Severity): SeverityDisplay {
 export function getSeverityIcon(severity: Severity, size: number = 24): ReactElement {
     const config = SEVERITY_CONFIG[severity];
     const IconComponent = config.icon;
-    return <IconComponent size={size} style={{ color: config.color }} />;
+    return <IconComponent size={size} className={`severity-icon severity-icon--${severity}`} aria-label={`${config.label} severity`} />;
 }
 
 export function getSeverityTag(severity: Severity, size: 'sm' | 'md' = 'sm'): ReactElement {

@@ -3,3 +3,8 @@ export { AppLayout } from './AppLayout';
 export { AuthLayout } from './AuthLayout';
 export { AuthHeader } from './AuthHeader';
 export { PublicLayout } from './PublicLayout';
+export { PageLayout } from './PageLayout';
+export { GlobalSearch, useGlobalSearchShortcut } from './GlobalSearch';
+export { NotificationPanel } from './NotificationPanel';
+export { SidebarUserSection } from './SidebarUserSection';
+export { SearchResultList } from './SearchResultList';

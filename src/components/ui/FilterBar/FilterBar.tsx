@@ -68,7 +68,7 @@ export interface FilterBarProps {
  * - Clear-all button with active filter count badge
  * - Results summary line
  */
-export function FilterBar({
+export const FilterBar = React.memo(function FilterBar({
     searchEnabled = false,
     searchPlaceholder = 'Search...',
     searchValue = '',
@@ -98,7 +98,7 @@ export function FilterBar({
         totalCount !== undefined && filteredCount !== undefined && hasActiveFilters;
 
     return (
-        <div className={`filter-bar ${className}`.trim()}>
+        <div className={`filter-bar ${className}`.trim()} role="search" aria-label={`Filter ${itemLabel}`}>
             {/* Primary row: search + dropdowns + clear */}
             <div className="filter-bar__primary">
                 {searchEnabled && (
@@ -121,7 +121,8 @@ export function FilterBar({
                             <Dropdown
                                 key={dd.id}
                                 id={dd.id}
-                                titleText=""
+                                titleText={dd.label}
+                                hideLabel
                                 label={dd.label}
                                 size="lg"
                                 items={dd.options}
@@ -150,7 +151,7 @@ export function FilterBar({
 
             {/* Quick-filter tags row */}
             {quickFilters.length > 0 && (
-                <div className="filter-bar__quick-filters">
+                <div className="filter-bar__quick-filters" role="group" aria-label="Quick filters">
                     <span className="filter-bar__quick-filters-label">Quick filters:</span>
                     {quickFilters.map((label) => {
                         const isActive = activeQuickFilters.includes(label);
@@ -160,6 +161,15 @@ export function FilterBar({
                                 type={isActive ? 'blue' : 'gray'}
                                 size="md"
                                 onClick={() => onQuickFilterToggle?.(label)}
+                                onKeyDown={(e: React.KeyboardEvent) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        onQuickFilterToggle?.(label);
+                                    }
+                                }}
+                                role="button"
+                                tabIndex={0}
+                                aria-pressed={isActive}
                                 className="filter-bar__tag"
                             >
                                 {label}
@@ -171,12 +181,12 @@ export function FilterBar({
 
             {/* Results summary */}
             {showResultsSummary && (
-                <p className="filter-bar__results-summary">
+                <p className="filter-bar__results-summary" aria-live="polite" aria-atomic="true">
                     Showing {filteredCount} of {totalCount} {itemLabel}
                 </p>
             )}
         </div>
     );
-}
+});
 
 export default FilterBar;

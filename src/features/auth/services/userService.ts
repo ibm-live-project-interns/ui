@@ -63,6 +63,51 @@ interface MessageResponse {
     message: string;
 }
 
+/** Raw user shape from the backend API (may use snake_case, camelCase, or PascalCase) */
+interface RawUserFromAPI {
+    id?: string | number;
+    ID?: string | number;
+    username?: string;
+    Username?: string;
+    email?: string;
+    Email?: string;
+    first_name?: string;
+    firstName?: string;
+    FirstName?: string;
+    last_name?: string;
+    lastName?: string;
+    LastName?: string;
+    role?: { id?: string } | string;
+    Role?: string;
+    is_active?: boolean;
+    isActive?: boolean;
+    IsActive?: boolean;
+    email_verified?: boolean;
+    emailVerified?: boolean;
+    last_login?: string;
+    lastLogin?: string;
+    created_at?: string;
+    createdAt?: string;
+}
+
+/** Response from the users list endpoint */
+interface UsersListResponse {
+    users?: RawUserFromAPI[];
+}
+
+/** Response from the register endpoint */
+interface RegisterUserResponse {
+    user?: RawUserFromAPI;
+    id?: string;
+    message?: string;
+}
+
+/** Response from the update user endpoint */
+interface UpdateUserResponse {
+    user?: RawUserFromAPI;
+    [key: string]: unknown;
+}
+
 // ==========================================
 // Service Implementation
 // ==========================================
@@ -80,9 +125,9 @@ class UserManagementService extends HttpService {
      */
     async getUsers(): Promise<ManagedUser[]> {
         try {
-            const response = await this.get<any>(API_ENDPOINTS.USERS);
-            const users = Array.isArray(response) ? response : (response.users || []);
-            return users.map((u: any) => this.transformUser(u));
+            const response = await this.get<RawUserFromAPI[] | UsersListResponse>(API_ENDPOINTS.USERS);
+            const users: RawUserFromAPI[] = Array.isArray(response) ? response : ((response as UsersListResponse).users || []);
+            return users.map((u: RawUserFromAPI) => this.transformUser(u));
         } catch (error) {
             // Re-throw permission/auth errors instead of swallowing them
             if (error instanceof Error) {
@@ -113,7 +158,7 @@ class UserManagementService extends HttpService {
                 last_name: data.last_name || '',
                 role: data.role || 'network-ops',
             };
-            const response = await this.post<any>(API_ENDPOINTS.AUTH.REGISTER, payload);
+            const response = await this.post<RegisterUserResponse>(API_ENDPOINTS.AUTH.REGISTER, payload);
             // The register endpoint may return the user or just a message.
             // If it returns the user, transform it; otherwise construct a partial response.
             if (response.user) {
@@ -141,8 +186,8 @@ class UserManagementService extends HttpService {
      */
     async updateUser(id: string, data: UpdateUserRequest): Promise<ManagedUser> {
         try {
-            const response = await this.put<any>(API_ENDPOINTS.USER_BY_ID(id), data);
-            return this.transformUser(response.user || response);
+            const response = await this.put<UpdateUserResponse>(API_ENDPOINTS.USER_BY_ID(id), data);
+            return this.transformUser((response.user || response) as RawUserFromAPI);
         } catch (error) {
             throw new Error(parseAPIError(error));
         }
@@ -181,14 +226,16 @@ class UserManagementService extends HttpService {
     // Private Helpers
     // ==========================================
 
-    private transformUser(raw: any): ManagedUser {
+    private transformUser(raw: RawUserFromAPI): ManagedUser {
+        const role = raw.role;
+        const roleValue = (typeof role === 'object' && role !== null ? role.id : role) || raw.Role || 'network-ops';
         return {
             id: String(raw.id || raw.ID || ''),
             username: raw.username || raw.Username || '',
             email: raw.email || raw.Email || '',
             first_name: raw.first_name || raw.firstName || raw.FirstName || '',
             last_name: raw.last_name || raw.lastName || raw.LastName || '',
-            role: raw.role?.id || raw.role || raw.Role || 'network-ops',
+            role: roleValue,
             is_active: raw.is_active ?? raw.isActive ?? raw.IsActive ?? true,
             email_verified: raw.email_verified ?? raw.emailVerified ?? false,
             last_login: raw.last_login || raw.lastLogin || null,

@@ -113,8 +113,8 @@ export interface PageHeaderProps {
  *   ]}
  *   title="High CPU Utilization (98%) on Module 4"
  *   badges={[
- *     { text: 'Critical', color: '#da1e28' },
- *     { text: 'Open', color: '#ff832b', variant: 'outline' }
+ *     { text: 'Critical', color: 'var(--cds-support-error, #da1e28)' },
+ *     { text: 'Open', color: 'var(--cds-support-warning, #ff832b)', variant: 'outline' }
  *   ]}
  *   actions={[
  *     { label: 'Suppress', icon: Notification, variant: 'secondary', onClick: handleSuppress },
@@ -150,7 +150,7 @@ export interface PageHeaderProps {
  * />
  * ```
  */
-export function PageHeader({
+export const PageHeader = React.memo(function PageHeader({
     breadcrumbs,
     showBreadcrumbs = true,
     title,
@@ -217,11 +217,7 @@ export function PageHeader({
                                         <span
                                             key={index}
                                             className={`page-header__badge page-header__badge--${badge.variant || 'filled'}`}
-                                            style={{
-                                                backgroundColor: badge.variant === 'outline' ? 'transparent' : badge.color,
-                                                borderColor: badge.color,
-                                                color: badge.variant === 'outline' ? badge.color : '#ffffff',
-                                            }}
+                                            style={{ '--badge-color': badge.color } as React.CSSProperties}
                                         >
                                             {badge.text}
                                         </span>
@@ -293,6 +289,6 @@ export function PageHeader({
             )}
         </header>
     );
-}
+});
 
 export default PageHeader;

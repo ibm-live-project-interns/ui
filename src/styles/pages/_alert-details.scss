@@ -1,13 +1,12 @@
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
-@use '@carbon/react' as react;
+@use '@carbon/react/scss/type' as react;
 @use '@carbon/colors' as *;
 
 // ==========================================
 // Page Layout - FULL WIDTH
 // ==========================================
 .alert-details-page {
-    padding: 0;
     width: 100%;
     max-width: 100%;
     position: relative;
@@ -417,6 +416,14 @@
     margin-top: 2px;
 }
 
+.alert-card__reanalyze-btn {
+    margin-left: auto;
+}
+
+.alert-card__impact-text {
+    margin-left: $spacing-03;
+}
+
 .alert-card__impact-box {
     display: flex;
     align-items: flex-start;
@@ -478,10 +485,14 @@
     background-color: $layer-02;
     border-radius: 4px;
     border: 1px solid $border-subtle-01;
-    cursor: pointer;
+    cursor: default;
     transition: all 0.15s ease;
     text-align: left;
     width: 100%;
+
+    &--navigable {
+        cursor: pointer;
+    }
 
     &:hover {
         background-color: $layer-hover-02;
@@ -520,10 +531,92 @@
     margin: 0;
 }
 
+.alert-card__similarity-score {
+    @include react.type-style('label-01');
+    color: $text-secondary;
+    background-color: $layer-01;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.alert-card__empty {
+    padding: $spacing-06 $spacing-05;
+    text-align: center;
+    color: $text-secondary;
+
+    p {
+        @include react.type-style('body-compact-01');
+        margin: 0 0 $spacing-03;
+
+        &:last-child {
+            margin-bottom: 0;
+        }
+    }
+
+    &-hint {
+        @include react.type-style('helper-text-01');
+        color: $text-secondary;
+        font-style: italic;
+    }
+}
+
+.alert-card__loading {
+    padding: $spacing-06 $spacing-05;
+}
+
 .alert-card__view-all {
     width: 100%;
     justify-content: space-between;
     flex-shrink: 0;
+}
+
+// ==========================================
+// AI Explanation Impact Box Level Variants
+// ==========================================
+.ai-explanation__impact-box {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-04;
+    padding: $spacing-05;
+    border-radius: 4px;
+    border-left: 4px solid $border-subtle-01;
+    @include react.type-style('body-compact-01');
+    color: $text-primary;
+    line-height: 1.5;
+
+    &--high {
+        background-color: rgba($red-60, 0.15);
+        border-left-color: $red-60;
+    }
+
+    &--medium {
+        background-color: rgba($orange-40, 0.15);
+        border-left-color: $orange-40;
+    }
+
+    &--low {
+        background-color: rgba($yellow-30, 0.15);
+        border-left-color: $yellow-30;
+    }
+}
+
+.ai-explanation__impact-icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+
+    &--high {
+        color: $red-60;
+    }
+
+    &--medium {
+        color: $orange-40;
+    }
+
+    &--low {
+        color: $yellow-30;
+    }
 }
 
 // Alert Actions
@@ -647,7 +740,275 @@
     }
 }
 
+// ==========================================
+// Enrichment Row (3-column layout)
+// ==========================================
+.alert-details-page__enrichment-row {
+    display: grid;
+    grid-column: 1 / -1;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: $spacing-05;
+    align-items: stretch;
+    margin-bottom: $spacing-05;
+
+    @media (max-width: 1056px) {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    @media (max-width: 672px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+// ==========================================
+// Enrichment Card Base
+// ==========================================
+.alert-enrichment-card {
+    min-height: 180px;
+
+    &--compact {
+        min-height: 120px;
+    }
+}
+
+// ==========================================
+// Linked Tickets
+// ==========================================
+.alert-enrichment__ticket-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $spacing-03;
+
+    .cds--tag {
+        cursor: pointer;
+        transition: opacity 0.15s ease;
+
+        &:hover {
+            opacity: 0.85;
+        }
+    }
+}
+
+.alert-enrichment__ticket-tag {
+    max-width: 240px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// ==========================================
+// Suggested Runbooks
+// ==========================================
+.alert-enrichment__runbook-list {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-04;
+}
+
+.alert-enrichment__runbook-card {
+    padding: $spacing-04;
+    background-color: $layer-02;
+    border-radius: 4px;
+    border: 1px solid $border-subtle-01;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+        background-color: $layer-hover-02;
+        border-color: $border-strong-01;
+    }
+
+    &:focus {
+        outline: 2px solid $focus;
+        outline-offset: -2px;
+    }
+}
+
+.alert-enrichment__runbook-title {
+    @include react.type-style('body-compact-01');
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: $spacing-03;
+}
+
+.alert-enrichment__runbook-meta {
+    display: flex;
+    align-items: center;
+    gap: $spacing-04;
+}
+
+.alert-enrichment__runbook-time {
+    @include react.type-style('label-01');
+    color: $text-secondary;
+    display: flex;
+    align-items: center;
+    gap: $spacing-02;
+
+    svg {
+        color: $icon-secondary;
+    }
+}
+
+// ==========================================
+// Related Alerts
+// ==========================================
+.alert-enrichment__related-list {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-03;
+}
+
+.alert-enrichment__related-item {
+    display: flex;
+    align-items: center;
+    gap: $spacing-03;
+    padding: $spacing-03 $spacing-04;
+    background-color: $layer-02;
+    border-radius: 4px;
+    border: 1px solid $border-subtle-01;
+    cursor: pointer;
+    transition: all 0.15s ease;
+
+    &:hover {
+        background-color: $layer-hover-02;
+    }
+
+    &:focus {
+        outline: 2px solid $focus;
+        outline-offset: -2px;
+    }
+}
+
+.alert-enrichment__related-title {
+    @include react.type-style('body-compact-01');
+    color: $text-primary;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.alert-enrichment__related-time {
+    @include react.type-style('label-01');
+    color: $text-secondary;
+    flex-shrink: 0;
+}
+
+// ==========================================
+// Post-Mortem Section
+// ==========================================
+.alert-enrichment__postmortem-summary {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-04;
+}
+
+.alert-enrichment__postmortem-title {
+    @include react.type-style('productive-heading-02');
+    color: $text-primary;
+    margin: 0;
+}
+
+.alert-enrichment__postmortem-actions {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-04;
+    margin-top: $spacing-04;
+}
+
+.alert-enrichment__postmortem-action-item {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-04;
+    @include react.type-style('body-compact-01');
+    color: $text-primary;
+}
+
+.alert-enrichment__postmortem-action-meta {
+    display: flex;
+    align-items: center;
+    gap: $spacing-03;
+    margin-top: $spacing-02;
+    @include react.type-style('label-01');
+    color: $text-secondary;
+}
+
+// Post-Mortem Form (Modal)
+.alert-enrichment__postmortem-form {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-05;
+    padding: $spacing-05 0;
+}
+
+.alert-enrichment__postmortem-action-items {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-04;
+}
+
+.alert-enrichment__postmortem-action-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    h4 {
+        @include react.type-style('productive-heading-01');
+        color: $text-primary;
+        margin: 0;
+    }
+}
+
+.alert-enrichment__postmortem-action-row {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr auto;
+    gap: $spacing-04;
+    align-items: flex-end;
+
+    @media (max-width: 672px) {
+        grid-template-columns: 1fr;
+    }
+}
+
+// ==========================================
+// On-Call Card
+// ==========================================
+.alert-enrichment__oncall-info {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-04;
+}
+
+.alert-enrichment__oncall-person {
+    display: flex;
+    align-items: center;
+    gap: $spacing-04;
+
+    svg {
+        color: $icon-primary;
+        flex-shrink: 0;
+    }
+}
+
+.alert-enrichment__oncall-name {
+    @include react.type-style('body-compact-01');
+    font-weight: 600;
+    color: $text-primary;
+}
+
+.alert-enrichment__oncall-role {
+    @include react.type-style('label-01');
+    color: $text-secondary;
+}
+
+.alert-enrichment__oncall-contact {
+    @include react.type-style('label-01');
+    color: $text-secondary;
+    padding-left: calc(32px + $spacing-04); // Align with name after avatar
+}
+
+// ==========================================
 // Responsive
+// ==========================================
 @media (max-width: 672px) {
     .alert-details-page__header {
         flex-direction: column;

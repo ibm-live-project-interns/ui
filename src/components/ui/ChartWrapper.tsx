@@ -12,13 +12,19 @@ import { ChartColumn } from '@carbon/icons-react';
 import '@carbon/charts-react/styles.css';
 import './ChartWrapper.scss';
 
+/** Generic chart data item - Carbon Charts accepts records with various shapes */
+type ChartDataItem = Record<string, unknown>;
+
+/** Carbon Charts options - varies by chart type */
+type ChartOptions = Record<string, unknown>;
+
 interface ChartWrapperProps {
     /** The Carbon Charts component to render */
-    ChartComponent: React.ComponentType<any>;
+    ChartComponent: React.ComponentType<{ data: ChartDataItem[]; options: ChartOptions }>;
     /** Chart data array */
-    data: any[];
+    data: ChartDataItem[];
     /** Chart options (Carbon Charts format) */
-    options: any;
+    options: ChartOptions;
     /** Additional class name */
     className?: string;
     /** Chart height */
@@ -39,7 +45,7 @@ interface ChartWrapperProps {
  * Uses Carbon SkeletonPlaceholder for loading states and shows
  * a visual empty state with icon and message when no data is available.
  */
-export function ChartWrapper({
+export const ChartWrapper = React.memo(function ChartWrapper({
     ChartComponent,
     data,
     options,
@@ -71,17 +77,14 @@ export function ChartWrapper({
                 try {
                     const dateVal = item.date instanceof Date ? item.date : new Date(item.date);
                     if (isNaN(dateVal.getTime())) {
-                        console.warn('[ChartWrapper] Filtering out item with invalid date:', item);
                         return false;
                     }
-                } catch (e) {
-                    console.warn('[ChartWrapper] Error parsing date:', item.date);
+                } catch {
                     return false;
                 }
             }
             // Validate value is a number
             if (item.value !== undefined && typeof item.value !== 'number') {
-                console.warn('[ChartWrapper] Filtering out item with non-numeric value:', item);
                 return false;
             }
             return true;
@@ -122,10 +125,9 @@ export function ChartWrapper({
         return (
             <div className={`chart-wrapper chart-wrapper--empty ${className}`}>
                 {title && <h4 className="chart-wrapper__title">{title}</h4>}
-                <div className="chart-wrapper__empty-state" style={{ height }}>
+                <div className="chart-wrapper__empty-state" style={{ '--chart-height': height } as React.CSSProperties}>
                     <SkeletonPlaceholder
-                        className="chart-wrapper__empty-skeleton"
-                        style={{ width: '100%', height: '100%', position: 'absolute' }}
+                        className="chart-wrapper__empty-skeleton chart-wrapper__empty-skeleton--full"
                     />
                     <div className="chart-wrapper__empty-overlay">
                         <ChartColumn size={32} className="chart-wrapper__empty-icon" />
@@ -143,6 +145,6 @@ export function ChartWrapper({
             <ChartComponent data={sanitizedData} options={chartOptions} />
         </div>
     );
-}
+});
 
 export default ChartWrapper;

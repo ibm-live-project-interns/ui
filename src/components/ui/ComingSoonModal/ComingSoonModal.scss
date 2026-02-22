@@ -1,0 +1,49 @@
+/**
+ * Copyright IBM Corp. 2026
+ * ComingSoonModal styles
+ */
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/type' as *;
+@use '@carbon/react/scss/colors' as *;
+
+.coming-soon-modal {
+    &__body {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        padding: $spacing-05 0;
+        gap: $spacing-04;
+    }
+
+    &__icon-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background-color: var(--cds-layer-02, $blue-10);
+        color: var(--cds-interactive, $blue-60);
+        margin-bottom: $spacing-03;
+    }
+
+    &__feature-name {
+        @include type-style('heading-compact-02');
+        color: var(--cds-text-primary, $gray-100);
+        margin: 0;
+    }
+
+    &__tag {
+        margin: 0;
+    }
+
+    &__description {
+        @include type-style('body-01');
+        color: var(--cds-text-secondary, $gray-70);
+        margin: 0;
+        max-width: 360px;
+        line-height: 1.5;
+    }
+}

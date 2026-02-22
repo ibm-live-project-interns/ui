@@ -1,0 +1,154 @@
+/**
+ * Header Expandable Search
+ *
+ * Inline search bar that expands across the header when activated.
+ * Shows filtered results in a dropdown below the header.
+ */
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as react;
+
+.header-expandable-search {
+  display: flex;
+  align-items: center;
+  height: 48px;
+
+  &.expanded {
+    position: absolute;
+    left: 256px; // Account for sidenav width
+    right: 48px; // Account for notification icon
+    top: 0;
+    height: 48px;
+    z-index: 8000;
+
+    @media (max-width: 1055px) {
+      left: 48px; // Account for hamburger menu only
+    }
+  }
+}
+
+.header-search-expanded {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+  background-color: $layer-01;
+  position: relative;
+}
+
+.header-search-icon {
+  position: absolute;
+  left: $spacing-05;
+  fill: $icon-secondary;
+  pointer-events: none;
+}
+
+.header-search-input {
+  width: 100%;
+  height: 100%;
+  padding: 0 $spacing-09 0 $spacing-09;
+  border: none;
+  background: transparent;
+  @include react.type-style('body-compact-01');
+  color: $text-primary;
+
+  &::placeholder {
+    color: $text-placeholder;
+  }
+
+  &:focus {
+    outline: 2px solid $focus;
+    outline-offset: -2px;
+  }
+}
+
+.header-search-close {
+  position: absolute;
+  right: 0;
+  top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+
+  svg {
+    fill: $icon-secondary;
+  }
+
+  &:hover {
+    background-color: $layer-hover-01;
+
+    svg {
+      fill: $icon-primary;
+    }
+  }
+
+  &:focus {
+    outline: 2px solid $focus;
+    outline-offset: -2px;
+  }
+}
+
+.header-search-results {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background-color: $layer-01;
+  border: 1px solid $border-subtle-01;
+  border-top: none;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  max-height: 400px;
+  overflow-y: auto;
+  z-index: 9999;
+}
+
+.header-search-result-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: $spacing-04 $spacing-05;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid $border-subtle-01;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: $layer-hover-01;
+  }
+
+  &:focus {
+    outline: 2px solid $focus;
+    outline-offset: -2px;
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.header-search-result-label {
+  @include react.type-style('body-compact-01');
+  color: $text-primary;
+}
+
+.header-search-result-type {
+  @include react.type-style('helper-text-01');
+  color: $text-secondary;
+  text-transform: capitalize;
+}
+
+.header-search-no-results {
+  padding: $spacing-05;
+  @include react.type-style('body-compact-01');
+  color: $text-secondary;
+  text-align: center;
+}

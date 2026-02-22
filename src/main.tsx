@@ -1,7 +1,8 @@
 import { StrictMode, Component } from 'react';
 import type { ReactNode, ErrorInfo } from 'react';
 import { createRoot } from 'react-dom/client';
-import '@ibm/plex/css/ibm-plex.css';
+// Fonts loaded via Google Fonts CDN in index.html (IBM Plex Sans + Mono)
+// Carbon's $css--font-face is disabled to avoid broken ~@ibm/plex path resolution in Vite
 import '@/styles/index.scss';
 import App from './App';
 import { installErrorHandlers, logger } from '@/shared/utils/logger';
@@ -49,51 +50,20 @@ class GlobalErrorBoundary extends Component<{ children: ReactNode }, GlobalError
   render(): ReactNode {
     if (this.state.hasError) {
       return (
-        <div style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          height: '100vh',
-          background: '#161616',
-          color: '#f4f4f4',
-          fontFamily: "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif",
-          gap: '1rem',
-          padding: '2rem',
-          textAlign: 'center',
-        }}>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: 600 }}>Application Error</h1>
-          <p style={{ color: '#c6c6c6', maxWidth: '480px', lineHeight: 1.5 }}>
+        <div className="error-boundary">
+          <h1 className="error-boundary__title error-boundary__title--large">Application Error</h1>
+          <p className="error-boundary__description">
             The application encountered an unexpected error and cannot continue.
             Please reload the page to try again.
           </p>
           {this.state.error && (
-            <p style={{
-              color: '#ff8389',
-              fontSize: '0.875rem',
-              fontFamily: "'IBM Plex Mono', monospace",
-              maxWidth: '600px',
-              wordBreak: 'break-word',
-              padding: '0.75rem 1rem',
-              background: '#262626',
-              borderRadius: '4px',
-              border: '1px solid #393939',
-            }}>
+            <p className="error-boundary__error-message error-boundary__error-message--boxed">
               {this.state.error.message}
             </p>
           )}
           <button
             onClick={this.handleReload}
-            style={{
-              marginTop: '1rem',
-              padding: '0.75rem 2rem',
-              background: '#0f62fe',
-              color: '#ffffff',
-              border: 'none',
-              cursor: 'pointer',
-              fontSize: '0.875rem',
-              fontFamily: "'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif",
-            }}
+            className="error-boundary__reload-btn--native"
           >
             Reload Application
           </button>
