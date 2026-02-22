@@ -2,7 +2,7 @@
 // Uses Carbon Design System spacing tokens and theme variables
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
-@use '@carbon/react' as react;
+@use '@carbon/react/scss/type' as react;
 @use '@carbon/colors' as *;
 
 .settings-page {
@@ -49,12 +49,26 @@
         }
     }
 
+    // Settings Content - replaces inline grid styles
+    .settings-content {
+        padding-top: $spacing-05;
+
+        &--grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: $spacing-06;
+
+            @media (max-width: 1056px) {
+                grid-template-columns: 1fr;
+            }
+        }
+    }
+
     // Settings Grid - Content area (global padding is applied in index.scss)
     .settings-grid {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: $spacing-06;
-        padding: 0;
         padding-top: $spacing-05; // Space below PageHeader
 
         @media (max-width: 1056px) {
@@ -62,11 +76,34 @@
         }
     }
 
-    // Settings Tile - Equal height for first row
-    .settings-tile {
-        padding: $spacing-06;
+    // Form group spacing fix for role / theme radio sections
+    .settings-form-group {
+        .cds--fieldset {
+            margin-bottom: 0;
+        }
+    }
+
+    // Role radio label layout
+    .settings-role-label {
         display: flex;
         flex-direction: column;
+    }
+
+    .settings-role-name {
+        font-weight: 600;
+    }
+
+    .settings-role-description {
+        @include react.type-style('label-01');
+        color: $text-secondary;
+        margin-top: $spacing-02;
+    }
+
+    // Settings Tile - Equal height for first row
+    .settings-tile {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
 
         // First row tiles (Appearance and Notifications) should match height
         &:nth-child(1),
@@ -163,7 +200,6 @@
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: $spacing-03 0;
         border-bottom: 1px solid $border-subtle-01;
 
         &:last-child {

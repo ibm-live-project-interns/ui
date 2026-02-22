@@ -62,7 +62,7 @@ export function RoleProvider({ children, defaultRole = 'network-ops' }: RoleProv
     };
 
     const hasPermission = (permission: string): boolean => {
-        return currentRole.permissions.includes(permission as any);
+        return (currentRole.permissions as readonly string[]).includes(permission);
     };
 
     const value: RoleContextValue = {

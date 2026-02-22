@@ -117,18 +117,19 @@
         font-weight: 700; // font-bold
         text-transform: uppercase;
         letter-spacing: 0.05em;
-        border: 1px solid transparent;
+        border: 1px solid var(--badge-color, transparent);
         line-height: 1.4;
 
         &--filled {
             border-radius: 0;
+            background-color: var(--badge-color);
             color: #ffffff;
         }
 
         &--outline {
-            background-color: transparent !important;
-            border-width: 1px;
-            border-style: solid;
+            background-color: transparent;
+            border-color: var(--badge-color);
+            color: var(--badge-color);
         }
     }
 

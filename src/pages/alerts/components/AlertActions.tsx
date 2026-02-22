@@ -9,10 +9,12 @@
  * All actions are functional and call the provided handlers.
  */
 
-import { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button, Loading, Modal, TextArea, TextInput, Select, SelectItem } from '@carbon/react';
 import { Checkmark, Add, Close } from '@carbon/icons-react';
 import type { AlertStatus } from '@/shared/types/common.types';
+import { userService } from '@/shared/services';
+import type { ManagedUser } from '@/shared/services';
 import '@/styles/pages/_alert-details.scss';
 
 interface AlertActionsProps {
@@ -30,7 +32,7 @@ interface TicketData {
     assignee?: string;
 }
 
-export function AlertActions({
+export const AlertActions = React.memo(function AlertActions({
     alertId,
     currentStatus,
     onAcknowledge,
@@ -46,6 +48,19 @@ export function AlertActions({
         description: '',
         priority: 'high',
     });
+    const [assigneeOptions, setAssigneeOptions] = useState<ManagedUser[]>([]);
+
+    useEffect(() => {
+        let cancelled = false;
+        userService.getUsers().then((users) => {
+            if (!cancelled) {
+                setAssigneeOptions(users);
+            }
+        }).catch(() => {
+            // Silently fall back to empty list if users API is unavailable
+        });
+        return () => { cancelled = true; };
+    }, []);
 
     const handleAcknowledge = async () => {
         setIsAcknowledging(true);
@@ -180,19 +195,23 @@ export function AlertActions({
                         onChange={(e) => setTicketForm({ ...ticketForm, assignee: e.target.value })}
                     >
                         <SelectItem value="" text="Select assignee..." />
-                        <SelectItem value="John Smith" text="John Smith" />
-                        <SelectItem value="Jane Doe" text="Jane Doe" />
-                        <SelectItem value="Mike Johnson" text="Mike Johnson" />
-                        <SelectItem value="Sarah Williams" text="Sarah Williams" />
-                        <SelectItem value="DBA Team" text="DBA Team" />
-                        <SelectItem value="Network Team" text="Network Team" />
-                        <SelectItem value="Security Team" text="Security Team" />
-                        <SelectItem value="NOC Team" text="NOC Team" />
+                        {assigneeOptions.map((user) => {
+                            const displayName = user.first_name && user.last_name
+                                ? `${user.first_name} ${user.last_name}`
+                                : user.username;
+                            return (
+                                <SelectItem
+                                    key={user.id}
+                                    value={user.username}
+                                    text={displayName}
+                                />
+                            );
+                        })}
                     </Select>
                 </div>
             </Modal>
         </>
     );
-}
+});
 
 export default AlertActions;

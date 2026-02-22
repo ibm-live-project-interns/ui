@@ -33,6 +33,7 @@ export const ROUTES = {
     RUNBOOKS: '/runbooks',
     DEVICE_GROUPS: '/device-groups',
     SERVICE_STATUS: '/service-status',
+    POST_MORTEMS: '/incidents/post-mortems',
 } as const;
 
 export type RouteKey = keyof typeof ROUTES;

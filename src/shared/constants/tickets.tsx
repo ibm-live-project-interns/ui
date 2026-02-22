@@ -72,31 +72,31 @@ export interface TicketStatusConfig {
 export const TICKET_STATUS_CONFIG: Record<TicketStatus, TicketStatusConfig> = {
     open: {
         label: 'Open',
-        color: '#da1e28',
+        color: 'var(--cds-support-error, #da1e28)',
         tagType: 'red',
         description: 'Awaiting action',
     },
     'in-progress': {
         label: 'In Progress',
-        color: '#ff832b',
+        color: 'var(--cds-support-warning, #ff832b)',
         tagType: 'magenta',
         description: 'Being worked on',
     },
     pending: {
         label: 'Pending',
-        color: '#8a3ffc',
+        color: 'var(--cds-support-info, #8a3ffc)',
         tagType: 'purple',
         description: 'Awaiting response',
     },
     resolved: {
         label: 'Resolved',
-        color: '#24a148',
+        color: 'var(--cds-support-success, #24a148)',
         tagType: 'green',
         description: 'Issue fixed',
     },
     closed: {
         label: 'Closed',
-        color: '#6f6f6f',
+        color: 'var(--cds-text-helper, #6f6f6f)',
         tagType: 'gray',
         description: 'Ticket closed',
     },

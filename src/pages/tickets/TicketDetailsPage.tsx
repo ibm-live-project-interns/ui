@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
+import { logger } from '@/shared/utils/logger';
 import {
-    Tile,
     Button,
-    SkeletonText,
     InlineNotification,
     Modal,
     TextInput,
@@ -11,11 +10,10 @@ import {
     Select,
     SelectItem,
     ComboBox,
-    Tag,
 } from '@carbon/react';
 import {
-    Edit, View, Time, Ticket, User, Activity, ArrowLeft, Checkmark,
-    Chat, Send, TrashCan,
+    Edit, View, Time, Ticket, User, Activity, ArrowLeft,
+    Chat, TrashCan,
 } from '@carbon/icons-react';
 import '@/styles/pages/_ticket-details.scss';
 
@@ -23,20 +21,20 @@ import '@/styles/pages/_ticket-details.scss';
 import { ticketDataService, alertDataService, type TicketInfo } from '@/shared/services';
 import type { TicketComment } from '@/features/tickets/services/ticketService';
 import { userService } from '@/shared/services';
+import type { ManagedUser } from '@/features/auth/services/userService';
+import type { PriorityAlert } from '@/features/alerts/types';
 import { KPICard } from '@/components';
 import { PageHeader } from '@/components/ui';
+import { PageLayout } from '@/components/layout';
 import { useToast } from '@/contexts';
 
-/**
- * Returns true if the alertId represents a real backend alert that can be navigated to.
- * Filters out empty strings and synthetic "manual-" prefix IDs that were generated
- * client-side when creating tickets without a linked alert.
- */
-function isLinkableAlertId(alertId: string | undefined | null): alertId is string {
-    if (!alertId) return false;
-    if (alertId.startsWith('manual-')) return false;
-    return true;
-}
+import {
+    TicketDetailsSkeleton,
+    TicketInfoPanel,
+    TicketActivitySection,
+    isLinkableAlertId,
+} from './components';
+import type { EditFormData, AlertOption, AssigneeSelectOption } from './components';
 
 export function TicketDetailsPage() {
     const { ticketId } = useParams<{ ticketId: string }>();
@@ -46,13 +44,13 @@ export function TicketDetailsPage() {
     const [ticket, setTicket] = useState<TicketInfo | null>(null);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-    const [alertsList, setAlertsList] = useState<{ id: string; label: string }[]>([]);
-    const [assigneeOptions, setAssigneeOptions] = useState<{ value: string; text: string }[]>([]);
-    const [editForm, setEditForm] = useState({
+    const [alertsList, setAlertsList] = useState<AlertOption[]>([]);
+    const [assigneeOptions, setAssigneeOptions] = useState<AssigneeSelectOption[]>([]);
+    const [editForm, setEditForm] = useState<EditFormData>({
         title: '',
         description: '',
-        priority: 'medium' as TicketInfo['priority'],
-        status: 'open' as TicketInfo['status'],
+        priority: 'medium',
+        status: 'open',
         assignedTo: '',
         alertId: '',
     });
@@ -73,9 +71,9 @@ export function TicketDetailsPage() {
                     alertDataService.getAlerts(),
                 ]);
                 setTicket(foundTicket);
-                setAlertsList(alertsData.map((a: any) => ({
+                setAlertsList(alertsData.map((a: PriorityAlert) => ({
                     id: a.id,
-                    label: `${a.id} — ${a.aiTitle || a.title || 'Alert'}`,
+                    label: `${a.id} — ${a.aiTitle || 'Alert'}`,
                 })));
                 if (foundTicket) {
                     setEditForm({
@@ -90,14 +88,13 @@ export function TicketDetailsPage() {
 
                 // Load assignee options from users API
                 try {
-                    const usersResult = await userService.getUsers();
-                    const users = (usersResult as any).users || (Array.isArray(usersResult) ? usersResult : []);
-                    setAssigneeOptions(users.map((u: any) => ({
+                    const users: ManagedUser[] = await userService.getUsers();
+                    setAssigneeOptions(users.map((u: ManagedUser) => ({
                         value: u.username || `${u.first_name} ${u.last_name}`.trim(),
                         text: `${u.first_name || ''} ${u.last_name || ''}`.trim() || u.username || u.email,
                     })));
-                } catch {
-                    // Fallback if users API not available
+                } catch (err) {
+                    logger.warn('Users API unavailable, using fallback assignees', err);
                     setAssigneeOptions([
                         { value: 'John Smith', text: 'John Smith' },
                         { value: 'Jane Doe', text: 'Jane Doe' },
@@ -108,7 +105,7 @@ export function TicketDetailsPage() {
                     ]);
                 }
             } catch (error) {
-                console.error('Failed to load ticket:', error);
+                logger.error('Failed to load ticket', error);
             } finally {
                 setIsLoading(false);
             }
@@ -125,7 +122,7 @@ export function TicketDetailsPage() {
                 const result = await ticketDataService.getComments(ticketId);
                 setComments(result);
             } catch (error) {
-                console.error('Failed to load comments:', error);
+                logger.error('Failed to load comments', error);
             } finally {
                 setIsLoadingComments(false);
             }
@@ -142,7 +139,7 @@ export function TicketDetailsPage() {
             setNewComment('');
             addToast('success', 'Comment Added', 'Your comment has been posted');
         } catch (error) {
-            console.error('Failed to add comment:', error);
+            logger.error('Failed to add comment', error);
             addToast('error', 'Failed', 'Could not add comment');
         } finally {
             setIsSubmittingComment(false);
@@ -164,7 +161,7 @@ export function TicketDetailsPage() {
             setIsEditModalOpen(false);
             addToast('success', 'Ticket Updated', `${ticket.ticketNumber} has been updated successfully`);
         } catch (error) {
-            console.error('Failed to update ticket:', error);
+            logger.error('Failed to update ticket', error);
             addToast('error', 'Update Failed', 'Could not update ticket');
         }
     };
@@ -177,52 +174,18 @@ export function TicketDetailsPage() {
             setIsDeleteModalOpen(false);
             setTimeout(() => navigate('/tickets'), 1000);
         } catch (error) {
-            console.error('Failed to delete ticket:', error);
+            logger.error('Failed to delete ticket', error);
             addToast('error', 'Delete Failed', 'Could not delete ticket');
         }
     };
 
-    /** Format a date string to readable format */
-    const formatDate = (dateStr: string) => {
-        try {
-            const d = new Date(dateStr);
-            return d.toLocaleString('en-US', {
-                month: 'short', day: 'numeric', year: 'numeric',
-                hour: '2-digit', minute: '2-digit',
-            });
-        } catch {
-            return dateStr;
-        }
-    };
-
-    /** Format relative time */
-    const timeAgo = (dateStr: string) => {
-        try {
-            const d = new Date(dateStr);
-            const now = new Date();
-            const diffMs = now.getTime() - d.getTime();
-            const diffMins = Math.floor(diffMs / 60000);
-            if (diffMins < 1) return 'Just now';
-            if (diffMins < 60) return `${diffMins}m ago`;
-            const diffHours = Math.floor(diffMins / 60);
-            if (diffHours < 24) return `${diffHours}h ago`;
-            const diffDays = Math.floor(diffHours / 24);
-            return `${diffDays}d ago`;
-        } catch {
-            return '';
-        }
-    };
-
     if (isLoading) {
-        return (
-            <div className="ticket-details-page ticket-details-page--loading">
-                <SkeletonText className="ticket-details-page__skeleton" />
-            </div>
-        );
+        return <TicketDetailsSkeleton />;
     }
 
     if (!ticket) {
         return (
+            <PageLayout>
             <div className="ticket-details-page">
                 <InlineNotification
                     kind="error"
@@ -233,6 +196,7 @@ export function TicketDetailsPage() {
                     Back to Tickets
                 </Button>
             </div>
+            </PageLayout>
         );
     }
 
@@ -242,6 +206,7 @@ export function TicketDetailsPage() {
     const daysOpen = Math.floor((now.getTime() - createdDate.getTime()) / (1000 * 60 * 60 * 24));
 
     return (
+        <PageLayout>
         <div className="ticket-details-page">
             {/* PageHeader Component */}
             <PageHeader
@@ -252,7 +217,7 @@ export function TicketDetailsPage() {
                 title={ticket.ticketNumber}
                 subtitle={ticket.title}
                 badges={[
-                    { text: ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1), variant: 'filled', color: ticket.priority === 'critical' ? '#da1e28' : ticket.priority === 'high' ? '#ff832b' : ticket.priority === 'medium' ? '#8a3ffc' : '#0f62fe' },
+                    { text: ticket.priority.charAt(0).toUpperCase() + ticket.priority.slice(1), variant: 'filled', color: ticket.priority === 'critical' ? 'var(--cds-support-error, #da1e28)' : ticket.priority === 'high' ? 'var(--cds-support-warning, #ff832b)' : ticket.priority === 'medium' ? 'var(--cds-support-info, #8a3ffc)' : 'var(--cds-interactive, #0f62fe)' },
                     { text: ticket.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase()), variant: 'outline', color: 'var(--cds-text-primary)' }
                 ]}
                 actions={[
@@ -264,7 +229,7 @@ export function TicketDetailsPage() {
             />
 
             {/* KPI Row */}
-            <div className="ticket-kpi-row" style={{ marginTop: '1.5rem', marginBottom: '1.5rem' }}>
+            <div className="ticket-kpi-row">
                 <KPICard
                     id="status"
                     icon={Ticket}
@@ -307,132 +272,17 @@ export function TicketDetailsPage() {
             <div className="ticket-details-page__content-grid">
                 {/* Row 1: Ticket Details + Activity Timeline */}
                 <div className="ticket-details-page__row">
-                    <Tile className="ticket-card">
-                        <div className="ticket-card__header">
-                            <Ticket size={20} />
-                            <h3 className="ticket-card__title">Ticket Details</h3>
-                        </div>
+                    <TicketInfoPanel ticket={ticket} />
 
-                        <div className="ticket-card__section">
-                            <h4 className="ticket-card__section-title">Description</h4>
-                            <p className="ticket-card__text">{ticket.description}</p>
-                        </div>
-
-                        <div className="ticket-card__rows">
-                            <div className="ticket-card__row">
-                                <span className="ticket-card__label">Device</span>
-                                <span className="ticket-card__value">{ticket.deviceName}</span>
-                            </div>
-                            <div className="ticket-card__row">
-                                <span className="ticket-card__label">Assigned To</span>
-                                <span className="ticket-card__value">{ticket.assignedTo}</span>
-                            </div>
-                            <div className="ticket-card__row">
-                                <span className="ticket-card__label">Created</span>
-                                <span className="ticket-card__value">{formatDate(ticket.createdAt)}</span>
-                            </div>
-                            <div className="ticket-card__row">
-                                <span className="ticket-card__label">Last Updated</span>
-                                <span className="ticket-card__value">{formatDate(ticket.updatedAt)}</span>
-                            </div>
-                            {ticket.alertId && (
-                                <div className="ticket-card__row">
-                                    <span className="ticket-card__label">Related Alert</span>
-                                    {isLinkableAlertId(ticket.alertId) ? (
-                                        <Link to={`/alerts/${ticket.alertId}`} className="ticket-card__value ticket-card__value--link">
-                                            {ticket.alertId}
-                                        </Link>
-                                    ) : (
-                                        <span className="ticket-card__value">{ticket.alertId}</span>
-                                    )}
-                                </div>
-                            )}
-                        </div>
-                    </Tile>
-
-                    <Tile className="ticket-card">
-                        <div className="ticket-card__header">
-                            <Activity size={20} />
-                            <h3 className="ticket-card__title">Activity Timeline</h3>
-                            <Tag size="sm" type="gray" style={{ marginLeft: 'auto' }}>
-                                {comments.length} {comments.length === 1 ? 'entry' : 'entries'}
-                            </Tag>
-                        </div>
-
-                        <div className="ticket-timeline">
-                            {/* Real comments from API */}
-                            {isLoadingComments ? (
-                                <div style={{ padding: '1rem' }}>
-                                    <SkeletonText paragraph lineCount={3} />
-                                </div>
-                            ) : comments.length > 0 ? (
-                                comments.map((comment) => (
-                                    <div key={comment.id} className="ticket-timeline__item">
-                                        <div className="ticket-timeline__icon">
-                                            <Chat size={16} />
-                                        </div>
-                                        <div className="ticket-timeline__content">
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                <p className="ticket-timeline__title">{comment.author}</p>
-                                                <span className="ticket-timeline__timestamp">{timeAgo(comment.createdAt)}</span>
-                                            </div>
-                                            <p className="ticket-timeline__description">{comment.content}</p>
-                                            <p className="ticket-timeline__timestamp">{formatDate(comment.createdAt)}</p>
-                                        </div>
-                                    </div>
-                                ))
-                            ) : null}
-
-                            {/* Always show ticket created as last timeline entry */}
-                            <div className="ticket-timeline__item">
-                                <div className="ticket-timeline__icon ticket-timeline__icon--current">
-                                    <Checkmark size={16} />
-                                </div>
-                                <div className="ticket-timeline__content">
-                                    <p className="ticket-timeline__title">Ticket Created</p>
-                                    <p className="ticket-timeline__description">
-                                        {isLinkableAlertId(ticket.alertId) ? `Created from alert ${ticket.alertId}` : 'Ticket created manually'}
-                                    </p>
-                                    <p className="ticket-timeline__timestamp">{formatDate(ticket.createdAt)}</p>
-                                </div>
-                            </div>
-                        </div>
-
-                        {/* Add Comment Form */}
-                        <div className="ticket-comment-form" style={{
-                            borderTop: '1px solid var(--cds-border-subtle)',
-                            padding: '1rem 0 0',
-                            marginTop: '1rem',
-                            display: 'flex',
-                            gap: '0.5rem',
-                            alignItems: 'flex-end',
-                        }}>
-                            <TextArea
-                                id="new-comment"
-                                labelText="Add a comment"
-                                placeholder="Write a comment..."
-                                value={newComment}
-                                onChange={(e) => setNewComment(e.target.value)}
-                                rows={2}
-                                style={{ flex: 1 }}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
-                                        handleAddComment();
-                                    }
-                                }}
-                            />
-                            <Button
-                                kind="primary"
-                                size="md"
-                                renderIcon={Send}
-                                disabled={!newComment.trim() || isSubmittingComment}
-                                onClick={handleAddComment}
-                                style={{ minWidth: '100px', height: '40px' }}
-                            >
-                                {isSubmittingComment ? 'Sending...' : 'Send'}
-                            </Button>
-                        </div>
-                    </Tile>
+                    <TicketActivitySection
+                        ticket={ticket}
+                        comments={comments}
+                        isLoadingComments={isLoadingComments}
+                        newComment={newComment}
+                        isSubmittingComment={isSubmittingComment}
+                        onNewCommentChange={setNewComment}
+                        onAddComment={handleAddComment}
+                    />
                 </div>
             </div>
 
@@ -446,7 +296,7 @@ export function TicketDetailsPage() {
                 onRequestSubmit={handleEditTicket}
                 primaryButtonDisabled={!editForm.title}
             >
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div className="ticket-edit-modal__form">
                     <TextInput
                         id="edit-ticket-title"
                         labelText="Title"
@@ -527,11 +377,12 @@ export function TicketDetailsPage() {
                 danger
             >
                 <p>Are you sure you want to delete <strong>{ticket.ticketNumber}</strong>?</p>
-                <p style={{ marginTop: '0.5rem', color: 'var(--cds-text-secondary)' }}>
+                <p className="ticket-delete-modal__warning">
                     This action cannot be undone. All comments and activity history will be lost.
                 </p>
             </Modal>
         </div>
+        </PageLayout>
     );
 }
 

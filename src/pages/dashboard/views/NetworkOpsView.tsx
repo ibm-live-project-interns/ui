@@ -190,7 +190,7 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
   // Transform alerts for AlertTicker component
   const tickerAlerts: CriticalAlert[] = useMemo(() =>
     (recentAlerts || [])
-      .filter(a => a.severity === 'critical' || a.severity === 'high' || a.severity === 'major')
+      .filter(a => a.severity === 'critical' || a.severity === 'major')
       .slice(0, 8)
       .map(a => {
         // Ensure deviceName is always a primitive/string to avoid rendering objects as React children
@@ -204,7 +204,7 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
           timestamp: typeof a.timestamp === 'string' ? a.timestamp : a.timestamp?.relative || 'Now',
           message: a.aiSummary || 'Alert detected',
           deviceName,
-          severity: a.severity as 'critical' | 'high' | 'major'
+          severity: a.severity as 'critical' | 'major'
         };
       }),
     [recentAlerts]
@@ -277,10 +277,10 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
       const lowerQuery = searchQuery.toLowerCase();
       result = result.filter(alert =>
         alert.device?.name?.toLowerCase().includes(lowerQuery) ||
-        (alert.id || '').toLowerCase().includes(lowerQuery) ||
+        alert.id.toLowerCase().includes(lowerQuery) ||
         alert.aiSummary?.toLowerCase().includes(lowerQuery) ||
-        (alert.severity || '').toLowerCase().includes(lowerQuery) ||
-        (alert.status || '').toLowerCase().includes(lowerQuery)
+        alert.severity.toLowerCase().includes(lowerQuery) ||
+        alert.status.toLowerCase().includes(lowerQuery)
       );
     }
     return result;
@@ -552,10 +552,11 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
                     max={100}
                     hideLabel
                     size="small"
+                    status={metric.trend === 'up' ? 'active' : 'error'}
                   />
                 </div>
-                <div className={`metric-change ${metric.trend || 'stable'}`}>
-                  {metric.description || `${typeof metric.value === 'number' ? Math.round(metric.value * 10) / 10 : metric.value}%`}
+                <div className={`metric-change ${metric.trend}`}>
+                  {metric.change || '0%'}
                 </div>
               </div>
             ))}

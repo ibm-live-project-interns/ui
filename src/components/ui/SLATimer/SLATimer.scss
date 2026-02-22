@@ -1,0 +1,145 @@
+// SLATimer Component Styles
+// Uses Carbon Design System spacing tokens and theme variables
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as react;
+
+.sla-timer {
+  display: flex;
+  align-items: center;
+  gap: $spacing-03;
+  padding: $spacing-03 $spacing-04;
+  border-left: 3px solid transparent;
+  border-radius: 0;
+  background: $layer-01;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+
+  &__icon {
+    flex-shrink: 0;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  &__label {
+    @include react.type-style('label-01');
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+  }
+
+  &__value {
+    @include react.type-style('body-compact-01');
+    font-weight: 600;
+    white-space: nowrap;
+  }
+
+  // State: green (>50% time remaining)
+  &--green {
+    border-left-color: $support-success;
+
+    .sla-timer__icon {
+      color: $support-success;
+    }
+
+    .sla-timer__value {
+      color: $support-success;
+    }
+  }
+
+  // State: yellow (25-50% time remaining)
+  &--yellow {
+    border-left-color: $support-warning;
+
+    .sla-timer__icon {
+      color: $support-warning;
+    }
+
+    .sla-timer__value {
+      color: $support-warning;
+    }
+  }
+
+  // State: red (<25% time remaining)
+  &--red {
+    border-left-color: $support-error;
+
+    .sla-timer__icon {
+      color: $support-error;
+    }
+
+    .sla-timer__value {
+      color: $support-error;
+    }
+  }
+
+  // State: breached
+  &--breached {
+    border-left-color: $support-error;
+    background: rgba(218, 30, 40, 0.08);
+
+    .sla-timer__icon {
+      color: $support-error;
+    }
+
+    .sla-timer__value {
+      color: $support-error;
+      animation: sla-flash 1.5s ease-in-out infinite;
+    }
+  }
+
+  // Resolved - muted display
+  &--resolved {
+    opacity: 0.7;
+
+    .sla-timer__value {
+      animation: none;
+    }
+  }
+
+  // Compact mode: single-line inline badge
+  &--compact {
+    display: inline-flex;
+    padding: 2px $spacing-03;
+    border-left: none;
+    border-radius: 2px;
+    background: transparent;
+    @include react.type-style('label-01');
+    font-weight: 600;
+    gap: 0;
+
+    &.sla-timer--green {
+      color: $support-success;
+    }
+
+    &.sla-timer--yellow {
+      color: $support-warning;
+    }
+
+    &.sla-timer--red {
+      color: $support-error;
+    }
+
+    &.sla-timer--breached {
+      color: $support-error;
+      background: rgba(218, 30, 40, 0.08);
+      animation: sla-flash 1.5s ease-in-out infinite;
+    }
+  }
+}
+
+@keyframes sla-flash {
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: 0.5;
+  }
+}

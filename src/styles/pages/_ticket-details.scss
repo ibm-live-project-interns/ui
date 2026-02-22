@@ -1,13 +1,12 @@
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
-@use '@carbon/react' as react;
+@use '@carbon/react/scss/type' as react;
 @use '@carbon/colors' as *;
 
 // ==========================================
 // Page Layout - FULL WIDTH (matches AlertDetailsPage)
 // ==========================================
 .ticket-details-page {
-    padding: 0;
     width: 100%;
     max-width: 100%;
 
@@ -111,6 +110,7 @@
     grid-template-columns: repeat(4, 1fr);
     gap: $spacing-06;
     padding: 0 $spacing-06;
+    margin-top: $spacing-06;
     margin-bottom: $spacing-06;
 
     @media (max-width: 1056px) {
@@ -318,6 +318,67 @@
     @include react.type-style('helper-text-01');
     color: $text-secondary;
     margin: 0;
+}
+
+// ==========================================
+// Activity Timeline - Tag (auto-align right)
+// ==========================================
+.ticket-timeline__count-tag {
+    margin-left: auto;
+}
+
+// ==========================================
+// Activity Timeline - Loading State
+// ==========================================
+.ticket-timeline__loading {
+    padding: $spacing-05;
+}
+
+// ==========================================
+// Activity Timeline - Comment Meta Row
+// ==========================================
+.ticket-timeline__meta {
+    display: flex;
+    align-items: center;
+    gap: $spacing-03;
+}
+
+// ==========================================
+// Comment Form
+// ==========================================
+.ticket-comment-form {
+    border-top: 1px solid $border-subtle-01;
+    padding: $spacing-05 0 0;
+    margin-top: $spacing-05;
+    display: flex;
+    gap: $spacing-03;
+    align-items: flex-end;
+}
+
+.ticket-comment-form__input {
+    flex: 1;
+}
+
+.ticket-comment-form__submit {
+    min-width: 100px;
+    height: 40px;
+}
+
+// ==========================================
+// Edit Modal - Form Layout
+// ==========================================
+.ticket-edit-modal__form {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-05;
+}
+
+// ==========================================
+// Delete Modal - Warning Text
+// ==========================================
+.ticket-delete-modal__warning {
+    margin-top: $spacing-03;
+    color: $text-secondary;
 }
 
 // ==========================================

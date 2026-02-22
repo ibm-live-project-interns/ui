@@ -2,7 +2,6 @@
 // Consistent, sleek table wrapper styling matching ui-revamp-idea reference
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
-@use '@carbon/react' as react;
 
 .data-table-wrapper {
     background-color: $layer-01;
@@ -59,7 +58,7 @@
 
     // Content area - contains the DataTable
     &__content {
-        overflow: hidden;
+        overflow: visible;
 
         // Override Carbon DataTable container
         .cds--data-table-container {
@@ -112,9 +111,21 @@
             }
         }
 
-        // Hide default Carbon toolbar
+        // Hide default Carbon toolbar content but keep batch actions visible
         .cds--table-toolbar {
-            display: none;
+            overflow: visible;
+            position: relative;
+
+            // Hide the toolbar content (search, filter buttons) since DataTableWrapper has its own header
+            .cds--toolbar-content,
+            .cds--table-toolbar__content {
+                display: none;
+            }
+
+            // Batch actions overlay must remain visible
+            .cds--batch-actions {
+                z-index: 2;
+            }
         }
 
         // Pagination - use Carbon default styling

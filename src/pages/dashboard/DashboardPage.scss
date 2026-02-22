@@ -1,0 +1,54 @@
+// Dashboard Page - Widget Grid Layout
+// Uses CSS Grid with 12-column system for flexible widget placement.
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as *;
+
+.dashboard-page-shell {
+  width: 100%;
+
+  // Widget grid - 12-column layout
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: $spacing-05;
+    margin-top: $spacing-05;
+  }
+
+  // Grid cell span variants
+  &__cell {
+    min-width: 0; // prevent chart overflow
+
+    &--full {
+      grid-column: span 12;
+    }
+
+    &--half {
+      grid-column: span 6;
+    }
+
+    &--third {
+      grid-column: span 4;
+    }
+
+    &--two-thirds {
+      grid-column: span 8;
+    }
+
+    // Responsive: stack everything on smaller screens
+    @media (max-width: 1056px) {
+      &--half,
+      &--third,
+      &--two-thirds {
+        grid-column: span 12;
+      }
+    }
+
+    // Medium breakpoint: halves become full, thirds become halves
+    @media (min-width: 672px) and (max-width: 1056px) {
+      &--third {
+        grid-column: span 6;
+      }
+    }
+  }
+}

@@ -12,6 +12,7 @@
 import { useCallback, useState } from 'react';
 import { alertDataService } from '../services/alertService';
 import { ticketDataService } from '@/features/tickets/services/ticketService';
+import { logger } from '@/shared/utils/logger';
 
 interface TicketData {
     title: string;
@@ -38,7 +39,7 @@ export function useAlertActions(): UseAlertActionsResult {
 
         try {
             await alertDataService.acknowledgeAlert(alertId);
-            console.log(`Alert ${alertId} acknowledged`);
+            logger.info(`Alert ${alertId} acknowledged`);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to acknowledge alert';
             setError(errorMessage);
@@ -59,7 +60,7 @@ export function useAlertActions(): UseAlertActionsResult {
                 priority: ticketData.priority,
                 alertId: alertId,
             });
-            console.log(`Ticket created: ${ticket.id}`, { alertId, ticketData });
+            logger.info(`Ticket created: ${ticket.id}`, { alertId, ticketData });
             return ticket.id;
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to create ticket';
@@ -76,7 +77,7 @@ export function useAlertActions(): UseAlertActionsResult {
 
         try {
             await alertDataService.dismissAlert(alertId);
-            console.log(`Alert ${alertId} dismissed`);
+            logger.info(`Alert ${alertId} dismissed`);
         } catch (err) {
             const errorMessage = err instanceof Error ? err.message : 'Failed to dismiss alert';
             setError(errorMessage);

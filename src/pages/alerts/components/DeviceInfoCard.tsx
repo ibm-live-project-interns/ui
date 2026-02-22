@@ -7,6 +7,7 @@
  * - Interface Alias
  */
 
+import React from 'react';
 import { Tile } from '@carbon/react';
 import { VirtualMachine } from '@carbon/icons-react';
 import '@/styles/pages/_alert-details.scss';
@@ -25,7 +26,7 @@ interface DeviceInfoCardProps {
     device: DeviceInfo;
 }
 
-export function DeviceInfoCard({ device }: DeviceInfoCardProps) {
+export const DeviceInfoCard = React.memo(function DeviceInfoCard({ device }: DeviceInfoCardProps) {
     const infoRows = [
         { label: 'Device Name', value: device.deviceName },
         { label: 'IP Address', value: device.ipAddress },
@@ -39,7 +40,7 @@ export function DeviceInfoCard({ device }: DeviceInfoCardProps) {
     return (
         <Tile className="device-info-card">
             <div className="device-info-card__header">
-                <VirtualMachine size={20} />
+                <VirtualMachine size={20} aria-label="Network device" />
                 <h4 className="device-info-card__title">Device Information</h4>
             </div>
 
@@ -57,6 +58,6 @@ export function DeviceInfoCard({ device }: DeviceInfoCardProps) {
             </div>
         </Tile>
     );
-}
+});
 
 export default DeviceInfoCard;

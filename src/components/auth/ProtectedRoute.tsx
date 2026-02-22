@@ -10,6 +10,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { Navigate, useLocation, useSearchParams } from 'react-router-dom';
 import { Loading } from '@carbon/react';
 import { authService } from '@/features/auth/services/authService';
+import { logger } from '@/shared/utils/logger';
 
 interface ProtectedRouteProps {
     children: React.ReactNode;
@@ -29,13 +30,13 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
         const oauthError = searchParams.get('error');
 
         if (oauthError) {
-            console.error('[ProtectedRoute] OAuth error:', oauthError);
+            logger.error('[ProtectedRoute] OAuth error', new Error(oauthError));
             window.location.href = `/login?error=${encodeURIComponent(oauthError)}`;
             return;
         }
 
         if (token) {
-            console.log('[ProtectedRoute] Processing OAuth token from URL');
+            logger.info('Processing OAuth token from URL');
             // Clean up URL by removing token param
             const newParams = new URLSearchParams(searchParams);
             newParams.delete('token');
@@ -57,13 +58,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     // Show loading while checking authentication
     if (authState === 'loading') {
         return (
-            <div style={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                height: '100vh',
-                background: '#161616'
-            }}>
+            <div className="page-loader">
                 <Loading withOverlay={false} description="Completing sign in..." />
             </div>
         );

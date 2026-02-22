@@ -1,0 +1,58 @@
+/**
+ * Auth Header Account Dropdown
+ *
+ * Dropdown menu triggered by the user account button in the app header.
+ * Contains profile link, settings, and logout actions.
+ */
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as react;
+
+.auth-header-account {
+  position: relative;
+}
+
+.auth-header-chevron {
+  margin-left: $spacing-02;
+}
+
+.auth-header-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  min-width: 200px;
+  background-color: $layer-01;
+  border: 1px solid $border-subtle-01;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  z-index: 9000;
+}
+
+.auth-header-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-03;
+  width: 100%;
+  padding: $spacing-04 $spacing-05;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  @include react.type-style('body-compact-01');
+  color: $text-primary;
+  text-align: left;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: $layer-hover-01;
+  }
+
+  svg {
+    color: $icon-secondary;
+  }
+}
+
+.auth-header-dropdown-divider {
+  border: none;
+  border-top: 1px solid $border-subtle-01;
+  margin: 0;
+}

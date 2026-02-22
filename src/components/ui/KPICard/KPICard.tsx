@@ -31,7 +31,7 @@ export interface KPICardProps {
     value: string | number;
     /** Icon to display in top-right */
     icon?: React.ComponentType<{ size?: number; className?: string }>;
-    /** Icon color - applies directly to the icon (e.g., '#0f62fe', '#da1e28') */
+    /** Icon color - applies directly to the icon (e.g., 'var(--cds-interactive, #0f62fe)', 'var(--cds-support-error, #da1e28)') */
     iconColor?: string;
     /** Trend indicator */
     trend?: KPITrend;
@@ -62,7 +62,7 @@ export interface KPICardProps {
  * - Carbon skeleton loading state
  * - Optional badge display
  */
-export function KPICard({
+export const KPICard = React.memo(function KPICard({
     id,
     label,
     value,
@@ -119,20 +119,23 @@ export function KPICard({
             onKeyDown={handleKeyDown}
             role={onClick ? 'button' : undefined}
             tabIndex={onClick ? 0 : undefined}
+            aria-label={onClick ? `${label}: ${value}` : undefined}
         >
+            {Icon && (
+                <span
+                    className="kpi-card__icon"
+                    style={iconColor ? { color: iconColor } : undefined}
+                    aria-hidden="true"
+                >
+                    <Icon size={20} />
+                </span>
+            )}
+
             <div className="kpi-card__header">
                 <span className="kpi-card__label">{label}</span>
-                {Icon && (
-                    <span
-                        className="kpi-card__icon"
-                        style={iconColor ? { color: iconColor } : undefined}
-                    >
-                        <Icon size={20} />
-                    </span>
-                )}
             </div>
 
-            <div className="kpi-card__value-row">
+            <div className="kpi-card__value-row" aria-live="polite" aria-atomic="true">
                 <span className="kpi-card__value">{value}</span>
                 {badge && (
                     <span className={`kpi-card__badge kpi-card__badge--${badge.type || 'default'}`}>
@@ -153,6 +156,6 @@ export function KPICard({
             )}
         </Tile>
     );
-}
+});
 
 export default KPICard;

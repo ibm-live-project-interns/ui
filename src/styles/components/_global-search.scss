@@ -1,0 +1,304 @@
+/**
+ * Global Search Modal (Cmd+K)
+ *
+ * Overlay modal with search input, categorized results, keyboard navigation.
+ * Triggered by Cmd+K / Ctrl+K shortcut from anywhere in the app.
+ */
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as react;
+
+.global-search-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 10vh;
+  animation: global-search-fade-in 0.15s ease-out;
+}
+
+@keyframes global-search-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.global-search-modal {
+  width: 100%;
+  max-width: 640px;
+  background-color: $layer-01;
+  border: 1px solid $border-subtle-01;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  border-radius: 8px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 70vh;
+  animation: global-search-slide-in 0.15s ease-out;
+
+  @media (max-width: 672px) {
+    max-width: calc(100% - 2rem);
+  }
+}
+
+@keyframes global-search-slide-in {
+  from { opacity: 0; transform: translateY(-12px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.global-search-input-row {
+  display: flex;
+  align-items: center;
+  padding: 0 $spacing-05;
+  border-bottom: 1px solid $border-subtle-01;
+  height: 56px;
+  flex-shrink: 0;
+}
+
+.global-search-input-icon {
+  flex-shrink: 0;
+  fill: $icon-secondary;
+  margin-right: $spacing-03;
+}
+
+.global-search-input {
+  flex: 1;
+  height: 100%;
+  border: none;
+  background: transparent;
+  @include react.type-style('body-compact-01');
+  font-size: 1rem;
+  color: $text-primary;
+  outline: none;
+
+  &::placeholder {
+    color: $text-placeholder;
+  }
+}
+
+.global-search-shortcut-hint {
+  display: flex;
+  align-items: center;
+  gap: $spacing-02;
+  margin-right: $spacing-03;
+
+  kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 24px;
+    height: 22px;
+    padding: 0 $spacing-02;
+    background-color: $layer-02;
+    border: 1px solid $border-subtle-01;
+    border-radius: 4px;
+    @include react.type-style('helper-text-01');
+    color: $text-secondary;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+}
+
+.global-search-close-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: transparent;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+
+  svg {
+    fill: $icon-secondary;
+  }
+
+  &:hover {
+    background-color: $layer-hover-01;
+
+    svg {
+      fill: $icon-primary;
+    }
+  }
+
+  &:focus {
+    outline: 2px solid $focus;
+    outline-offset: -2px;
+  }
+}
+
+.global-search-results {
+  overflow-y: auto;
+  flex: 1;
+  min-height: 0;
+}
+
+.global-search-loading,
+.global-search-empty {
+  padding: $spacing-06;
+  text-align: center;
+  @include react.type-style('body-compact-01');
+  color: $text-secondary;
+}
+
+.global-search-hint {
+  padding: $spacing-06;
+  text-align: center;
+
+  p {
+    @include react.type-style('body-compact-01');
+    color: $text-secondary;
+    margin-bottom: $spacing-04;
+  }
+}
+
+.global-search-hint-shortcuts {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $spacing-05;
+  @include react.type-style('helper-text-01');
+  color: $text-helper;
+
+  span {
+    display: flex;
+    align-items: center;
+    gap: $spacing-02;
+  }
+
+  kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 18px;
+    padding: 0 3px;
+    background-color: $layer-02;
+    border: 1px solid $border-subtle-01;
+    border-radius: 3px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.6875rem;
+  }
+}
+
+.global-search-category {
+  border-bottom: 1px solid $border-subtle-01;
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.global-search-category-header {
+  display: flex;
+  align-items: center;
+  gap: $spacing-03;
+  padding: $spacing-03 $spacing-05;
+  @include react.type-style('label-01');
+  color: $text-secondary;
+  text-transform: uppercase;
+  letter-spacing: 0.32px;
+  background-color: $layer-02;
+
+  svg {
+    fill: $icon-secondary;
+  }
+}
+
+.global-search-category-count {
+  margin-left: auto;
+  @include react.type-style('helper-text-01');
+  color: $text-helper;
+}
+
+.global-search-result-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: $spacing-04 $spacing-05;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid $border-subtle-01;
+  cursor: pointer;
+  text-align: left;
+  transition: background-color 0.1s ease;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover,
+  &.selected {
+    background-color: $layer-hover-01;
+  }
+
+  &.selected {
+    outline: 2px solid $focus;
+    outline-offset: -2px;
+  }
+
+  &:focus {
+    outline: 2px solid $focus;
+    outline-offset: -2px;
+  }
+}
+
+.global-search-result-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.global-search-result-title {
+  @include react.type-style('body-compact-01');
+  color: $text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.global-search-result-subtitle {
+  @include react.type-style('helper-text-01');
+  color: $text-secondary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.global-search-result-meta {
+  display: flex;
+  align-items: center;
+  gap: $spacing-03;
+  flex-shrink: 0;
+  margin-left: $spacing-04;
+}
+
+.global-search-result-arrow {
+  fill: $icon-secondary;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+
+  .global-search-result-item:hover &,
+  .global-search-result-item.selected & {
+    opacity: 1;
+  }
+}
+
+.global-search-footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: $spacing-03 $spacing-05;
+  border-top: 1px solid $border-subtle-01;
+  @include react.type-style('helper-text-01');
+  color: $text-secondary;
+  background-color: $layer-02;
+  flex-shrink: 0;
+}

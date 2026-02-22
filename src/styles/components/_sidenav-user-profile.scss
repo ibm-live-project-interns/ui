@@ -1,0 +1,150 @@
+/**
+ * SideNav User Profile Footer
+ *
+ * Fixed footer at the bottom of the sidebar showing the current user's
+ * avatar, name, and role. Clicking reveals a slide-up menu with logout.
+ */
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/colors' as *;
+@use '@carbon/react/scss/type' as react;
+
+.sidenav-user-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+}
+
+// Ensure the nav list scrolls clear of the fixed footer
+.cds--side-nav__items {
+  padding-bottom: 5rem; // ~80px to account for the user footer height
+}
+
+.sidenav-user-profile {
+  display: flex;
+  align-items: center;
+  gap: $spacing-03;
+  padding: $spacing-04 $spacing-05;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+  border-top: 1px solid $border-subtle-01;
+
+  &:hover {
+    background-color: $layer-hover-01;
+  }
+
+  &:focus {
+    outline: 2px solid $focus;
+    outline-offset: -2px;
+  }
+}
+
+.sidenav-user-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background-color: $blue-60;
+  color: $white-0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  @include react.type-style('label-01');
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.sidenav-user-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.sidenav-user-name {
+  @include react.type-style('body-compact-01');
+  color: $text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidenav-user-role {
+  @include react.type-style('helper-text-01');
+  color: $text-secondary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sidenav-user-chevron {
+  color: $icon-secondary;
+  flex-shrink: 0;
+  transition: transform 0.2s ease;
+
+  &.open {
+    transform: rotate(180deg);
+  }
+}
+
+// Popup menu - Logout
+.sidenav-user-menu {
+  background-color: $layer-02;
+  border-bottom: 1px solid $border-subtle-01;
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.2s ease-out;
+
+  &.open {
+    max-height: 200px;
+  }
+}
+
+.sidenav-user-menu-item {
+  display: flex;
+  align-items: center;
+  gap: $spacing-03;
+  width: 100%;
+  padding: $spacing-04 $spacing-05;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  @include react.type-style('body-compact-01');
+  color: $text-primary;
+  text-align: left;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background-color: $layer-hover-02;
+  }
+
+  &:focus {
+    outline: 2px solid $focus;
+    outline-offset: -2px;
+  }
+
+  svg {
+    color: $icon-secondary;
+  }
+}
+
+// SideNav Link with Badge (Priority Alerts)
+// Badge positioned at far right edge
+.sidenav-link-with-badge {
+  .cds--side-nav__link-text {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+}
+
+.sidenav-link-text {
+  flex: 1;
+}
+
+.sidenav-alert-badge {
+  margin-left: auto;
+  flex-shrink: 0;
+}

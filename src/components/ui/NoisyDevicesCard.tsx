@@ -12,6 +12,7 @@
  * <NoisyDevicesCard devices={devices} variant="gradient" showViewAll />
  */
 
+import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Tile, Button } from '@carbon/react';
 import { SEVERITY_CONFIG, getSeverityBackgroundClass } from '@/shared/constants/severity';
@@ -43,7 +44,7 @@ export interface NoisyDevicesCardProps {
 // Component
 // ==========================================
 
-export function NoisyDevicesCard({
+export const NoisyDevicesCard = React.memo(function NoisyDevicesCard({
     title = 'Top Noisy Devices',
     subtitle,
     devices,
@@ -120,6 +121,6 @@ export function NoisyDevicesCard({
             </div>
         </Tile>
     );
-}
+});
 
 export default NoisyDevicesCard;

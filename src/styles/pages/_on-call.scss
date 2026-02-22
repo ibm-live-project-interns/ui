@@ -1,0 +1,203 @@
+/**
+ * On-Call Page Styles
+ *
+ * Styles for the on-call schedule management page with
+ * tabs for schedule, overrides, and history views.
+ */
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as *;
+@use '@carbon/react/scss/colors' as *;
+
+.oncall-page {
+  width: 100%;
+
+  // KPI row
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $spacing-05;
+    margin-bottom: $spacing-05;
+
+    @media (max-width: 1056px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 672px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .kpi-card-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-03;
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-05;
+  }
+
+  // Tabs
+  &__tabs {
+    .cds--tabs {
+      margin-bottom: 0;
+    }
+
+    .cds--tab-content {
+    }
+  }
+
+  // Section
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-04;
+  }
+
+  &__section-title {
+    @include type-style('heading-compact-01');
+    color: $text-primary;
+    display: flex;
+    align-items: center;
+    gap: $spacing-03;
+    margin: 0;
+  }
+
+  // Weekly Schedule Grid
+  &__week-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: $spacing-03;
+
+    @media (max-width: 1056px) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    @media (max-width: 672px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  &__day-card {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-03;
+    min-height: 120px;
+
+    &--today {
+      border-left: 3px solid $interactive;
+      background-color: rgba(15, 98, 254, 0.04);
+    }
+  }
+
+  &__day-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  &__day-name {
+    @include type-style('heading-compact-01');
+    color: $text-primary;
+  }
+
+  &__day-date {
+    @include type-style('label-01');
+    color: $text-secondary;
+  }
+
+  &__day-person {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding-top: $spacing-03;
+    border-top: 1px solid $border-subtle-01;
+  }
+
+  &__person-label {
+    @include type-style('helper-text-01');
+    color: $text-helper;
+    text-transform: uppercase;
+    letter-spacing: 0.32px;
+  }
+
+  &__person-name {
+    @include type-style('body-compact-01');
+    color: $text-primary;
+    font-weight: 600;
+  }
+
+  &__person-name--secondary {
+    @include type-style('body-compact-01');
+    color: $text-secondary;
+  }
+
+  // Table Tile
+  &__table-tile {
+
+    .cds--data-table-container {
+    }
+  }
+
+  // Today row highlight
+  &__today-row {
+    background-color: rgba(15, 98, 254, 0.06) !important;
+    border-left: 3px solid $interactive;
+  }
+
+  // Override reason cell
+  &__reason-cell {
+    max-width: 300px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  // Action buttons in table
+  &__action-cell {
+    display: flex;
+    align-items: center;
+    gap: $spacing-03;
+  }
+
+  // Empty state wrapper
+  &__empty-tile {
+    display: flex;
+    align-items: center;
+    gap: $spacing-03;
+    color: $text-secondary;
+    @include type-style('body-compact-01');
+
+    p {
+      margin: 0;
+    }
+  }
+
+  // Modal form fields
+  &__form-group {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-05;
+  }
+
+  &__form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $spacing-05;
+
+    @media (max-width: 672px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  // Week label
+  &__week-label {
+    @include type-style('label-01');
+    color: $text-secondary;
+    margin-left: $spacing-02;
+  }
+}

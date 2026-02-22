@@ -1,0 +1,150 @@
+// ActivityTimeline Component Styles
+// Vertical timeline with avatar circles and connector lines
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as react;
+
+.activity-timeline {
+  padding: 0;
+
+  &__list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  &__entry {
+    position: relative;
+    display: flex;
+    gap: $spacing-04;
+    padding-bottom: $spacing-05;
+
+    &:last-child {
+      padding-bottom: 0;
+    }
+  }
+
+  // Vertical connector line between entries
+  &__connector {
+    position: absolute;
+    left: 15px; // Center of 32px avatar
+    top: 32px; // Below avatar
+    bottom: 0;
+    width: 1px;
+    background-color: $border-subtle-01;
+  }
+
+  // Avatar circle with initials
+  &__avatar {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    @include react.type-style('label-01');
+    font-weight: 600;
+    font-size: 11px;
+    flex-shrink: 0;
+    z-index: 1;
+    background-color: var(--cds-blue-60, #0f62fe); // default
+
+    &--sysadmin {
+      background-color: var(--cds-purple-60, #8a3ffc);
+    }
+
+    &--network-admin {
+      background-color: var(--cds-teal-60, #007d79);
+    }
+
+    &--senior-eng {
+      background-color: var(--cds-blue-60, #0f62fe);
+    }
+
+    &--sre {
+      background-color: var(--cds-magenta-60, #d02670);
+    }
+
+    &--network-ops {
+      background-color: var(--cds-cyan-60, #0072c3);
+    }
+
+    &--system {
+      background-color: var(--cds-gray-60, #6f6f6f);
+    }
+  }
+
+  // Content area
+  &__content {
+    flex: 1;
+    min-width: 0;
+    padding-top: 2px;
+  }
+
+  &__header {
+    display: flex;
+    align-items: center;
+    gap: $spacing-03;
+    flex-wrap: wrap;
+    margin-bottom: 2px;
+  }
+
+  &__user {
+    @include react.type-style('body-compact-01');
+    font-weight: 600;
+    color: $text-primary;
+  }
+
+  &__type-badge {
+    @include react.type-style('label-01');
+    color: $text-secondary;
+    padding: 0 $spacing-02;
+    background: $layer-02;
+    border-radius: 2px;
+    font-weight: 500;
+    text-transform: capitalize;
+  }
+
+  &__time {
+    @include react.type-style('helper-text-01');
+    color: $text-helper;
+    margin-left: auto;
+    white-space: nowrap;
+  }
+
+  &__description {
+    @include react.type-style('body-compact-01');
+    color: $text-secondary;
+    margin: 0;
+    line-height: 1.4;
+  }
+
+  // Show more button
+  &__show-more {
+    margin-top: $spacing-03;
+    margin-left: 48px; // Align with content after avatar
+  }
+
+  // Empty state
+  &--empty {
+    padding: $spacing-05;
+    text-align: center;
+  }
+
+  &__empty-text {
+    @include react.type-style('body-compact-01');
+    color: $text-secondary;
+    margin: 0;
+  }
+
+  // Activity type-specific accent (subtle left border on content)
+  &__entry--resolved &__description {
+    color: $support-success;
+  }
+
+  &__entry--reopened &__description {
+    color: $support-error;
+  }
+}

@@ -2,7 +2,7 @@
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as *;
-@use '@carbon/react' as react;
+@use '@carbon/react/scss/type' as react;
 
 .device-explorer-page {
     width: 100%;
@@ -56,7 +56,6 @@
 
     // Device Table Tile
     .devices-table-tile {
-        padding: $spacing-06;
         background: $layer-01;
         border: 1px solid $border-subtle-01;
 
@@ -74,7 +73,6 @@
                     font-weight: 600;
                     text-transform: uppercase;
                     letter-spacing: 0.5px;
-                    padding: $spacing-03 $spacing-04;
                     border-bottom: none;
                 }
             }
@@ -91,7 +89,6 @@
                 }
 
                 td {
-                    padding: $spacing-03 $spacing-04;
                     border-bottom: 1px solid $border-subtle-01;
                 }
             }
@@ -139,8 +136,35 @@
             }
         }
 
+        .health-value {
+            font-weight: 600;
+
+            &--good {
+                color: $support-success;
+            }
+
+            &--fair {
+                color: $support-warning;
+            }
+
+            &--poor {
+                color: $support-error;
+            }
+        }
+
         .no-alerts {
             color: $text-secondary;
+        }
+
+        // Status tag icon inline spacing
+        .status-tag-icon {
+            margin-right: 4px;
+        }
+
+        // Skeleton placeholder for loading
+        .device-skeleton-placeholder {
+            width: 100%;
+            height: 400px;
         }
 
         // Pagination

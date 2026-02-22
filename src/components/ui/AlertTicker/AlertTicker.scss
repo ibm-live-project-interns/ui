@@ -63,7 +63,7 @@ $ticker-height: 40px;
 
     &__content {
         display: inline-flex;
-        animation: ticker-scroll 30s linear infinite;
+        animation: ticker-scroll var(--ticker-speed, 30s) linear infinite;
 
         &:hover {
             animation-play-state: paused;

@@ -1,0 +1,518 @@
+// Widget Shared Styles
+// Consistent tile styling, padding, and loading/error states for all dashboard widgets
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as *;
+@use '@carbon/react/scss/type' as react;
+
+// ==========================================
+// Base Widget Styles
+// ==========================================
+
+.widget {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+
+  // Widget tile wrapper (when widget uses a Tile)
+  .widget__tile {
+    padding: $spacing-05;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  // Widget header - title + optional actions
+  .widget__header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $spacing-04;
+    min-height: 32px;
+    flex-shrink: 0;
+
+    h3 {
+      @include react.type-style('heading-compact-02');
+      margin: 0;
+      display: flex;
+      align-items: center;
+      gap: $spacing-03;
+      color: var(--cds-text-primary);
+    }
+  }
+
+  // Widget body - main content area
+  .widget__body {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0; // allow shrinking in flex
+
+    // CRITICAL: prevent chart SVGs from overflowing
+    > * {
+      min-width: 0;
+    }
+  }
+
+  // Widget footer
+  .widget__footer {
+    margin-top: $spacing-04;
+    padding-top: $spacing-03;
+    border-top: 1px solid var(--cds-border-subtle-01);
+    display: flex;
+    justify-content: flex-end;
+    flex-shrink: 0;
+  }
+
+  // Empty state within widget
+  .widget__empty {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-06;
+    color: var(--cds-text-secondary);
+    text-align: center;
+    @include react.type-style('body-compact-01');
+  }
+}
+
+// ==========================================
+// Widget Variants
+// ==========================================
+
+// KPI grid - 4 columns of KPI cards
+.widget--alert-summary {
+  .widget__kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $spacing-05;
+
+    @media (max-width: 1056px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 672px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+// Chart widget - ensures proper chart sizing
+.widget--chart {
+  .widget__tile {
+    min-height: 380px;
+  }
+
+  .widget__chart-container {
+    flex: 1;
+    min-height: 280px;
+    width: 100%;
+
+    // Center donut charts
+    .cds--cc--donut {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+    }
+  }
+}
+
+// Table widget
+.widget--table {
+  .widget__tile {
+    padding: 0;
+  }
+}
+
+// Compact widget (on-call, error budget, etc.)
+.widget--compact {
+  .widget__tile {
+    padding: $spacing-05;
+  }
+
+  .widget__stat {
+    @include react.type-style('productive-heading-04');
+    color: var(--cds-text-primary);
+    margin-bottom: $spacing-02;
+  }
+
+  .widget__stat-label {
+    @include react.type-style('body-compact-01');
+    color: var(--cds-text-secondary);
+  }
+}
+
+// ==========================================
+// Action Required Widget
+// ==========================================
+
+.widget--action-required {
+  .action-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-04;
+    background: var(--cds-layer-02);
+    border-radius: 2px;
+    margin-bottom: $spacing-03;
+    transition: background 0.15s ease;
+    border-left: 3px solid transparent;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+
+    &:hover {
+      background: var(--cds-layer-hover-02);
+    }
+
+    &--critical {
+      border-left-color: var(--cds-support-error);
+    }
+
+    &--warning {
+      border-left-color: var(--cds-support-warning);
+    }
+
+    &--info {
+      border-left-color: var(--cds-support-info);
+    }
+  }
+
+  .action-item__content {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-02;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .action-item__title {
+    @include react.type-style('body-compact-01');
+    font-weight: 600;
+    color: var(--cds-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .action-item__subtitle {
+    @include react.type-style('label-01');
+    color: var(--cds-text-secondary);
+  }
+
+  .action-item__actions {
+    flex-shrink: 0;
+    margin-left: $spacing-04;
+  }
+
+  .action-item__age {
+    margin-left: $spacing-03;
+    font-weight: 600;
+    color: var(--cds-text-secondary);
+
+    &--critical {
+      color: var(--cds-support-error);
+    }
+  }
+}
+
+// ==========================================
+// Metrics List (AI Insights, System Health)
+// ==========================================
+
+.widget__metrics-list {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-04;
+
+  .metric-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: $spacing-04;
+
+    .metric-left {
+      flex: 1;
+
+      .metric-name {
+        @include react.type-style('body-compact-01');
+        margin-bottom: $spacing-02;
+        color: var(--cds-text-primary);
+      }
+    }
+
+    .metric-value {
+      @include react.type-style('body-compact-01');
+      font-weight: 600;
+      min-width: 60px;
+      text-align: right;
+      color: var(--cds-text-primary);
+    }
+  }
+}
+
+// ==========================================
+// On-Call Widget
+// ==========================================
+
+.widget--on-call {
+  .on-call__person {
+    display: flex;
+    align-items: center;
+    gap: $spacing-04;
+    padding: $spacing-04;
+    background: var(--cds-layer-02);
+    border-radius: 2px;
+    margin-bottom: $spacing-04;
+  }
+
+  .on-call__avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--cds-interactive);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    color: var(--cds-text-on-color);
+  }
+
+  .on-call__details {
+    .on-call__name {
+      @include react.type-style('body-compact-01');
+      font-weight: 600;
+      color: var(--cds-text-primary);
+    }
+
+    .on-call__role {
+      @include react.type-style('label-01');
+      color: var(--cds-text-secondary);
+    }
+  }
+
+  .on-call__meta {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-03;
+    @include react.type-style('label-01');
+    color: var(--cds-text-secondary);
+
+    span {
+      display: flex;
+      align-items: center;
+      gap: $spacing-02;
+    }
+  }
+}
+
+// ==========================================
+// User Management Widget
+// ==========================================
+
+.widget--user-management {
+  .user-stat-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: $spacing-04;
+    margin-bottom: $spacing-05;
+  }
+
+  .user-stat {
+    padding: $spacing-04;
+    background: var(--cds-layer-02);
+    border-radius: 2px;
+    text-align: center;
+
+    .user-stat__value {
+      @include react.type-style('productive-heading-03');
+      color: var(--cds-text-primary);
+      margin-bottom: $spacing-02;
+
+      &--error {
+        color: var(--cds-support-error);
+      }
+
+      &--muted {
+        color: var(--cds-text-secondary);
+      }
+    }
+
+    .user-stat__label {
+      @include react.type-style('label-01');
+      color: var(--cds-text-secondary);
+    }
+  }
+}
+
+// ==========================================
+// Device Health Widget
+// ==========================================
+
+.widget--device-health {
+  .device-health__bar {
+    display: flex;
+    align-items: center;
+    gap: $spacing-03;
+    padding: $spacing-03 0;
+    border-bottom: 1px solid var(--cds-border-subtle-01);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .device-health__icon {
+    flex-shrink: 0;
+
+    &--online {
+      color: var(--cds-support-success);
+    }
+
+    &--warning {
+      color: var(--cds-support-warning);
+    }
+
+    &--critical {
+      color: var(--cds-support-error);
+    }
+
+    &--offline {
+      color: var(--cds-text-disabled);
+    }
+  }
+
+  .device-health__label {
+    @include react.type-style('body-compact-01');
+    font-weight: 500;
+    min-width: 80px;
+    color: var(--cds-text-primary);
+  }
+
+  .device-health__progress {
+    flex: 1;
+  }
+
+  .device-health__count {
+    @include react.type-style('body-compact-01');
+    font-weight: 600;
+    min-width: 40px;
+    text-align: right;
+    color: var(--cds-text-primary);
+  }
+}
+
+// ==========================================
+// SLA Compliance Widget
+// ==========================================
+
+.widget--sla-compliance {
+  .sla-stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: $spacing-03 0;
+    border-bottom: 1px solid var(--cds-border-subtle-01);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .sla-compliance__category-value {
+    font-size: 0.875rem;
+    font-weight: 600;
+
+    &--met {
+      color: var(--cds-support-success);
+    }
+
+    &--violated {
+      color: var(--cds-support-error);
+    }
+  }
+}
+
+// ==========================================
+// Error Budget Widget
+// ==========================================
+
+.widget--error-budget {
+  .error-budget__value {
+    font-size: 2rem;
+    font-weight: 700;
+
+    &--critical {
+      color: var(--cds-support-error);
+    }
+
+    &--warning {
+      color: var(--cds-support-warning);
+    }
+
+    &--safe {
+      color: var(--cds-support-success);
+    }
+  }
+
+  .budget-visual {
+    margin: $spacing-05 0;
+  }
+
+  .budget-meta {
+    display: flex;
+    justify-content: space-between;
+    @include react.type-style('label-01');
+    color: var(--cds-text-secondary);
+    margin-top: $spacing-03;
+  }
+}
+
+// ==========================================
+// Audit Activity Widget
+// ==========================================
+
+.widget--audit-activity {
+  .audit-item {
+    display: flex;
+    align-items: flex-start;
+    gap: $spacing-03;
+    padding: $spacing-03 0;
+    border-bottom: 1px solid var(--cds-border-subtle-01);
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  .audit-item__icon {
+    flex-shrink: 0;
+    margin-top: 2px;
+    color: var(--cds-icon-secondary);
+  }
+
+  .audit-item__content {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .audit-item__action {
+    @include react.type-style('body-compact-01');
+    color: var(--cds-text-primary);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .audit-item__meta {
+    @include react.type-style('label-01');
+    color: var(--cds-text-secondary);
+    display: flex;
+    gap: $spacing-03;
+  }
+}

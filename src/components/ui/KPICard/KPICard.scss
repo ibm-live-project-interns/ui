@@ -6,31 +6,36 @@
 @use '@carbon/colors' as *;
 
 .kpi-card {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: $spacing-02;
     padding: $spacing-05;
     background-color: $layer-01;
     border: 1px solid $border-subtle-01;
-    border-bottom: 2px solid $border-subtle-01;
+    border-bottom: 3px solid $border-subtle-01;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 
     // Severity variants - use Carbon color tokens
     &--critical {
-        border-bottom-color: $red-50;
+        border-bottom-color: $red-60;
     }
 
     &--major {
         border-bottom-color: $orange-40;
     }
 
+    &--warning {
+        border-bottom-color: $yellow-30;
+    }
+
     &--minor {
-        border-bottom-color: $blue-60;
+        border-bottom-color: $blue-40;
     }
 
     &--info {
-        border-bottom-color: $cyan-50;
+        border-bottom-color: $blue-60;
     }
 
     &--success {
@@ -56,9 +61,6 @@
     }
 
     &__header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
         color: $text-secondary;
     }
 
@@ -70,13 +72,15 @@
     }
 
     &__icon {
+        position: absolute;
+        top: $spacing-04;
+        right: $spacing-04;
         display: flex;
         align-items: center;
         justify-content: center;
-        opacity: 0.9;
+        opacity: 0.7;
         transition: opacity 0.2s ease;
 
-        // Icon inherits color from parent span
         svg {
             fill: currentColor;
         }
@@ -150,7 +154,7 @@
         }
 
         &--negative {
-            color: $red-50;
+            color: $red-60;
         }
     }
 }

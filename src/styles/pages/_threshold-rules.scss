@@ -1,0 +1,249 @@
+// Threshold Rules Tab Component Styles
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+@use '@carbon/react/scss/type' as *;
+@use '@carbon/react/scss/type' as react;
+
+.threshold-rules {
+  // ==========================================
+  // Rule form (shared between edit/create modals)
+  // ==========================================
+  &__form {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-05;
+    padding: $spacing-05 0;
+  }
+
+  &__form-label {
+    display: block;
+    margin-bottom: $spacing-03;
+  }
+
+  &__form-row {
+    display: flex;
+    gap: $spacing-03;
+    align-items: flex-start;
+  }
+
+  &__form-unit {
+    padding: $spacing-03 0;
+    @include react.type-style('body-compact-01');
+    color: $text-secondary;
+    white-space: nowrap;
+  }
+
+  // ==========================================
+  // Rules section layout
+  // ==========================================
+  &__rules-section {
+    flex: 1;
+  }
+
+  // ==========================================
+  // Rule name cell (two-line: name + description)
+  // ==========================================
+  &__rule-name {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__rule-name-text {
+    font-weight: 600;
+    color: $text-primary;
+  }
+
+  &__rule-description-text {
+    @include react.type-style('label-01');
+    color: $text-secondary;
+  }
+
+  // ==========================================
+  // Condition cell (monospaced)
+  // ==========================================
+  &__condition-code {
+    font-family: 'IBM Plex Mono', monospace;
+    @include react.type-style('body-compact-01');
+  }
+
+  // ==========================================
+  // Expanded row details
+  // ==========================================
+  &__expanded-content {
+    padding: $spacing-05;
+    background: $layer-02;
+  }
+
+  &__expanded-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: $spacing-05;
+    margin-bottom: $spacing-05;
+  }
+
+  &__expanded-label {
+    display: block;
+    @include react.type-style('label-01');
+    color: $text-secondary;
+    margin-bottom: $spacing-03;
+    text-transform: uppercase;
+  }
+
+  &__expanded-value {
+    font-family: 'IBM Plex Mono', monospace;
+    @include react.type-style('body-compact-01');
+    color: $text-primary;
+    padding: $spacing-03;
+    background: $layer-01;
+    border-bottom: 1px solid $border-subtle-01;
+  }
+
+  &__expanded-severity {
+    padding: $spacing-03 0;
+  }
+
+  &__expanded-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: $spacing-03;
+  }
+
+  // ==========================================
+  // Settings side panel
+  // ==========================================
+  &__settings-section {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-05;
+
+    .settings-panel {
+      background: $layer-01;
+      border: 1px solid $border-subtle-01;
+      padding: $spacing-05;
+      border-radius: 0;
+
+      .settings-panel__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: $spacing-05;
+        padding-bottom: $spacing-04;
+        border-bottom: 1px solid $border-subtle-01;
+
+        h3 {
+          @include react.type-style('heading-compact-01');
+          display: flex;
+          align-items: center;
+          gap: $spacing-03;
+          margin: 0;
+
+          svg {
+            color: $icon-secondary;
+          }
+        }
+      }
+
+      .settings-panel__content {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-04;
+      }
+    }
+  }
+
+  // ==========================================
+  // Setting row overrides (column layout with toggle)
+  // ==========================================
+  &__setting-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: $spacing-02;
+    padding: $spacing-03 $spacing-04;
+    background: $layer-02;
+    border-bottom: none;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__setting-toggle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  &__setting-name {
+    @include react.type-style('body-compact-01');
+    font-weight: 600;
+    color: $text-primary;
+  }
+
+  &__setting-description {
+    @include react.type-style('label-01');
+    color: $text-secondary;
+  }
+
+  // ==========================================
+  // Notification icon color override
+  // ==========================================
+  &__notification-icon {
+    color: $support-warning;
+  }
+
+  // ==========================================
+  // Channel item overrides (compact card layout)
+  // ==========================================
+  &__channel-item {
+    flex-direction: column;
+    align-items: stretch;
+    gap: $spacing-02;
+    padding: $spacing-03 $spacing-04;
+    background: $layer-02;
+    border-left: 3px solid $support-success;
+
+    &.channel--inactive {
+      border-left-color: $text-helper;
+    }
+  }
+
+  &__channel-info {
+    display: flex;
+    align-items: center;
+    gap: $spacing-03;
+
+    svg {
+      color: $icon-secondary;
+      flex-shrink: 0;
+    }
+  }
+
+  &__channel-name {
+    @include react.type-style('body-compact-01');
+    font-weight: 600;
+    color: $text-primary;
+  }
+
+  &__channel-status {
+    margin-left: auto;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: $support-success;
+    flex-shrink: 0;
+  }
+
+  &__channel-meta {
+    @include react.type-style('label-01');
+    color: $text-secondary;
+    padding-left: calc($spacing-05 + $spacing-03);
+  }
+
+  // ==========================================
+  // Delete modal confirmation text
+  // ==========================================
+  &__delete-text {
+    padding: $spacing-05 0;
+  }
+}

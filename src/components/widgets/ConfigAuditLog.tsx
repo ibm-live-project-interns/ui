@@ -6,10 +6,11 @@
  * Falls back gracefully when the API is not yet available or returns empty.
  */
 
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { SkeletonText } from '@carbon/react';
 import { HttpService } from '@/shared/api';
 import { env, API_ENDPOINTS } from '@/shared/config';
+import { logger } from '@/shared/utils/logger';
 import '@/styles/components/_kpi-card.scss';
 
 /** Audit log entry returned from the backend */
@@ -149,7 +150,7 @@ class AuditLogClient extends HttpService {
 
 const auditClient = new AuditLogClient();
 
-export function ConfigAuditLog() {
+export const ConfigAuditLog = React.memo(function ConfigAuditLog() {
     const [entries, setEntries] = useState<AuditDisplayEntry[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
@@ -175,7 +176,7 @@ export function ConfigAuditLog() {
 
                 setEntries(displayEntries);
             } catch (error) {
-                console.warn('[ConfigAuditLog] Failed to fetch audit logs:', error);
+                logger.warn('Failed to fetch audit logs for ConfigAuditLog widget', error);
                 // Leave entries empty -- the widget shows an empty state
             } finally {
                 if (!cancelled) setIsLoading(false);
@@ -191,69 +192,50 @@ export function ConfigAuditLog() {
     }, []);
 
     return (
-        <div className="kpi-card" style={{ height: '100%' }}>
+        <div className="config-audit-log">
             <div className="kpi-header">
                 <div className="kpi-title-group">
                     <span className="kpi-title">Config Audit Log</span>
                 </div>
             </div>
 
-            <div style={{ marginTop: '1rem', position: 'relative' }}>
+            <div className="config-audit-log__body">
                 {isLoading ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                    <div className="config-audit-log__skeleton-list">
                         {[1, 2, 3].map(i => (
-                            <div key={i} style={{ paddingLeft: '2rem' }}>
+                            <div key={i} className="config-audit-log__skeleton-item">
                                 <SkeletonText width="30%" />
-                                <div style={{ marginTop: '0.25rem' }}><SkeletonText width="70%" /></div>
-                                <div style={{ marginTop: '0.25rem' }}><SkeletonText width="40%" /></div>
+                                <div className="config-audit-log__skeleton-line"><SkeletonText width="70%" /></div>
+                                <div className="config-audit-log__skeleton-line"><SkeletonText width="40%" /></div>
                             </div>
                         ))}
                     </div>
                 ) : entries.length === 0 ? (
-                    <div style={{ color: 'var(--cds-text-secondary)', fontSize: '0.875rem', textAlign: 'center', padding: '1rem 0' }}>
+                    <div className="config-audit-log__empty">
                         No audit log entries available
                     </div>
                 ) : (
                     <>
                         {/* Timeline line */}
-                        <div style={{
-                            position: 'absolute',
-                            left: '7px',
-                            top: '8px',
-                            bottom: '20px',
-                            width: '2px',
-                            backgroundColor: 'var(--cds-border-subtle-01, #393939)',
-                        }} />
+                        <div className="config-audit-log__timeline-line" />
 
                         {entries.map((entry, index) => (
                             <div
                                 key={entry.id}
-                                style={{
-                                    display: 'flex',
-                                    gap: '1rem',
-                                    marginBottom: index < entries.length - 1 ? '1.5rem' : 0,
-                                }}
+                                className={`config-audit-log__entry ${index < entries.length - 1 ? 'config-audit-log__entry--spaced' : ''}`}
                             >
-                                <div style={{
-                                    width: '16px',
-                                    height: '16px',
-                                    borderRadius: '50%',
-                                    border: `2px solid ${entry.isFailure ? 'var(--cds-support-error, #da1e28)' : 'var(--cds-icon-secondary, #8d8d8d)'}`,
-                                    backgroundColor: 'var(--cds-layer-01, #161616)',
-                                    zIndex: 1,
-                                    flexShrink: 0,
-                                }} />
+                                <div className={`config-audit-log__dot ${entry.isFailure ? 'config-audit-log__dot--failure' : 'config-audit-log__dot--normal'}`} />
                                 <div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--cds-text-helper, #c6c6c6)' }}>
+                                    <div className="config-audit-log__time">
                                         {entry.time}
                                     </div>
-                                    <div style={{ fontSize: '0.875rem', fontWeight: 500, margin: '2px 0' }}>
+                                    <div className="config-audit-log__description">
                                         {entry.description}
                                         {entry.resourceName && (
-                                            <> on <span style={{ color: 'var(--cds-link-primary, #4589ff)' }}>{entry.resourceName}</span></>
+                                            <> on <span className="config-audit-log__resource-link">{entry.resourceName}</span></>
                                         )}
                                     </div>
-                                    <div style={{ fontSize: '0.75rem', color: 'var(--cds-text-helper, #8d8d8d)' }}>
+                                    <div className="config-audit-log__user">
                                         by {entry.username}
                                     </div>
                                 </div>
@@ -264,4 +246,4 @@ export function ConfigAuditLog() {
             </div>
         </div>
     );
-}
+});

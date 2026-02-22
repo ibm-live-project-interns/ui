@@ -1,6 +1,7 @@
 // Reusable KPI Row Component
 // Used across Dashboard, Priority Alerts, and other pages
 
+import React from 'react';
 import { Tile, Tag, ProgressBar } from '@carbon/react';
 import {
     WarningFilled,
@@ -182,7 +183,7 @@ function KPITile({ tile, variant }: { tile: KPITileData; variant: KPIVariant }) 
 // KPI Row Component
 // ==========================================
 
-export function KPIRow({ tiles, variant = 'dashboard', className = '' }: KPIRowProps) {
+export const KPIRow = React.memo(function KPIRow({ tiles, variant = 'dashboard', className = '' }: KPIRowProps) {
     return (
         <div className={`kpi-row kpi-row--${variant} ${className}`}>
             {tiles.map((tile) => (
@@ -190,6 +191,6 @@ export function KPIRow({ tiles, variant = 'dashboard', className = '' }: KPIRowP
             ))}
         </div>
     );
-}
+});
 
 export default KPIRow;

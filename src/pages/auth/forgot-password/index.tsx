@@ -16,6 +16,7 @@ import {
 import { Password, ArrowLeft, ArrowRight } from '@carbon/icons-react';
 import { authService } from '@/shared/services';
 import { env } from '@/shared/config';
+import { authLogger } from '@/shared/utils/logger';
 import '@/styles/pages/_auth.scss';
 
 export function ForgotPasswordPage() {
@@ -39,7 +40,7 @@ export function ForgotPasswordPage() {
             await authService.forgotPassword(email);
             setIsSubmitted(true);
         } catch (err: unknown) {
-            console.error('Password reset request failed:', err);
+            authLogger.error('Password reset request failed', err);
             // Don't reveal if email exists for security
             setIsSubmitted(true);
         } finally {
@@ -67,7 +68,7 @@ export function ForgotPasswordPage() {
                             hideCloseButton
                             className="auth-notification"
                         />
-                        <div className="auth-footer" style={{ borderTop: 'none', marginTop: 0, paddingTop: 0 }}>
+                        <div className="auth-footer auth-footer--borderless">
                             <Link to="/login" className="auth-link">
                                 <ArrowLeft size={16} />
                                 Back to login

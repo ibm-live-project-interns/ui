@@ -1,199 +1,506 @@
-// Tickets Page Styles
+// Tickets Page Styles - Split View Layout
 // Uses Carbon Design System spacing tokens and theme variables
-// Matches structure of PriorityAlertsPage.scss
 @use '@carbon/colors' as *;
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
-@use '@carbon/react' as react;
+@use '@carbon/react/scss/type' as react;
+
+// ==========================================
+// Page-Level Layout
+// ==========================================
 
 .tickets-page {
+  // Override page-layout padding for tighter ticket view
+  &.page-layout {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 48px); // Subtract app header height
+    overflow: hidden;
+  }
 
-    // Content Wrapper - global padding is applied in index.scss
-    &__content {
-        padding: 0;
-        display: flex;
-        flex-direction: column;
-        gap: $spacing-06;
+  // PageHeader - reduce bottom margin for tighter layout
+  .page-header {
+    margin-bottom: $spacing-04;
+    flex-shrink: 0;
+  }
+
+  // KPI row - compact inline strip matching mockup style
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0;
+    margin-bottom: 0;
+    border: 1px solid $border-subtle-01;
+    flex-shrink: 0;
+
+    .kpi-card {
+      border: none;
+      border-radius: 0;
+      border-right: 1px solid $border-subtle-01;
+      min-height: 80px;
+      box-shadow: none;
+
+      &:last-child {
+        border-right: none;
+      }
+
+      &:hover {
+        box-shadow: none;
+        background: $layer-hover-01;
+      }
+
+      &__value {
+        font-size: 1.5rem;
+      }
     }
 
-    // KPI Row - Uses shared .kpi-row from KPICard.scss
+    @media (max-width: 1056px) {
+      grid-template-columns: repeat(2, 1fr);
 
-    // Filters Row - Following Carbon filtering pattern
-    .filters-row {
-        display: flex;
-        align-items: flex-end;
-        gap: $spacing-04;
-        margin-bottom: $spacing-04;
-        flex-wrap: wrap;
-
-        .filters-search {
-            flex: 1;
-            min-width: 200px;
-            max-width: 400px;
+      .kpi-card {
+        &:nth-child(2) {
+          border-right: none;
         }
 
-        .cds--dropdown {
-            min-width: 160px;
+        &:nth-child(1),
+        &:nth-child(2) {
+          border-bottom: 1px solid $border-subtle-01;
         }
+      }
     }
 
-    // Quick Filters - Instant update pattern
-    .quick-filters {
-        display: flex;
-        align-items: center;
-        gap: $spacing-03;
-        margin-bottom: $spacing-05;
-        flex-wrap: wrap;
+    @media (max-width: 672px) {
+      grid-template-columns: 1fr;
 
-        .quick-filters-label {
-            @include react.type-style('label-01');
-            color: $text-secondary;
+      .kpi-card {
+        border-right: none;
+        border-bottom: 1px solid $border-subtle-01;
+
+        &:last-child {
+          border-bottom: none;
         }
+      }
+    }
+  }
 
-        .quick-filter-tag {
-            cursor: pointer;
-            transition: background-color 0.15s ease;
+  // KPI card with active filter visual feedback
+  .kpi-card--active-filter {
+    outline: 2px solid $interactive;
+    outline-offset: -2px;
+  }
 
-            &:hover {
-                opacity: 0.85;
-            }
-        }
+  // FilterBar - compact for split view context
+  .filter-bar {
+    flex-shrink: 0;
+    gap: $spacing-03;
+
+    &__primary {
+      gap: $spacing-03;
     }
 
-    // Filter Results Summary
-    .filter-results-summary {
-        @include react.type-style('body-compact-01');
-        color: $text-secondary;
-        margin-bottom: $spacing-04;
-        padding: $spacing-03;
-        background: $layer-01;
-        border-radius: 4px;
-        border-left: 3px solid $blue-60;
+    // Use medium-height inputs instead of large
+    .cds--search {
+      height: 40px;
+
+      .cds--search-input {
+        height: 40px;
+      }
     }
 
-    // Tickets Table - Polished Dark Theme (matches alerts-table-container)
-    .tickets-table-container {
-        margin-bottom: $spacing-05;
-        background: $layer-01;
-        border: 1px solid $border-subtle-01;
-        overflow: hidden;
-
-        // Table Header container
-        .cds--data-table-header {
-            background: $layer-02;
-            padding: $spacing-04;
-            border-bottom: 1px solid $border-subtle-01;
-
-            .cds--data-table-header__title {
-                @include react.type-style('heading-compact-01');
-                color: $text-primary;
-            }
-
-            .cds--data-table-header__description {
-                color: $text-secondary;
-            }
-        }
-
-        // Toolbar styling
-        .cds--table-toolbar {
-            background: $layer-02;
-            border-bottom: 1px solid $border-subtle-01;
-        }
-
-        // Dark table header row
-        .cds--data-table thead {
-            background: $layer-02;
-
-            tr {
-                background: $layer-02;
-
-                th {
-                    background: $layer-02;
-                    color: $text-secondary;
-                    font-size: 11px;
-                    font-weight: 600;
-                    text-transform: uppercase;
-                    letter-spacing: 0.5px;
-                    padding: $spacing-03 $spacing-04;
-                    border-bottom: none;
-
-                    .cds--table-header-label {
-                        color: $text-secondary;
-                    }
-                }
-            }
-        }
-
-        // Table body styling
-        .cds--data-table tbody {
-            tr {
-                background: $layer-01;
-                transition: background-color 0.15s ease;
-
-                &:hover {
-                    background: $layer-hover-01;
-                }
-
-                td {
-                    padding: $spacing-03 $spacing-04;
-                    border-bottom: 1px solid $border-subtle-01;
-                    font-size: 12px;
-                }
-            }
-        }
-
-        // Table footer/pagination area
-        .cds--pagination {
-            background: $layer-02;
-            border-top: 1px solid $border-subtle-01;
-        }
-
-        .cds--data-table {
-            width: 100%;
-        }
+    .cds--dropdown {
+      height: 40px;
+      min-height: 40px;
     }
 
-    // Table Cell Styles - Consistent with Priority Alerts
-    .ticket-number {
-        @include react.type-style('body-compact-01');
-        color: $link-primary;
-        font-weight: 600;
-        cursor: pointer;
-
-        &:hover {
-            text-decoration: underline;
-        }
+    .cds--list-box {
+      height: 40px;
+      min-height: 40px;
     }
 
-    .ticket-title-cell {
-        display: flex;
-        flex-direction: column;
-        gap: $spacing-02;
-        max-width: 300px;
+    .cds--list-box__field {
+      height: 40px;
+    }
+  }
+}
 
-        .ticket-title {
-            @include react.type-style('body-compact-01');
-            font-weight: 600;
-        }
+// ==========================================
+// Split View Container
+// ==========================================
 
-        .ticket-description {
-            @include react.type-style('label-01');
-            color: $text-secondary;
-            display: -webkit-box;
-            -webkit-line-clamp: 2;
-            line-clamp: 2;
-            -webkit-box-orient: vertical;
-            overflow: hidden;
-        }
+.tickets-split-view {
+  display: grid;
+  grid-template-columns: 7fr 5fr;
+  gap: 0;
+  border: 1px solid $border-subtle-01;
+  border-radius: 0;
+  overflow: hidden;
+  flex: 1;
+  min-height: 0; // Critical for flex child to allow shrinking
+
+  // Responsive: stack on smaller screens
+  @media (max-width: 1056px) {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+
+  // ----- Left Panel: Ticket List -----
+  &__list {
+    display: flex;
+    flex-direction: column;
+    border-right: 1px solid $border-subtle-01;
+    background: $layer-01;
+    overflow: hidden;
+    min-height: 0; // Allow flex shrinking
+
+    @media (max-width: 1056px) {
+      border-right: none;
+      border-bottom: 1px solid $border-subtle-01;
     }
 
-    .timestamp {
-        @include react.type-style('label-01');
-        color: $text-secondary;
+    // Pagination at the bottom
+    .cds--pagination {
+      background: $layer-02;
+      border-top: 1px solid $border-subtle-01;
+      flex-shrink: 0;
+
+      // Make pagination compact
+      .cds--pagination__left,
+      .cds--pagination__right {
+        padding: $spacing-02 $spacing-04;
+      }
+    }
+  }
+
+  // Quick filter tabs bar
+  &__tabs {
+    display: flex;
+    align-items: center;
+    gap: $spacing-03;
+    padding: $spacing-03 $spacing-04;
+    background: $layer-02;
+    border-bottom: 1px solid $border-subtle-01;
+    flex-shrink: 0;
+
+    .cds--content-switcher {
+      flex: 1;
+      max-width: 400px;
+    }
+  }
+
+  &__clear-kpi {
+    flex-shrink: 0;
+  }
+
+  // Table container
+  &__table-container {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+
+    // Remove default container border - parent handles it
+    border: none;
+
+    .cds--data-table-container {
+      border: none;
+    }
+  }
+
+  // Ticket count label in toolbar
+  &__count {
+    @include react.type-style('label-01');
+    color: $text-secondary;
+    padding: 0 $spacing-03;
+  }
+
+  // Table row styles
+  &__row {
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+
+    &:hover {
+      background: $layer-hover-01;
     }
 
-    .action-btns {
-        display: flex;
-        gap: $spacing-02;
+    // Active (selected) row
+    &--active {
+      background: $layer-selected-01 !important;
+      border-left: 3px solid $interactive;
+
+      td:first-child {
+        padding-left: calc(#{$spacing-04} - 3px);
+      }
     }
+
+    td {
+      @include react.type-style('body-compact-01');
+      padding: $spacing-03 $spacing-04;
+      font-size: 13px;
+      vertical-align: middle;
+    }
+  }
+
+  // ----- Right Panel: Ticket Detail -----
+  &__detail {
+    display: flex;
+    flex-direction: column;
+    background: $layer-01;
+    overflow: hidden; // Let inner content scroll, not the panel itself
+    min-height: 0;
+  }
+
+  &__no-selection {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 300px;
+  }
+}
+
+// ==========================================
+// Ticket Detail Panel
+// ==========================================
+
+.ticket-detail-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+
+  &__header {
+    padding: $spacing-04 $spacing-05;
+    border-bottom: 1px solid $border-subtle-01;
+    background: $layer-02;
+    flex-shrink: 0;
+  }
+
+  &__header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: $spacing-02;
+  }
+
+  &__id-row {
+    display: flex;
+    align-items: center;
+    gap: $spacing-03;
+    flex-wrap: wrap;
+  }
+
+  &__ticket-id {
+    @include react.type-style('heading-compact-02');
+    color: $link-primary;
+    font-weight: 600;
+    font-family: 'IBM Plex Mono', monospace;
+  }
+
+  &__title {
+    @include react.type-style('heading-compact-01');
+    color: $text-primary;
+    margin: 0 0 $spacing-02;
+    line-height: 1.3;
+  }
+
+  &__meta {
+    display: flex;
+    align-items: center;
+    gap: $spacing-04;
+    flex-wrap: wrap;
+  }
+
+  &__meta-item {
+    display: inline-flex;
+    align-items: center;
+    gap: $spacing-02;
+    @include react.type-style('label-01');
+    color: $text-secondary;
+
+    svg {
+      color: $icon-secondary;
+    }
+  }
+
+  // Tabs - fill remaining space
+  .cds--tabs {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: 0;
+  }
+
+  // Tab list should not shrink
+  .cds--tab-content {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+  }
+
+  &__tab-content {
+    padding: $spacing-04 $spacing-05;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-04;
+  }
+
+  // Section blocks inside tabs
+  &__section {
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-03;
+  }
+
+  &__section-title {
+    @include react.type-style('label-01');
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  &__description {
+    @include react.type-style('body-long-01');
+    color: $text-primary;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  // Resolve section
+  &__resolve-section {
+    border-top: 1px solid $border-subtle-01;
+    padding-top: $spacing-04;
+  }
+
+  &__resolve-actions {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: $spacing-03;
+    margin-top: $spacing-03;
+  }
+
+  // Alert card in Related Alerts tab
+  &__alert-card {
+    padding: $spacing-04;
+  }
+
+  &__alert-card-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  // Loading state
+  &__loading {
+    padding: $spacing-05;
+  }
+}
+
+// ==========================================
+// Table Cell Styles
+// ==========================================
+
+.ticket-number {
+  @include react.type-style('body-compact-01');
+  color: $link-primary;
+  font-weight: 600;
+  font-family: 'IBM Plex Mono', monospace;
+  font-size: 12px;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.ticket-title-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-width: 280px;
+
+  .ticket-title {
+    @include react.type-style('body-compact-01');
+    font-weight: 600;
+    color: $text-primary;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .ticket-alert-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    @include react.type-style('helper-text-01');
+    color: $text-secondary;
+
+    svg {
+      color: $icon-secondary;
+    }
+  }
+}
+
+.timestamp {
+  @include react.type-style('label-01');
+  color: $text-secondary;
+  white-space: nowrap;
+}
+
+// ==========================================
+// Create Modal Form
+// ==========================================
+
+.tickets-modal-form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-05;
+}
+
+// ==========================================
+// Table overrides for compact split-view
+// ==========================================
+
+.tickets-split-view {
+  // Compact table headers
+  .cds--data-table thead th {
+    @include react.type-style('label-01');
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: $spacing-03 $spacing-04;
+    background: $layer-02;
+    color: $text-secondary;
+  }
+
+  // Compact table rows
+  .cds--data-table tbody td {
+    padding: $spacing-03 $spacing-04;
+    border-bottom: 1px solid $border-subtle-01;
+  }
+
+  // Toolbar styling
+  .cds--table-toolbar {
+    background: $layer-02;
+    min-height: auto;
+  }
+
+  // Batch action bar
+  .cds--batch-actions {
+    z-index: 1;
+  }
+}
+
+// ==========================================
+// Skeleton state
+// ==========================================
+
+.tickets-page {
+  .kpi-card-skeleton {
+    min-height: 80px;
+    background: $layer-01;
+    border: 1px solid $border-subtle-01;
+  }
 }

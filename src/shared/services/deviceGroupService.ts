@@ -9,6 +9,7 @@
 
 import { HttpService } from '@/shared/api';
 import { env } from '@/shared/config';
+import { logger } from '@/shared/utils/logger';
 
 // ==========================================
 // Types
@@ -62,7 +63,7 @@ class DeviceGroupService extends HttpService {
     try {
       return await this.get<DeviceGroupsResponse>(`/device-groups${query}`);
     } catch (error) {
-      console.warn('[DeviceGroupService] GET /device-groups not available, returning empty:', error);
+      logger.warn('GET /device-groups not available, returning empty', error);
       return {
         device_groups: [],
         total: 0,

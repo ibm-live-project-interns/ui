@@ -24,3 +24,24 @@ export type { Device, DeviceDetails, DeviceStats, NoisyDevice, DeviceType, Devic
 // Ticket services
 export { ticketDataService } from '../../features/tickets/services/ticketService';
 export type { TicketInfo, CreateTicketData, TicketStats } from '../../features/tickets/services/ticketService';
+
+// On-Call services
+export { onCallService } from './onCallService';
+export type {
+  OnCallSchedule,
+  OnCallOverride,
+  CreateScheduleRequest,
+  CreateOverrideRequest,
+  SchedulesResponse,
+  CurrentOnCallResponse,
+} from './onCallService';
+
+// Post-Mortem services
+export { postMortemService } from './postMortemService';
+export type {
+  PostMortem,
+  PostMortemsResponse,
+  UpdatePostMortemRequest,
+  TimelineEntry,
+  ActionItem,
+} from './postMortemService';

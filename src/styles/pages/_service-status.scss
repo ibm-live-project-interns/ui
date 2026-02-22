@@ -2,7 +2,7 @@
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as *;
-@use '@carbon/react' as react;
+@use '@carbon/react/scss/type' as react;
 @use '@carbon/colors' as *;
 
 .service-status-page {
@@ -13,7 +13,6 @@
     display: flex;
     align-items: center;
     gap: $spacing-04;
-    padding: $spacing-05 $spacing-06;
     border-radius: 4px;
     margin-bottom: $spacing-06;
 
@@ -34,6 +33,18 @@
 
     .banner-icon {
       flex-shrink: 0;
+
+      &--operational {
+        color: $support-success;
+      }
+
+      &--degraded {
+        color: $support-warning;
+      }
+
+      &--outage {
+        color: $support-error;
+      }
     }
 
     .banner-content {
@@ -126,6 +137,19 @@
       align-items: center;
     }
 
+    .section-title-icon {
+      margin-right: $spacing-03;
+      vertical-align: text-bottom;
+    }
+
+    .section-title-tag {
+      margin-left: $spacing-04;
+    }
+
+    .docker-notification {
+      margin-bottom: $spacing-05;
+    }
+
     .docker-timestamp {
       @include react.type-style('label-01');
       color: $text-secondary;
@@ -144,7 +168,6 @@
 
   // Docker Card
   &__docker-card {
-    padding: $spacing-05;
     position: relative;
     border-left: 3px solid transparent;
     transition: border-color 0.15s ease;
@@ -283,7 +306,6 @@
 
   // Service Card
   &__service-card {
-    padding: $spacing-05;
     position: relative;
     border-left: 3px solid transparent;
     transition: border-color 0.15s ease;
@@ -414,7 +436,6 @@
   }
 
   &__incident-card {
-    padding: $spacing-05;
     display: flex;
     gap: $spacing-05;
     align-items: flex-start;
@@ -464,7 +485,6 @@
 
   // No incident state
   &__no-incident {
-    padding: $spacing-05;
 
     .no-incident-content {
       display: flex;
@@ -482,6 +502,16 @@
         margin: 0;
       }
     }
+  }
+
+  // Content area padding wrapper
+  &__content {
+    padding: 0 $spacing-05;
+  }
+
+  // Warning notification (stale data)
+  &__stale-warning {
+    margin-bottom: $spacing-05;
   }
 
   // Loading skeleton
@@ -530,14 +560,12 @@
       display: flex;
       align-items: center;
       gap: $spacing-04;
-      padding: $spacing-05;
       color: $text-secondary;
       @include react.type-style('body-compact-01');
     }
 
     .logs-output {
       @include react.type-style('code-01');
-      padding: $spacing-04;
       margin: 0;
       white-space: pre-wrap;
       word-break: break-all;
