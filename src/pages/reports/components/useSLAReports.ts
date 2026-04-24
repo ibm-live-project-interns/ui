@@ -175,7 +175,12 @@ export function useSLAReports(): UseSLAReportsReturn {
                 value: `${overview.compliance_percent}%`,
                 subtitle: `${overview.resolved_count} resolved of ${overview.total_alerts} total`,
                 icon: Checkmark,
-                iconColor: complianceSeverity === 'success' ? '#24a148' : complianceSeverity === 'critical' ? '#da1e28' : '#f1c21b',
+                iconColor:
+                    complianceSeverity === 'success'
+                        ? 'var(--cds-support-success, #24a148)'
+                        : complianceSeverity === 'critical'
+                            ? 'var(--cds-support-error, #da1e28)'
+                            : 'var(--cds-support-caution-major, #f1c21b)',
                 severity: complianceSeverity,
                 trend: complianceTrend,
             },
@@ -185,7 +190,7 @@ export function useSLAReports(): UseSLAReportsReturn {
                 value: overview.mttr_display,
                 subtitle: `${overview.mttr_minutes.toFixed(1)} minutes average`,
                 icon: Time,
-                iconColor: '#0f62fe',
+                iconColor: 'var(--cds-interactive, #0f62fe)',
                 severity: 'info' as KPISeverity,
                 trend: overview.mttr_minutes <= 30
                     ? { direction: 'down' as const, value: 'Healthy', isPositive: true }
@@ -197,7 +202,7 @@ export function useSLAReports(): UseSLAReportsReturn {
                 value: overview.mtta_display,
                 subtitle: `${overview.mtta_minutes.toFixed(1)} minutes average`,
                 icon: Timer,
-                iconColor: '#8a3ffc',
+                iconColor: 'var(--cds-support-info, #8a3ffc)',
                 severity: 'info' as KPISeverity,
             },
             {
@@ -206,7 +211,9 @@ export function useSLAReports(): UseSLAReportsReturn {
                 value: overview.total_violations,
                 subtitle: `Across ${overview.total_alerts} alerts in period`,
                 icon: WarningAlt,
-                iconColor: overview.total_violations > 0 ? '#da1e28' : '#24a148',
+                iconColor: overview.total_violations > 0
+                    ? 'var(--cds-support-error, #da1e28)'
+                    : 'var(--cds-support-success, #24a148)',
                 severity: violationsSeverity,
                 trend: overview.total_violations === 0
                     ? { direction: 'stable' as const, value: 'No violations', isPositive: true }

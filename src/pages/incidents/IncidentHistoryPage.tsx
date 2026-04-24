@@ -9,14 +9,16 @@
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import { logger } from '@/shared/utils/logger';
 import { useFetchData, useThemeDetection } from '@/shared/hooks';
-import { Download, CheckmarkOutline, Time, Policy, WarningAlt } from '@carbon/icons-react';
+import { Download, CheckmarkOutline, Time, Policy, WarningAlt, Add } from '@carbon/icons-react';
 import { ScaleTypes } from '@carbon/charts';
+import { InlineNotification, Modal, TextInput, TextArea, Select, SelectItem } from '@carbon/react';
 import '@carbon/charts-react/styles.css';
 
 import { KPICard, PageHeader, FilterBar, ComingSoonModal, useComingSoon } from '@/components';
 import { PageLayout } from '@/components/layout';
 import type { KPICardProps } from '@/components/ui/KPICard';
 import type { DropdownFilterConfig } from '@/components/ui/FilterBar';
+import { postMortemService } from '@/shared/services/postMortemService';
 
 import { IncidentCharts, IncidentRightColumn } from './components/IncidentCharts';
 import { IncidentTable } from './components/IncidentTable';
@@ -34,7 +36,18 @@ import { alertDataService, ticketDataService } from '@/shared/services';
 import type { DetailedAlert } from '@/features/alerts/types';
 import { useToast } from '@/contexts';
 import { ROUTES } from '@/shared/constants/routes';
+import { env } from '@/shared/config';
 import '@/styles/pages/_incident-history.scss';
+
+// Type for a single resolved-alert history row returned by GET /alert-history
+interface AlertHistoryItem {
+  id: number;
+  alert_id: string;
+  title: string;
+  resolution: string;
+  severity: string;
+  resolved_at: string;
+}
 
 export function IncidentHistoryPage() {
   const { addToast } = useToast();
@@ -46,8 +59,19 @@ export function IncidentHistoryPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
 
+  // Post-mortem creation modal state
+  const [pmModalOpen, setPmModalOpen] = useState(false);
+  const [pmSubmitting, setPmSubmitting] = useState(false);
+  const [pmForm, setPmForm] = useState({
+    title: '',
+    severity: 'medium',
+    timeline: '',
+    root_cause: '',
+    action_items: '',
+  });
+
   // Data fetching via useFetchData
-  const { data: rawIncidents, isLoading, refetch } = useFetchData(
+  const { data: rawIncidents, isLoading, error: fetchError, refetch } = useFetchData(
     async (_signal) => {
       const [alertsResponse, ticketsResponse] = await Promise.all([
         alertDataService.getAlerts(),
@@ -69,8 +93,7 @@ export function IncidentHistoryPage() {
         const timestampStr = typeof alert.timestamp === 'string'
           ? alert.timestamp
           : alert.timestamp?.absolute || new Date().toISOString();
-        const resolvedAt = (alert as DetailedAlert & { resolvedAt?: string; resolved_at?: string });
-        const resolvedAtStr = resolvedAt.resolvedAt || resolvedAt.resolved_at || null;
+        const resolvedAtStr = alert.resolved_at || null;
         const { text: durationText, minutes: durationMinutes } = resolvedAtStr
           ? computeDuration(timestampStr, resolvedAtStr)
           : { text: 'Unknown', minutes: 0 };
@@ -101,6 +124,31 @@ export function IncidentHistoryPage() {
     {
       initialData: [] as ResolvedIncident[],
       onError: (err) => logger.error('Failed to fetch incident history data', err),
+    }
+  );
+
+  // Fetch alert history resolution log from the dedicated endpoint
+  const { data: alertHistory, isLoading: historyLoading } = useFetchData(
+    async (signal) => {
+      const token = localStorage.getItem('noc_token');
+      const res = await fetch(
+        `${env.API_URL}/api/v1/alert-history?limit=25`,
+        {
+          signal,
+          headers: {
+            ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!res.ok) return [] as AlertHistoryItem[];
+      const body = await res.json();
+      return (body.history || []) as AlertHistoryItem[];
+    },
+    [],
+    {
+      initialData: [] as AlertHistoryItem[],
+      onError: (err) => logger.error('Failed to fetch alert history', err),
     }
   );
 
@@ -224,15 +272,25 @@ export function IncidentHistoryPage() {
   // -- Chart options --
 
   // Filter color scales to only include groups present in data (avoids Carbon Charts warnings)
+  // Resolve Carbon CSS custom properties to hex at render time so chart colors follow theme.
   const barColorScale = useMemo(() => {
-    const ALL_BAR_COLORS: Record<string, string> = { Critical: '#da1e28', Major: '#ff832b', Minor: '#0f62fe' };
+    const readCssVar = (name: string, fallback: string) => {
+      if (typeof window === 'undefined') return fallback;
+      const v = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+      return v || fallback;
+    };
+    const ALL_BAR_COLORS: Record<string, string> = {
+      Critical: readCssVar('--cds-support-error', '#da1e28'),
+      Major: readCssVar('--cds-support-warning', '#ff832b'),
+      Minor: readCssVar('--cds-interactive', '#0f62fe'),
+    };
     const presentGroups = new Set(durationChartData.map(d => d.group));
     const filtered: Record<string, string> = {};
     for (const [k, v] of Object.entries(ALL_BAR_COLORS)) {
       if (presentGroups.has(k)) filtered[k] = v;
     }
     return Object.keys(filtered).length > 0 ? filtered : ALL_BAR_COLORS;
-  }, [durationChartData]);
+  }, [durationChartData, currentTheme]);
 
   const donutColorScale = useMemo(() => {
     const presentGroups = new Set(rootCauseDistribution.map(d => d.group));
@@ -282,6 +340,37 @@ export function IncidentHistoryPage() {
     setPageSize(newPageSize);
   }, []);
 
+  const handleOpenPmModal = useCallback(() => {
+    setPmForm({ title: '', severity: 'medium', timeline: '', root_cause: '', action_items: '' });
+    setPmModalOpen(true);
+  }, []);
+
+  const handleSubmitPostMortem = useCallback(async () => {
+    if (!pmForm.title.trim()) {
+      addToast('error', 'Validation Error', 'Title is required to create a post-mortem.');
+      return;
+    }
+    setPmSubmitting(true);
+    try {
+      await postMortemService.create({
+        title: pmForm.title.trim(),
+        root_cause: pmForm.root_cause.trim(),
+        root_cause_category: pmForm.severity,
+        impact_description: '',
+        timeline: pmForm.timeline.trim(),
+        action_items: pmForm.action_items.trim(),
+        status: 'draft',
+      });
+      addToast('success', 'Post-Mortem Created', `"${pmForm.title}" was created successfully.`);
+      setPmModalOpen(false);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Unknown error';
+      addToast('error', 'Failed to Create Post-Mortem', msg);
+    } finally {
+      setPmSubmitting(false);
+    }
+  }, [pmForm, addToast]);
+
   // -- Loading --
 
   if (isLoading && resolvedIncidents.length === 0) {
@@ -303,8 +392,22 @@ export function IncidentHistoryPage() {
           { label: 'Incident History', active: true },
         ]}
         showBorder
-        actions={[{ label: 'Export Report', onClick: handleExport, variant: 'primary', icon: Download }]}
+        actions={[
+          { label: 'Create Post-Mortem', onClick: handleOpenPmModal, variant: 'ghost', icon: Add },
+          { label: 'Export Report', onClick: handleExport, variant: 'primary', icon: Download },
+        ]}
       />
+
+      {fetchError && (
+        <InlineNotification
+          kind="error"
+          title="Failed to load incident data"
+          subtitle={fetchError}
+          lowContrast
+          hideCloseButton
+          className="incident-history-page__error"
+        />
+      )}
 
       <div className="incident-history-page__content">
         <div className="kpi-row">
@@ -353,8 +456,109 @@ export function IncidentHistoryPage() {
           </div>
         </div>
       </div>
+        {/* Resolution Log - sourced from alert_history table */}
+        <div className="incident-history-page__resolution-log">
+          <h4 className="resolution-log__title">Resolution Log</h4>
+          <p className="resolution-log__subtitle">
+            Persistent record of every alert resolved through the system.
+          </p>
+          {historyLoading ? (
+            <p className="resolution-log__message">Loading resolution log…</p>
+          ) : alertHistory && alertHistory.length > 0 ? (
+            <table className="resolution-log__table">
+              <thead>
+                <tr>
+                  <th>Alert</th>
+                  <th>Title</th>
+                  <th>Resolution</th>
+                  <th>Severity</th>
+                  <th>Resolved At</th>
+                </tr>
+              </thead>
+              <tbody>
+                {alertHistory.map((item) => (
+                  <tr key={item.id}>
+                    <td><code>{item.alert_id}</code></td>
+                    <td>{item.title}</td>
+                    <td>{item.resolution}</td>
+                    <td>
+                      <span className={`resolution-log__severity resolution-log__severity--${item.severity}`}>
+                        {item.severity}
+                      </span>
+                    </td>
+                    <td>{new Date(item.resolved_at).toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="resolution-log__message">
+              No resolution records yet. Records appear here when alerts are resolved.
+            </p>
+          )}
+        </div>
+
       {/* Coming Soon Modal */}
       <ComingSoonModal open={comingSoonOpen} onClose={hideComingSoon} feature={comingSoonFeature} />
+
+      {/* Create Post-Mortem Modal */}
+      <Modal
+        open={pmModalOpen}
+        onRequestClose={() => setPmModalOpen(false)}
+        onRequestSubmit={handleSubmitPostMortem}
+        modalHeading="Create Post-Mortem"
+        modalLabel="Incident Analysis"
+        primaryButtonText={pmSubmitting ? 'Creating...' : 'Create Post-Mortem'}
+        secondaryButtonText="Cancel"
+        primaryButtonDisabled={pmSubmitting || !pmForm.title.trim()}
+        size="md"
+      >
+        <div className="incident-history-page__pm-form">
+          <TextInput
+            id="pm-title"
+            labelText="Title"
+            value={pmForm.title}
+            onChange={(e) => setPmForm((p) => ({ ...p, title: e.target.value }))}
+            placeholder="Incident title"
+            required
+          />
+          <Select
+            id="pm-severity"
+            labelText="Severity"
+            value={pmForm.severity}
+            onChange={(e) => setPmForm((p) => ({ ...p, severity: e.target.value }))}
+          >
+            <SelectItem value="low" text="Low" />
+            <SelectItem value="medium" text="Medium" />
+            <SelectItem value="high" text="High" />
+            <SelectItem value="critical" text="Critical" />
+          </Select>
+          <TextArea
+            id="pm-timeline"
+            labelText="Timeline"
+            value={pmForm.timeline}
+            onChange={(e) => setPmForm((p) => ({ ...p, timeline: e.target.value }))}
+            placeholder="Describe the timeline of the incident..."
+            rows={4}
+          />
+          <TextArea
+            id="pm-root-cause"
+            labelText="Root Cause"
+            value={pmForm.root_cause}
+            onChange={(e) => setPmForm((p) => ({ ...p, root_cause: e.target.value }))}
+            placeholder="Describe the root cause..."
+            rows={3}
+          />
+          <TextArea
+            id="pm-action-items"
+            labelText="Action Items"
+            value={pmForm.action_items}
+            onChange={(e) => setPmForm((p) => ({ ...p, action_items: e.target.value }))}
+            placeholder="List the action items to prevent recurrence..."
+            rows={3}
+          />
+        </div>
+      </Modal>
     </div>
     </PageLayout>
   );

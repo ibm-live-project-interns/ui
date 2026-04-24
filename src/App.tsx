@@ -14,6 +14,8 @@ import { ProtectedRoute } from './components/auth';
 
 // Auth service for RBAC checks
 import { authService } from '@/features/auth/services/authService';
+import { ROLE_CONFIGS } from '@/features/roles/config/roleConfig';
+import type { RoleID } from '@/shared/types';
 
 // Lazy load all pages - they'll be loaded on-demand
 const WelcomePage = lazy(() => import('./pages/welcome').then(m => ({ default: m.WelcomePage })));
@@ -119,6 +121,33 @@ function RequireRole({ allowedRoles, children }: RequireRoleProps) {
   return <>{children}</>;
 }
 
+// ==========================================
+// Permission-based route guard
+// ==========================================
+
+interface RequirePermissionProps {
+  permission: string;
+  children: ReactNode;
+}
+
+function RequirePermission({ permission, children }: RequirePermissionProps) {
+  const user = authService.getCurrentUser();
+  const userRole = (user?.role || 'network-ops') as RoleID;
+  const roleConfig = ROLE_CONFIGS[userRole];
+  const permissions = (roleConfig?.permissions as readonly string[] | undefined) ?? [];
+
+  // Sysadmin (view-all) bypasses all permission checks.
+  // Otherwise, require the specific permission.
+  const hasPermission =
+    permissions.includes('view-all') || permissions.includes(permission);
+
+  if (!hasPermission) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+}
+
 // Loading fallback component
 const PageLoader = () => (
   <div className="page-loader">
@@ -188,19 +217,35 @@ const router = createBrowserRouter([
       },
       {
         path: 'devices',
-        element: withSuspense(DeviceExplorerPage),
+        element: (
+          <RequirePermission permission="view-devices">
+            {withSuspense(DeviceExplorerPage)}
+          </RequirePermission>
+        ),
       },
       {
         path: 'devices/:deviceId',
-        element: withSuspense(DeviceDetailsPage),
+        element: (
+          <RequirePermission permission="view-devices">
+            {withSuspense(DeviceDetailsPage)}
+          </RequirePermission>
+        ),
       },
       {
         path: 'trends',
-        element: withSuspense(TrendsPage),
+        element: (
+          <RequirePermission permission="view-analytics">
+            {withSuspense(TrendsPage)}
+          </RequirePermission>
+        ),
       },
       {
         path: 'incident-history',
-        element: withSuspense(IncidentHistoryPage),
+        element: (
+          <RequirePermission permission="view-analytics">
+            {withSuspense(IncidentHistoryPage)}
+          </RequirePermission>
+        ),
       },
       {
         path: 'tickets',
@@ -233,11 +278,19 @@ const router = createBrowserRouter([
       },
       {
         path: 'reports',
-        element: withSuspense(ReportsHubPage),
+        element: (
+          <RequirePermission permission="view-analytics">
+            {withSuspense(ReportsHubPage)}
+          </RequirePermission>
+        ),
       },
       {
         path: 'reports/sla',
-        element: withSuspense(SLAReportsPage),
+        element: (
+          <RequirePermission permission="view-analytics">
+            {withSuspense(SLAReportsPage)}
+          </RequirePermission>
+        ),
       },
       {
         path: 'on-call',
@@ -245,11 +298,19 @@ const router = createBrowserRouter([
       },
       {
         path: 'topology',
-        element: withSuspense(TopologyPage),
+        element: (
+          <RequirePermission permission="view-devices">
+            {withSuspense(TopologyPage)}
+          </RequirePermission>
+        ),
       },
       {
         path: 'device-groups',
-        element: withSuspense(DeviceGroupsPage),
+        element: (
+          <RequirePermission permission="view-devices">
+            {withSuspense(DeviceGroupsPage)}
+          </RequirePermission>
+        ),
       },
       {
         path: 'runbooks',
@@ -261,7 +322,11 @@ const router = createBrowserRouter([
       },
       {
         path: 'incidents/post-mortems',
-        element: withSuspense(PostMortemPage),
+        element: (
+          <RequirePermission permission="view-analytics">
+            {withSuspense(PostMortemPage)}
+          </RequirePermission>
+        ),
       },
       {
         path: '*',

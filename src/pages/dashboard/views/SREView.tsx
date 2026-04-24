@@ -15,13 +15,14 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
-import { Tile, ProgressBar, SkeletonText, SkeletonPlaceholder, InlineNotification } from '@carbon/react';
+import { Tile, ProgressBar, SkeletonText, SkeletonPlaceholder, InlineNotification, Grid, Column } from '@carbon/react';
 import { ArrowDown, ArrowUp, Time, Activity, ChartLineSmooth, WarningAlt } from '@carbon/icons-react';
 import { LineChart, StackedBarChart } from '@carbon/charts-react';
 import { ScaleTypes } from '@carbon/charts';
 import { KPICard, type KPICardProps, PageHeader } from '@/components/ui';
 import type { RoleConfig } from '@/features/roles/types/role.types';
 import { alertDataService, deviceService } from '@/shared/services';
+import { uiLogger } from '@/shared/utils/logger';
 import '@/styles/pages/_dashboard.scss';
 import '@/styles/components/_kpi-card.scss';
 
@@ -165,7 +166,7 @@ export function SREView({ config: _config }: SREViewProps) {
                 }
 
             } catch (err) {
-                console.error('Failed to fetch SRE data:', err);
+                uiLogger.error('Failed to fetch SRE data', err);
                 setError('Failed to load SRE metrics. Please check your connection and try again.');
             } finally {
                 if (isMounted) setIsLoading(false);
@@ -188,7 +189,7 @@ export function SREView({ config: _config }: SREViewProps) {
             label: 'Mean Time to Resolve',
             value: metrics.mttr !== null ? `${metrics.mttr}m` : 'N/A',
             icon: Time,
-            iconColor: metrics.mttr !== null && metrics.mttr < 30 ? '#24a148' : '#ff832b',
+            iconColor: metrics.mttr !== null && metrics.mttr < 30 ? 'var(--cds-support-success)' : 'var(--cds-support-warning)',
             severity: metrics.mttr !== null && metrics.mttr < 30 ? 'success' as const : 'major' as const,
             trend: metrics.mttrChange !== null
                 ? { direction: 'down' as const, value: `${Math.abs(metrics.mttrChange)}%`, isPositive: true }
@@ -200,7 +201,7 @@ export function SREView({ config: _config }: SREViewProps) {
             label: 'System Availability',
             value: metrics.availability !== null ? `${metrics.availability}%` : 'N/A',
             icon: Activity,
-            iconColor: metrics.availability !== null && metrics.availability >= 99.9 ? '#24a148' : '#ff832b',
+            iconColor: metrics.availability !== null && metrics.availability >= 99.9 ? 'var(--cds-support-success)' : 'var(--cds-support-warning)',
             severity: metrics.availability !== null && metrics.availability >= 99.9 ? 'success' as const : 'major' as const,
             subtitle: metrics.availability !== null ? 'Based on device health' : 'Data unavailable',
         },
@@ -209,7 +210,7 @@ export function SREView({ config: _config }: SREViewProps) {
             label: 'Active Incidents',
             value: metrics.incidentCount !== null ? metrics.incidentCount : 'N/A',
             icon: WarningAlt,
-            iconColor: metrics.incidentCount !== null && metrics.incidentCount > 10 ? '#da1e28' : '#ff832b',
+            iconColor: metrics.incidentCount !== null && metrics.incidentCount > 10 ? 'var(--cds-support-error)' : 'var(--cds-support-warning)',
             severity: metrics.incidentCount !== null && metrics.incidentCount > 10 ? 'critical' as const : 'major' as const,
             trend: metrics.incidentChange !== null
                 ? { direction: 'down' as const, value: `${Math.abs(metrics.incidentChange)}%`, isPositive: true }
@@ -222,8 +223,8 @@ export function SREView({ config: _config }: SREViewProps) {
             value: metrics.errorBudgetUsed !== null ? `${metrics.errorBudgetUsed}%` : 'N/A',
             icon: ChartLineSmooth,
             iconColor: metrics.errorBudgetUsed !== null
-                ? (metrics.errorBudgetUsed > 80 ? '#da1e28' : metrics.errorBudgetUsed > 50 ? '#ff832b' : '#0f62fe')
-                : '#0f62fe',
+                ? (metrics.errorBudgetUsed > 80 ? 'var(--cds-support-error)' : metrics.errorBudgetUsed > 50 ? 'var(--cds-support-warning)' : 'var(--cds-interactive)')
+                : 'var(--cds-interactive)',
             severity: metrics.errorBudgetUsed !== null
                 ? (metrics.errorBudgetUsed > 80 ? 'critical' as const : metrics.errorBudgetUsed > 50 ? 'major' as const : 'info' as const)
                 : 'info' as const,
@@ -231,19 +232,11 @@ export function SREView({ config: _config }: SREViewProps) {
         },
     ], [metrics]);
 
-    const getStatusColor = (status: 'healthy' | 'degraded' | 'down') => {
-        switch (status) {
-            case 'healthy': return 'var(--cds-support-success)';
-            case 'degraded': return 'var(--cds-support-warning)';
-            case 'down': return 'var(--cds-support-error)';
-        }
-    };
-
     const getStatusIcon = (status: 'healthy' | 'degraded' | 'down') => {
         switch (status) {
-            case 'healthy': return <ArrowUp size={16} style={{ color: 'var(--cds-support-success)' }} />;
-            case 'degraded': return <Time size={16} style={{ color: 'var(--cds-support-warning)' }} />;
-            case 'down': return <ArrowDown size={16} style={{ color: 'var(--cds-support-error)' }} />;
+            case 'healthy': return <ArrowUp size={16} className="u-icon--success" />;
+            case 'degraded': return <Time size={16} className="u-icon--warning" />;
+            case 'down': return <ArrowDown size={16} className="u-icon--error" />;
         }
     };
 
@@ -255,7 +248,7 @@ export function SREView({ config: _config }: SREViewProps) {
                     <PageHeader
                         title="Site Reliability Engineering"
                         subtitle="System reliability metrics, incident tracking, and service health monitoring"
-                        badges={[{ text: 'System Operational', color: '#24a148' }]}
+                        badges={[{ text: 'System Operational', color: 'var(--cds-support-success)' }]}
                     />
                     <div className="kpi-row">
                         {[1, 2, 3, 4].map((i) => (
@@ -269,20 +262,22 @@ export function SREView({ config: _config }: SREViewProps) {
                     <div className="charts-row">
                         <Tile className="chart-tile">
                             <SkeletonText heading width="150px" />
-                            <SkeletonPlaceholder style={{ width: '100%', height: '300px', marginTop: '1rem' }} />
+                            <SkeletonPlaceholder className="dashboard-skeleton--chart-top" />
                         </Tile>
                         <Tile className="chart-tile">
                             <SkeletonText heading width="150px" />
-                            <SkeletonPlaceholder style={{ width: '100%', height: '300px', marginTop: '1rem' }} />
+                            <SkeletonPlaceholder className="dashboard-skeleton--chart-top" />
                         </Tile>
                     </div>
                     <Tile className="chart-tile">
                         <SkeletonText heading width="200px" />
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem', marginTop: '1rem' }}>
+                        <Grid className="sre-view__health-grid-skeleton">
                             {[1, 2, 3].map(i => (
-                                <SkeletonPlaceholder key={i} style={{ height: '80px' }} />
+                                <Column key={i} lg={4} md={4} sm={4}>
+                                    <SkeletonPlaceholder className="dashboard-skeleton--block-sm" />
+                                </Column>
                             ))}
-                        </div>
+                        </Grid>
                     </Tile>
                 </div>
             </div>
@@ -296,7 +291,7 @@ export function SREView({ config: _config }: SREViewProps) {
                 <PageHeader
                     title="Site Reliability Engineering"
                     subtitle="System reliability metrics, incident tracking, and service health monitoring"
-                    badges={[{ text: 'System Operational', color: '#24a148' }]}
+                    badges={[{ text: 'System Operational', color: 'var(--cds-support-success)' }]}
                 />
 
                 {/* Error notification */}
@@ -305,7 +300,7 @@ export function SREView({ config: _config }: SREViewProps) {
                         kind="error"
                         title="Error"
                         subtitle={error}
-                        style={{ marginBottom: 'var(--cds-spacing-05)' }}
+                        className="u-notification-gap"
                     />
                 )}
 
@@ -338,13 +333,7 @@ export function SREView({ config: _config }: SREViewProps) {
                                     }}
                                 />
                             ) : (
-                                <div style={{
-                                    height: '300px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: 'var(--cds-text-secondary)'
-                                }}>
+                                <div className="sre-view__chart-empty">
                                     No trend data available
                                 </div>
                             )}
@@ -370,13 +359,7 @@ export function SREView({ config: _config }: SREViewProps) {
                                     }}
                                 />
                             ) : (
-                                <div style={{
-                                    height: '300px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    color: 'var(--cds-text-secondary)'
-                                }}>
+                                <div className="sre-view__chart-empty">
                                     No incident data available
                                 </div>
                             )}
@@ -394,31 +377,18 @@ export function SREView({ config: _config }: SREViewProps) {
                             {serviceHealth.map((service, index) => (
                                 <div
                                     key={index}
-                                    className="service-item"
-                                    style={{
-                                        padding: 'var(--cds-spacing-05)',
-                                        background: 'var(--cds-layer-02)',
-                                        borderLeft: `3px solid ${getStatusColor(service.status)}`,
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        gap: 'var(--cds-spacing-03)'
-                                    }}
+                                    className={`sre-view__service-item sre-view__service-item--${service.status}`}
                                 >
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                        <span style={{ fontWeight: 600, color: 'var(--cds-text-primary)' }}>{service.name}</span>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--cds-spacing-02)' }}>
+                                    <div className="sre-view__service-header">
+                                        <span className="sre-view__service-name">{service.name}</span>
+                                        <div className="sre-view__service-status">
                                             {getStatusIcon(service.status)}
-                                            <span style={{
-                                                fontSize: '12px',
-                                                fontWeight: 600,
-                                                color: getStatusColor(service.status),
-                                                textTransform: 'uppercase'
-                                            }}>
+                                            <span className={`sre-view__service-status-label sre-view__service-status-label--${service.status}`}>
                                                 {service.status}
                                             </span>
                                         </div>
                                     </div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--cds-spacing-03)' }}>
+                                    <div className="sre-view__service-meter">
                                         <ProgressBar
                                             label=""
                                             value={service.uptime}
@@ -426,7 +396,7 @@ export function SREView({ config: _config }: SREViewProps) {
                                             size="small"
                                             hideLabel
                                         />
-                                        <span style={{ fontSize: '12px', color: 'var(--cds-text-secondary)', minWidth: '60px' }}>
+                                        <span className="sre-view__service-meter-label">
                                             {service.uptime}% health
                                         </span>
                                     </div>
@@ -434,11 +404,7 @@ export function SREView({ config: _config }: SREViewProps) {
                             ))}
                         </div>
                     ) : (
-                        <div style={{
-                            padding: 'var(--cds-spacing-06)',
-                            textAlign: 'center',
-                            color: 'var(--cds-text-secondary)'
-                        }}>
+                        <div className="sre-view__empty-block sre-view__empty-block--padded">
                             No device health data available
                         </div>
                     )}

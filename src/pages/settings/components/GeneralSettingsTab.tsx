@@ -47,10 +47,14 @@ export const GeneralSettingsTab = React.memo(function GeneralSettingsTab({
                     labelText="Language"
                     value={general.language}
                     onChange={(e) => handleLanguageChange(e.target.value)}
-                    helperText="Only English is currently supported"
+                    helperText="Additional languages coming soon."
                 >
                     {GENERAL_OPTS.languages.map(opt => (
-                        <SelectItem key={opt.value} {...opt} />
+                        <SelectItem
+                            key={opt.value}
+                            {...opt}
+                            disabled={opt.value !== 'en'}
+                        />
                     ))}
                 </Select>
                 <Select

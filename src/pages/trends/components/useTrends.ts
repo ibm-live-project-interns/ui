@@ -267,7 +267,7 @@ export function useTrends(): UseTrendsReturn {
                 value: kpi.value,
                 subtitle: kpi.subtitle || 'Compared to last period',
                 icon: KPI_ICON_MAP[kpi.id] || KPI_ICON_MAP['alert-volume'],
-                iconColor: '#0f62fe',
+                iconColor: 'var(--cds-interactive, #0f62fe)',
                 severity: KPI_SEVERITY_MAP[kpi.id] || 'info',
                 trend: trendObj,
             };
@@ -278,10 +278,10 @@ export function useTrends(): UseTrendsReturn {
     const systemStatus = useMemo(() => {
         const alertVolumeKpi = trendsKPI.find(k => k.id === 'alert-volume');
         const alertVolume = alertVolumeKpi ? parseInt(String(alertVolumeKpi.value), 10) : 0;
-        if (alertVolume > 200) return { text: 'Degraded', color: '#da1e28' };
-        if (alertVolume > 50) return { text: 'Under Pressure', color: '#ff832b' };
-        if (trendsKPI.length === 0 && !isLoading) return { text: 'No Data', color: '#525252' };
-        return { text: 'Operational', color: '#24a148' };
+        if (alertVolume > 200) return { text: 'Degraded', color: 'var(--cds-support-error, #da1e28)' };
+        if (alertVolume > 50) return { text: 'Under Pressure', color: 'var(--cds-support-warning, #ff832b)' };
+        if (trendsKPI.length === 0 && !isLoading) return { text: 'No Data', color: 'var(--cds-text-secondary, #525252)' };
+        return { text: 'Operational', color: 'var(--cds-support-success, #24a148)' };
     }, [trendsKPI, isLoading]);
 
     // Empty state

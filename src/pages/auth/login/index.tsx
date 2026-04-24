@@ -57,12 +57,37 @@ function sanitizeOAuthError(rawError: string): string {
 /** sessionStorage key for preserving redirect path through OAuth flow */
 const OAUTH_REDIRECT_KEY = 'noc_oauth_from';
 
+/**
+ * Allowlist of post-login redirect paths. Prevents open-redirect abuse
+ * where an attacker crafts a link that points `from` to an external URL.
+ */
+const ALLOWED_REDIRECT_PATHS = [
+    '/dashboard', '/priority-alerts', '/tickets', '/devices', '/trends',
+    '/incident-history', '/reports', '/reports/sla', '/on-call', '/topology',
+    '/device-groups', '/runbooks', '/service-status', '/incidents/post-mortems',
+    '/configuration', '/settings', '/profile', '/admin/audit-log',
+];
+
+function safeRedirectPath(candidate: string | undefined | null): string {
+    if (!candidate) return '/dashboard';
+    // Allow exact match OR known prefix (e.g. /tickets/123 under /tickets)
+    if (ALLOWED_REDIRECT_PATHS.includes(candidate)) return candidate;
+    if (ALLOWED_REDIRECT_PATHS.some(p => candidate.startsWith(p + '/'))) return candidate;
+    return '/dashboard';
+}
+
 export function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
     const [error, setError] = useState('');
+    const [isSessionExpired, setIsSessionExpired] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        const flag = sessionStorage.getItem('sessionExpired') === 'true';
+        if (flag) sessionStorage.removeItem('sessionExpired');
+        return flag;
+    });
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -73,18 +98,21 @@ export function LoginPage() {
 
     // Get the page user was trying to access. First check sessionStorage (OAuth return),
     // then location state (normal redirect), then default to dashboard.
+    // All candidates are run through safeRedirectPath to prevent open-redirect abuse.
     const from = (() => {
         const storedFrom = sessionStorage.getItem(OAUTH_REDIRECT_KEY);
         if (storedFrom) {
             sessionStorage.removeItem(OAUTH_REDIRECT_KEY);
-            return storedFrom;
+            return safeRedirectPath(storedFrom);
         }
-        return (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
+        const stateFrom = (location.state as { from?: { pathname: string } })?.from?.pathname;
+        return safeRedirectPath(stateFrom);
     })();
 
-    // Handle OAuth callback - token or error from URL params
+    // Handle OAuth callback - token, code, or error from URL params
     useEffect(() => {
         const token = searchParams.get('token');
+        const oauthCode = searchParams.get('code');
         const oauthError = searchParams.get('error');
 
         if (oauthError) {
@@ -94,13 +122,37 @@ export function LoginPage() {
             searchParams.delete('error');
             setSearchParams(searchParams, { replace: true });
         } else if (token) {
-            // Set the token from OAuth callback (now async, loads user profile)
+            // Legacy: backend redirected with ?token=... already exchanged
             authService.setOAuthToken(token).then(() => {
-                // Clean up URL and redirect to destination
                 navigate(from, { replace: true });
             }).catch(() => {
                 setError('Failed to complete sign in. Please try again.');
             });
+        } else if (oauthCode) {
+            // New: exchange the OAuth code with the backend for a token.
+            // This keeps the code out of logs/history longer than necessary
+            // and avoids the token ever being visible in the URL bar.
+            (async () => {
+                try {
+                    const apiBase = env.apiBaseUrl || 'http://localhost:8080';
+                    const res = await fetch(
+                        `${apiBase}/api/v1/auth/oauth/exchange?code=${encodeURIComponent(oauthCode)}`,
+                        { method: 'GET' }
+                    );
+                    const data = await res.json().catch(() => ({}));
+                    if (res.ok && data.token) {
+                        await authService.setOAuthToken(data.token);
+                        // Clean up URL before navigating
+                        searchParams.delete('code');
+                        setSearchParams(searchParams, { replace: true });
+                        navigate(from, { replace: true });
+                    } else {
+                        setError('OAuth authentication failed. Please try again.');
+                    }
+                } catch {
+                    setError('OAuth authentication failed. Please try again.');
+                }
+            })();
         }
     }, [searchParams, setSearchParams, navigate, from]);
 
@@ -188,6 +240,17 @@ export function LoginPage() {
 
                 <h1 className="auth-title">Sign In</h1>
                 <p className="auth-subtitle">Enter your credentials to continue</p>
+
+                {isSessionExpired && !error && (
+                    <InlineNotification
+                        kind="warning"
+                        title="Session expired"
+                        subtitle="Please sign in again to continue."
+                        lowContrast
+                        hideCloseButton
+                        className="auth-notification"
+                    />
+                )}
 
                 {error && (
                     <InlineNotification

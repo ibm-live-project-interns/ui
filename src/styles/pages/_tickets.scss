@@ -4,6 +4,7 @@
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as react;
+@use '../tokens' as tok;
 
 // ==========================================
 // Page-Level Layout
@@ -24,62 +25,26 @@
     flex-shrink: 0;
   }
 
-  // KPI row - compact inline strip matching mockup style
+  // KPI row - proper Carbon spacing between cards (no more merged strip)
   .kpi-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 0;
-    margin-bottom: 0;
-    border: 1px solid $border-subtle-01;
+    gap: tok.$tok-kpi-row-gap;
+    margin-bottom: tok.$tok-kpi-row-margin-bottom;
     flex-shrink: 0;
 
     .kpi-card {
-      border: none;
-      border-radius: 0;
-      border-right: 1px solid $border-subtle-01;
-      min-height: 80px;
-      box-shadow: none;
-
-      &:last-child {
-        border-right: none;
-      }
-
-      &:hover {
-        box-shadow: none;
-        background: $layer-hover-01;
-      }
-
-      &__value {
-        font-size: 1.5rem;
-      }
+      min-height: 88px;
     }
 
     @media (max-width: 1056px) {
       grid-template-columns: repeat(2, 1fr);
-
-      .kpi-card {
-        &:nth-child(2) {
-          border-right: none;
-        }
-
-        &:nth-child(1),
-        &:nth-child(2) {
-          border-bottom: 1px solid $border-subtle-01;
-        }
-      }
+      gap: $spacing-04;
     }
 
     @media (max-width: 672px) {
       grid-template-columns: 1fr;
-
-      .kpi-card {
-        border-right: none;
-        border-bottom: 1px solid $border-subtle-01;
-
-        &:last-child {
-          border-bottom: none;
-        }
-      }
+      gap: $spacing-04;
     }
   }
 
@@ -129,13 +94,18 @@
 
 .tickets-split-view {
   display: grid;
-  grid-template-columns: 7fr 5fr;
-  gap: 0;
-  border: 1px solid $border-subtle-01;
-  border-radius: 0;
+  grid-template-columns: 1fr 1fr;
+  gap: $spacing-05;
   overflow: hidden;
   flex: 1;
   min-height: 0; // Critical for flex child to allow shrinking
+
+  // Left list panel keeps its subtle border for clarity.
+  // Right detail panel uses a left border only (no shadow / full border),
+  // so the two panels read as one split pane separated by a divider.
+  &__list {
+    border: 1px solid $border-subtle-01;
+  }
 
   // Responsive: stack on smaller screens
   @media (max-width: 1056px) {
@@ -147,15 +117,9 @@
   &__list {
     display: flex;
     flex-direction: column;
-    border-right: 1px solid $border-subtle-01;
     background: $layer-01;
     overflow: hidden;
     min-height: 0; // Allow flex shrinking
-
-    @media (max-width: 1056px) {
-      border-right: none;
-      border-bottom: 1px solid $border-subtle-01;
-    }
 
     // Pagination at the bottom
     .cds--pagination {
@@ -223,18 +187,13 @@
 
     // Active (selected) row
     &--active {
-      background: $layer-selected-01 !important;
-      border-left: 3px solid $interactive;
-
-      td:first-child {
-        padding-left: calc(#{$spacing-04} - 3px);
-      }
+      background: $layer-selected-01;
+      box-shadow: inset 3px 0 0 0 $interactive;
     }
 
     td {
       @include react.type-style('body-compact-01');
       padding: $spacing-03 $spacing-04;
-      font-size: 13px;
       vertical-align: middle;
     }
   }
@@ -244,8 +203,11 @@
     display: flex;
     flex-direction: column;
     background: $layer-01;
-    overflow: hidden; // Let inner content scroll, not the panel itself
+    overflow-y: auto;
     min-height: 0;
+    padding: $spacing-05;
+    border-left: 1px solid var(--cds-border-subtle-01, #{$border-subtle-01});
+    box-shadow: none;
   }
 
   &__no-selection {
@@ -265,10 +227,9 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  overflow: hidden;
 
   &__header {
-    padding: $spacing-04 $spacing-05;
+    padding: $spacing-05 $spacing-06;
     border-bottom: 1px solid $border-subtle-01;
     background: $layer-02;
     flex-shrink: 0;
@@ -278,7 +239,7 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: $spacing-02;
+    margin-bottom: $spacing-03;
   }
 
   &__id-row {
@@ -296,10 +257,10 @@
   }
 
   &__title {
-    @include react.type-style('heading-compact-01');
+    @include react.type-style('heading-compact-02');
     color: $text-primary;
-    margin: 0 0 $spacing-02;
-    line-height: 1.3;
+    margin: 0 0 $spacing-03;
+    line-height: 1.4;
   }
 
   &__meta {
@@ -321,34 +282,35 @@
     }
   }
 
-  // Tabs - fill remaining space
+  // Tabs
   .cds--tabs {
-    flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
-    min-height: 0;
   }
 
-  // Tab list should not shrink
+  // Tab content - no nested scroll, parent panel scrolls
   .cds--tab-content {
-    flex: 1;
-    overflow-y: auto;
-    min-height: 0;
+    overflow: visible;
+
+    // Restore hidden behaviour overridden by display:flex below
+    &[hidden] {
+      display: none;
+    }
   }
 
   &__tab-content {
-    padding: $spacing-04 $spacing-05;
+    padding: $spacing-05 0;
     display: flex;
     flex-direction: column;
-    gap: $spacing-04;
+    gap: $spacing-06;
   }
 
   // Section blocks inside tabs
   &__section {
     display: flex;
     flex-direction: column;
-    gap: $spacing-03;
+    align-items: flex-start;
+    gap: $spacing-04;
   }
 
   &__section-title {
@@ -361,10 +323,9 @@
   }
 
   &__description {
-    @include react.type-style('body-long-01');
+    @include react.type-style('body-long-02');
     color: $text-primary;
     margin: 0;
-    line-height: 1.5;
   }
 
   // Resolve section
@@ -408,7 +369,6 @@
   color: $link-primary;
   font-weight: 600;
   font-family: 'IBM Plex Mono', monospace;
-  font-size: 12px;
 
   &:hover {
     text-decoration: underline;
@@ -418,7 +378,7 @@
 .ticket-title-cell {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: $spacing-01;
   max-width: 280px;
 
   .ticket-title {
@@ -433,7 +393,7 @@
   .ticket-alert-badge {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
+    gap: $spacing-02;
     @include react.type-style('helper-text-01');
     color: $text-secondary;
 

@@ -87,6 +87,8 @@ export interface BackendAlert {
     business_impact?: string;
     ai_recommendation?: string | string[];
     recommended_actions?: string | string[];
+    resolved_at?: string | null;
+    acknowledged_at?: string | null;
     raw_payload?: string;
     raw_data?: string;
     similar_count?: number;

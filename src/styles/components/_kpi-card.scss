@@ -2,12 +2,13 @@
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as react;
+@use '../tokens' as tok;
 
 .kpi-row {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: $spacing-06;
-    margin-bottom: $spacing-06;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: tok.$tok-kpi-row-gap;
+    margin-bottom: tok.$tok-kpi-row-margin-bottom;
 
     @media (max-width: 1056px) {
         grid-template-columns: repeat(2, 1fr);
@@ -23,8 +24,8 @@
     display: flex;
     align-items: flex-start;
     gap: $spacing-04;
-    padding: $spacing-05;
-    min-height: 120px;
+    padding: tok.$tok-kpi-card-padding;
+    min-height: tok.$tok-kpi-card-min-height;
     background: $layer-01;
     border: 1px solid $border-subtle-01;
     border-radius: 0;

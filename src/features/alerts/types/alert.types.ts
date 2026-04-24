@@ -62,6 +62,7 @@ export interface HistoricalAlert {
 
 export interface DetailedAlert extends PriorityAlert {
     category?: string;
+    resolved_at?: string | null;
     similarEvents: number;
     aiAnalysis: {
         summary: string;

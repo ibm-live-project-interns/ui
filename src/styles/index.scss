@@ -13,6 +13,7 @@
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/themes';
 @use '@carbon/react/scss/colors' as *;
+@use './tokens' as tok;
 
 // Extracted component and layout partials
 @use './layout/app-content';
@@ -152,6 +153,17 @@ body {
   --section-gap: #{$spacing-06};
   --card-padding: #{$spacing-05};
 
+  // Sentrix design tokens exposed as CSS custom properties
+  --sentrix-page-padding:       #{tok.$tok-page-content-padding};
+  --sentrix-section-gap:        #{tok.$tok-page-section-gap};
+  --sentrix-content-gap:        #{tok.$tok-page-content-gap};
+  --sentrix-kpi-gap:            #{tok.$tok-kpi-row-gap};
+  --sentrix-kpi-margin-bottom:  #{tok.$tok-kpi-row-margin-bottom};
+  --sentrix-tile-padding:       #{tok.$tok-tile-padding};
+  --sentrix-tile-margin-bottom: #{tok.$tok-tile-margin-bottom};
+  --sentrix-grid-gap:           #{tok.$tok-grid-gap};
+  --sentrix-grid-margin-bottom: #{tok.$tok-grid-margin-bottom};
+
   @media (max-width: 672px) {
     --page-padding: #{$spacing-04};
     --page-gap: #{$spacing-04};
@@ -181,6 +193,92 @@ body {
 }
 
 // ==========================================
+// Global DataTable Normalization
+// Ensures ALL Carbon DataTables have consistent styling:
+// uppercase headers, uniform row heights, hover, borders, pagination
+// ==========================================
+.cds--data-table {
+  thead {
+    tr {
+      height: tok.$tok-table-header-height;
+    }
+
+    th {
+      background-color: $layer-02;
+      padding: tok.$tok-table-cell-padding-v tok.$tok-table-cell-padding-h;
+      border-bottom: 1px solid $border-subtle-01;
+
+      .cds--table-header-label {
+        text-transform: uppercase;
+        font-weight: 600;
+        color: $text-secondary;
+        letter-spacing: 0.5px;
+        font-size: 11px;
+      }
+    }
+  }
+
+  tbody {
+    tr {
+      height: tok.$tok-table-row-height;
+      transition: background-color 0.1s ease;
+
+      &:hover {
+        background-color: $layer-hover-01;
+
+        td {
+          background-color: $layer-hover-01;
+        }
+      }
+
+      td {
+        padding: tok.$tok-table-cell-padding-v tok.$tok-table-cell-padding-h;
+        border-bottom: 1px solid $border-subtle-01;
+        background-color: $layer-01;
+        font-size: 13px;
+        vertical-align: middle;
+      }
+    }
+  }
+}
+
+// Pagination inside any page gets consistent styling
+.cds--pagination {
+  background-color: $layer-02;
+  border-top: 1px solid $border-subtle-01;
+
+  .cds--pagination__left,
+  .cds--pagination__right {
+    background-color: $layer-02;
+  }
+}
+
+// Table toolbar background consistency
+.cds--table-toolbar {
+  background: $layer-02;
+}
+
+// Tiles containing tables: flush padding so table fills the tile
+.oncall-page__table-tile,
+.incident-history-page__table-tile {
+  padding: 0;
+
+  .table-header {
+    padding: $spacing-03 $spacing-05;
+    background: $layer-02;
+  }
+
+  .cds--data-table-container {
+    border: none;
+  }
+}
+
+// Table containers should handle overflow properly
+.cds--data-table-container {
+  overflow-x: auto;
+}
+
+// ==========================================
 // Small Screen / Phone Breakpoint (< 480px)
 // Tighten spacing and force single-column grids
 // ==========================================
@@ -207,3 +305,13 @@ body {
     margin-bottom: $spacing-05;
   }
 }
+
+/* Global fix: respect the HTML `hidden` attribute on Carbon tab panels.
+   Some page-level styles apply `display: flex` to `.cds--tab-content` which
+   overrides the default `[hidden] { display: none }` from the UA stylesheet,
+   causing all tab panels to render simultaneously. This guarantees hidden
+   panels stay hidden regardless of custom layout rules. */
+.cds--tab-content[hidden] {
+  display: none !important;
+}
+

@@ -100,14 +100,14 @@ export function getOverallStatusConfig(status: string): OverallStatusConfig {
         title: 'All Systems Operational',
         subtitle: 'All services are running normally. No issues detected.',
         icon: CheckmarkFilled,
-        iconColor: '#24a148',
+        iconColor: 'var(--cds-support-success, #24a148)',
       };
     case 'degraded':
       return {
         title: 'Partial System Degradation',
         subtitle: 'Some services are experiencing issues. Monitoring in progress.',
         icon: WarningAltFilled,
-        iconColor: '#f5a524',
+        iconColor: 'var(--cds-support-warning, #f5a524)',
       };
     case 'outage':
     case 'down':
@@ -115,14 +115,14 @@ export function getOverallStatusConfig(status: string): OverallStatusConfig {
         title: 'System Outage Detected',
         subtitle: 'One or more critical services are down. The team is investigating.',
         icon: ErrorFilled,
-        iconColor: '#da1e28',
+        iconColor: 'var(--cds-support-error, #da1e28)',
       };
     default:
       return {
         title: 'Status Unknown',
         subtitle: 'Unable to determine system status.',
         icon: Activity,
-        iconColor: '#525252',
+        iconColor: 'var(--cds-text-secondary, #525252)',
       };
   }
 }

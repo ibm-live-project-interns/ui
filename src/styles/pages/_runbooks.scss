@@ -3,6 +3,7 @@
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as *;
 @use '@carbon/react/scss/type' as react;
+@use '../tokens' as tok;
 
 .runbooks-page {
   width: 100%;

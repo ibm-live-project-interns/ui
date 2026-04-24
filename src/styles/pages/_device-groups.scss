@@ -3,20 +3,18 @@
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as *;
 @use '@carbon/react/scss/type' as react;
+@use '../tokens' as tok;
 
 .device-groups-page {
   width: 100%;
-
-  // Remove default Carbon Tile borders (visible in dark theme g100)
-  .cds--tile {
-    border: none;
-  }
 
   // ==========================================
   // Content wrapper
   // ==========================================
   &__content {
-    padding: 0 $spacing-05;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-05;
   }
 
   // ==========================================
@@ -54,27 +52,27 @@
   &__card {
     display: flex;
     flex-direction: column;
-    padding: 0 !important;
-    min-height: 180px;
+    padding: 0;
     overflow: hidden;
     transition: box-shadow 0.15s ease;
+    border: 1px solid $border-subtle-01;
 
     &:hover {
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.10);
+      box-shadow: 0 2px 6px $shadow;
     }
   }
 
   &__card-border {
     width: 100%;
-    height: 4px;
+    height: $spacing-02;
     flex-shrink: 0;
-    background-color: var(--group-color, $interactive);
+    background-color: var(--group-color, #{$interactive});
   }
 
   &__card-body {
     display: flex;
     flex-direction: column;
-    flex: 1;
+    padding: $spacing-05;
   }
 
   &__card-header {
@@ -124,10 +122,9 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 2rem;
-    height: 2rem;
+    width: $spacing-07;
+    height: $spacing-07;
     border: none;
-    border-radius: 4px;
     background: transparent;
     color: $text-secondary;
     cursor: pointer;
@@ -169,7 +166,7 @@
     display: flex;
     flex-wrap: wrap;
     gap: $spacing-02;
-    margin-top: auto;
+    margin-top: $spacing-03;
     padding-top: $spacing-03;
     border-top: 1px solid $border-subtle-01;
   }
@@ -228,12 +225,12 @@
   }
 
   &__form-color-swatch {
-    width: 24px;
-    height: 24px;
+    width: $spacing-06;
+    height: $spacing-06;
     border-radius: 50%;
     border: 2px solid $border-subtle-01;
     flex-shrink: 0;
-    background-color: var(--swatch-color, $interactive);
+    background-color: var(--swatch-color, #{$interactive});
   }
 
   // ==========================================

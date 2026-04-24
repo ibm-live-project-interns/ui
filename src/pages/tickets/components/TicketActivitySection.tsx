@@ -52,13 +52,15 @@ export const TicketActivitySection: React.FC<TicketActivitySectionProps> = React
         onNewCommentChange,
         onAddComment,
     }) {
+        // Count includes the "Ticket Created" timeline entry that is always rendered
+        const entryCount = comments.length + 1;
         return (
             <Tile className="ticket-card">
                 <div className="ticket-card__header">
                     <Activity size={20} aria-label="Activity timeline" />
                     <h3 className="ticket-card__title">Activity Timeline</h3>
                     <Tag size="sm" type="gray" className="ticket-timeline__count-tag">
-                        {comments.length} {comments.length === 1 ? 'entry' : 'entries'}
+                        {entryCount} {entryCount === 1 ? 'entry' : 'entries'}
                     </Tag>
                 </div>
 

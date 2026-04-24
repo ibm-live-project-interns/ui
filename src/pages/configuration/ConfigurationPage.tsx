@@ -20,10 +20,10 @@ import {
 
 import '@/styles/pages/_configuration.scss';
 
-const TAB_VALUES = ['rules', 'channels', 'policies', 'maintenance'] as const;
+type TabValue = 'rules' | 'channels' | 'policies' | 'maintenance';
 
 export function ConfigurationPage() {
-    const [selectedTab, setSelectedTab] = useState(0);
+    const [selectedTab, setSelectedTab] = useState<TabValue>('rules');
 
     return (
         <PageLayout className="configuration-page">
@@ -40,23 +40,20 @@ export function ConfigurationPage() {
                     { label: 'Escalation Policies', value: 'policies' },
                     { label: 'Maintenance Windows', value: 'maintenance' },
                 ]}
-                selectedTab={TAB_VALUES[selectedTab]}
-                onTabChange={(val) => {
-                    const idx = TAB_VALUES.indexOf(val as typeof TAB_VALUES[number]);
-                    if (idx >= 0) setSelectedTab(idx);
-                }}
+                selectedTab={selectedTab}
+                onTabChange={(val) => setSelectedTab(val as TabValue)}
                 showBorder={false}
             />
 
-            <div className={`configuration-content${selectedTab === 0 ? ' configuration-content--with-sidebar' : ''}`}>
-                {selectedTab === 0 && (
+            <div className={`configuration-content${selectedTab === 'rules' ? ' configuration-content--with-sidebar' : ''}`}>
+                {selectedTab === 'rules' && (
                     <ThresholdRulesTab
-                        onNavigateToChannels={() => setSelectedTab(1)}
+                        onNavigateToChannels={() => setSelectedTab('channels')}
                     />
                 )}
-                {selectedTab === 1 && <NotificationChannelsTab />}
-                {selectedTab === 2 && <EscalationPoliciesTab />}
-                {selectedTab === 3 && <MaintenanceWindowsTab />}
+                {selectedTab === 'channels' && <NotificationChannelsTab />}
+                {selectedTab === 'policies' && <EscalationPoliciesTab />}
+                {selectedTab === 'maintenance' && <MaintenanceWindowsTab />}
             </div>
         </PageLayout>
     );

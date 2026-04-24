@@ -87,13 +87,13 @@ export const GENERAL_OPTS = {
 
 export const NOTIFICATION_OPTS: NotificationOption[] = [
     { key: 'emailAlerts', label: 'Email Alerts', desc: 'Receive alert notifications via email', icon: Email },
-    { key: 'pushNotifications', label: 'Push Notifications', desc: 'Receive browser push notifications', icon: Notification },
+    { key: 'pushNotifications', label: 'Push Notifications', desc: 'Web push notifications are not yet supported', icon: Notification, comingSoon: true },
     { key: 'soundEnabled', label: 'Sound Effects', desc: 'Play sound for new alerts (Coming soon)', icon: VolumeUp, comingSoon: true },
     { key: 'criticalOnly', label: 'Critical Alerts Only', desc: 'Only notify for critical severity alerts', icon: Events },
 ];
 
 export const DEFAULT_SETTINGS: SettingsState = {
     theme: 'system',
-    notifications: { emailAlerts: true, pushNotifications: true, soundEnabled: false, criticalOnly: false },
+    notifications: { emailAlerts: true, pushNotifications: false, soundEnabled: false, criticalOnly: false },
     general: { language: 'en', timezone: 'UTC', autoRefresh: true, refreshInterval: '30' },
 };

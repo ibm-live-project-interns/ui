@@ -62,6 +62,19 @@ export interface UpdatePostMortemRequest {
   status?: string;
 }
 
+export interface CreatePostMortemRequest {
+  alert_id?: number | string;
+  title: string;
+  severity?: string;
+  root_cause?: string;
+  root_cause_category?: string;
+  impact_description?: string;
+  timeline?: TimelineEntry[] | string;
+  action_items?: ActionItem[] | string;
+  prevention_measures?: string;
+  status?: string;
+}
+
 // ==========================================
 // Service Interface
 // ==========================================
@@ -75,6 +88,7 @@ export interface IPostMortemService {
     category?: string;
   }): Promise<PostMortemsResponse>;
   update(id: number, data: UpdatePostMortemRequest): Promise<{ message: string; post_mortem?: PostMortem }>;
+  create(data: CreatePostMortemRequest): Promise<{ message: string; post_mortem?: PostMortem }>;
 }
 
 // ==========================================
@@ -117,6 +131,10 @@ class ApiPostMortemService extends HttpService implements IPostMortemService {
 
   async update(id: number, data: UpdatePostMortemRequest): Promise<{ message: string; post_mortem?: PostMortem }> {
     return await this.put<{ message: string; post_mortem?: PostMortem }>(`/post-mortems/${id}`, data);
+  }
+
+  async create(data: CreatePostMortemRequest): Promise<{ message: string; post_mortem?: PostMortem }> {
+    return await this.post<{ message: string; post_mortem?: PostMortem }>(`/post-mortems`, data);
   }
 }
 

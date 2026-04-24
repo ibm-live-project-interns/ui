@@ -23,7 +23,7 @@ import type { TicketComment } from '@/features/tickets/services/ticketService';
 import { userService } from '@/shared/services';
 import type { ManagedUser } from '@/features/auth/services/userService';
 import type { PriorityAlert } from '@/features/alerts/types';
-import { KPICard } from '@/components';
+import { KPICard, SLATimer } from '@/components';
 import { PageHeader } from '@/components/ui';
 import { PageLayout } from '@/components/layout';
 import { useToast } from '@/contexts';
@@ -265,6 +265,15 @@ export function TicketDetailsPage() {
                     value={comments.length.toString()}
                     subtitle="Activity entries"
                     severity="neutral"
+                />
+            </div>
+
+            {/* SLA Status */}
+            <div className="ticket-details-page__sla-wrap">
+                <SLATimer
+                    createdAt={ticket.createdAt}
+                    priority={ticket.priority}
+                    isResolved={ticket.status === 'resolved' || ticket.status === 'closed'}
                 />
             </div>
 

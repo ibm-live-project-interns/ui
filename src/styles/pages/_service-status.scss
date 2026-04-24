@@ -4,6 +4,7 @@
 @use '@carbon/react/scss/type' as *;
 @use '@carbon/react/scss/type' as react;
 @use '@carbon/colors' as *;
+@use '../tokens' as tok;
 
 .service-status-page {
   width: 100%;
@@ -103,8 +104,8 @@
   .kpi-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: $spacing-05;
-    margin-bottom: $spacing-06;
+    gap: tok.$tok-kpi-row-gap;
+    margin-bottom: tok.$tok-kpi-row-margin-bottom;
 
     @media (max-width: 1056px) {
       grid-template-columns: repeat(2, 1fr);
@@ -286,7 +287,7 @@
   // Application Services Grid
   // ==========================================
   &__services-section {
-    margin-bottom: $spacing-06;
+    margin-bottom: $spacing-07;
 
     .section-title {
       @include react.type-style('heading-compact-02');
@@ -366,7 +367,7 @@
     .status-badge {
       @include react.type-style('label-01');
       font-weight: 600;
-      padding: 2px 8px;
+      padding: $spacing-01 $spacing-03;
       border-radius: 12px;
       text-transform: capitalize;
 
@@ -427,7 +428,7 @@
 
   // Last Incident Card
   &__incident-section {
-    margin-bottom: $spacing-06;
+    margin-bottom: $spacing-07;
 
     .section-title {
       @include react.type-style('heading-compact-02');

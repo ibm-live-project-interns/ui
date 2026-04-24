@@ -2,6 +2,7 @@
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as *;
+@use '../tokens' as tok;
 
 .reports-hub {
   width: 100%;
@@ -10,8 +11,8 @@
   &__kpi-row {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: $spacing-05;
-    margin: $spacing-06 0;
+    gap: tok.$tok-kpi-row-gap;
+    margin: $spacing-06 0 tok.$tok-kpi-row-margin-bottom;
 
     @media (max-width: 1056px) {
       grid-template-columns: repeat(2, 1fr);

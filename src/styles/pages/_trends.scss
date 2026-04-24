@@ -4,6 +4,7 @@
 @use '@carbon/react/scss/type' as *;
 @use '@carbon/react/scss/type' as react;
 @use '@carbon/colors' as *;
+@use '../tokens' as tok;
 
 .trends-insights-page {
     // Global padding is applied in index.scss - no padding here
@@ -64,8 +65,8 @@
     .kpi-row {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: $spacing-05;
-        margin-bottom: $spacing-05;
+        gap: tok.$tok-kpi-row-gap;
+        margin-bottom: tok.$tok-kpi-row-margin-bottom;
 
         @media (max-width: 1056px) {
             grid-template-columns: repeat(2, 1fr);
@@ -144,7 +145,7 @@
     // Charts Section
     .chart-section,
     .alerts-chart-tile {
-        margin-bottom: $spacing-05;
+        margin-bottom: $spacing-07;
 
         .section-controls {
             display: flex;
@@ -191,8 +192,8 @@
     .middle-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: $spacing-05;
-        margin-bottom: $spacing-05;
+        gap: tok.$tok-grid-gap;
+        margin-bottom: tok.$tok-grid-margin-bottom;
         align-items: stretch; // Ensure items stretch to fill height
 
         @media (max-width: 1056px) {
@@ -379,8 +380,8 @@
     .bottom-row {
         display: grid;
         grid-template-columns: 1fr 1fr;
-        gap: $spacing-05;
-        margin-bottom: $spacing-05;
+        gap: tok.$tok-grid-gap;
+        margin-bottom: tok.$tok-grid-margin-bottom;
 
         @media (max-width: 1056px) {
             grid-template-columns: 1fr;
