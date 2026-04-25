@@ -341,7 +341,7 @@ export interface IAlertDataService {
     // Actions
     acknowledgeAlert(id: string): Promise<void>;
     dismissAlert(id: string): Promise<void>;
-    reanalyzeAlert(id: string): Promise<void>;
+    reanalyzeAlert(id: string): Promise<{ message: string; alert?: unknown }>;
     createTicket(id: string, details?: { title: string; description: string; priority: string }): Promise<void>;
     exportReport(format: 'csv' | 'pdf'): Promise<void>;
 

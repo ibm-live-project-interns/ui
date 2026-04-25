@@ -494,8 +494,8 @@ export class ApiAlertDataService extends HttpService implements IAlertDataServic
     // Enrichment Methods
     // ==========================================
 
-    async reanalyzeAlert(id: string): Promise<void> {
-        return this.post<void>(API_ENDPOINTS.REANALYZE_ALERT(id), {});
+    async reanalyzeAlert(id: string): Promise<{ message: string; alert?: unknown }> {
+        return this.post<{ message: string; alert?: unknown }>(API_ENDPOINTS.REANALYZE_ALERT(id), {});
     }
 
     async getAlertTickets(id: string): Promise<LinkedTicket[]> {
