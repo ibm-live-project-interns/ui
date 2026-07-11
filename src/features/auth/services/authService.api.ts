@@ -322,6 +322,24 @@ export class AuthService extends HttpService {
     }
 
     /**
+     * Exchange a short-lived OAuth code for a JWT, then load user profile.
+     * The backend issues a one-time code (not the JWT itself) in the redirect
+     * to keep the real token out of the browser URL bar and history.
+     */
+    async exchangeOAuthCode(code: string): Promise<void> {
+        const apiBaseUrl = (import.meta.env.VITE_API_BASE_URL || 'http://localhost:8080').trim();
+        const response = await fetch(`${apiBaseUrl}/api/v1/auth/oauth/exchange?code=${encodeURIComponent(code)}`);
+        if (!response.ok) {
+            throw new Error('OAuth code exchange failed');
+        }
+        const data = await response.json();
+        if (!data.token) {
+            throw new Error('No token in exchange response');
+        }
+        await this.setOAuthToken(data.token);
+    }
+
+    /**
      * Set token from OAuth callback and load user profile
      */
     async setOAuthToken(token: string): Promise<void> {

@@ -35,6 +35,10 @@ const KNOWN_OAUTH_ERRORS: Record<string, string> = {
     'oauth_failed': 'OAuth authentication failed. Please try again.',
     'token_exchange_failed': 'Failed to complete authentication. Please try again.',
     'user_info_failed': 'Failed to retrieve user information. Please try again.',
+    'oauth_state_failed': 'OAuth session expired or invalid. Please try signing in again.',
+    'account_creation_failed': 'Failed to create your account. Please try again or contact support.',
+    'account_deactivated': 'Your account has been deactivated. Please contact your administrator.',
+    'token_generation_failed': 'Failed to generate your session. Please try again.',
 };
 
 /** Sanitize OAuth error — only show known error strings to prevent URL parameter injection */
@@ -109,50 +113,32 @@ export function LoginPage() {
         return safeRedirectPath(stateFrom);
     })();
 
-    // Handle OAuth callback - token, code, or error from URL params
+    // Handle OAuth callback - exchange code, direct token, or error from URL params
     useEffect(() => {
+        const code = searchParams.get('code');
         const token = searchParams.get('token');
-        const oauthCode = searchParams.get('code');
         const oauthError = searchParams.get('error');
 
         if (oauthError) {
-            // Sanitize error parameter — only show known error strings
             setError(sanitizeOAuthError(oauthError));
-            // Clean up URL
             searchParams.delete('error');
             setSearchParams(searchParams, { replace: true });
+        } else if (code) {
+            // Exchange the short-lived one-time code for a real JWT
+            searchParams.delete('code');
+            setSearchParams(searchParams, { replace: true });
+            authService.exchangeOAuthCode(code).then(() => {
+                navigate(from, { replace: true });
+            }).catch(() => {
+                setError('Failed to complete sign in. Please try again.');
+            });
         } else if (token) {
-            // Legacy: backend redirected with ?token=... already exchanged
+            // Legacy: direct token in URL (older backend versions)
             authService.setOAuthToken(token).then(() => {
                 navigate(from, { replace: true });
             }).catch(() => {
                 setError('Failed to complete sign in. Please try again.');
             });
-        } else if (oauthCode) {
-            // New: exchange the OAuth code with the backend for a token.
-            // This keeps the code out of logs/history longer than necessary
-            // and avoids the token ever being visible in the URL bar.
-            (async () => {
-                try {
-                    const apiBase = env.apiBaseUrl || 'http://localhost:8080';
-                    const res = await fetch(
-                        `${apiBase}/api/v1/auth/oauth/exchange?code=${encodeURIComponent(oauthCode)}`,
-                        { method: 'GET' }
-                    );
-                    const data = await res.json().catch(() => ({}));
-                    if (res.ok && data.token) {
-                        await authService.setOAuthToken(data.token);
-                        // Clean up URL before navigating
-                        searchParams.delete('code');
-                        setSearchParams(searchParams, { replace: true });
-                        navigate(from, { replace: true });
-                    } else {
-                        setError('OAuth authentication failed. Please try again.');
-                    }
-                } catch {
-                    setError('OAuth authentication failed. Please try again.');
-                }
-            })();
         }
     }, [searchParams, setSearchParams, navigate, from]);
 

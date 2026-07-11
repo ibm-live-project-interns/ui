@@ -30,4 +30,4 @@ bun.lock
 *.sw?
 ai-context
 .vercel
-.env*.local
+.env*
