@@ -3,6 +3,261 @@
 @use '@carbon/react/scss/theme' as *;
 
 // ==========================================
+// Page Layout
+// ==========================================
+.topology-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+
+  &__content {
+    padding: $spacing-06;
+    display: flex;
+    flex-direction: column;
+    gap: $spacing-06;
+  }
+
+  &__filters {
+    display: flex;
+    gap: $spacing-05;
+    align-items: flex-end;
+    flex-wrap: wrap;
+
+    .cds--dropdown__wrapper {
+      min-width: 180px;
+    }
+  }
+
+  &__clear-filters {
+    white-space: nowrap;
+  }
+
+  &__section-title {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--cds-text-primary);
+    margin-bottom: $spacing-05;
+  }
+
+  &__location-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+    gap: $spacing-05;
+
+    @media (max-width: 672px) {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__location-tile {
+    padding: $spacing-05;
+    background: var(--cds-layer-01);
+    border-left: 3px solid var(--cds-border-interactive);
+  }
+
+  &__location-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: $spacing-04;
+    padding-bottom: $spacing-03;
+    border-bottom: 1px solid var(--cds-border-subtle);
+  }
+
+  &__location-title {
+    display: flex;
+    align-items: center;
+    gap: $spacing-03;
+
+    h4 {
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--cds-text-primary);
+      margin: 0;
+    }
+  }
+
+  &__location-stats {
+    display: flex;
+    gap: $spacing-04;
+    font-size: 0.75rem;
+  }
+
+  &__location-stat {
+    display: flex;
+    align-items: center;
+    gap: $spacing-02;
+
+    &--online { color: var(--cds-support-success); }
+    &--warning { color: var(--cds-support-warning); }
+    &--offline { color: var(--cds-support-error); }
+  }
+
+  &__device-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(145px, 1fr));
+    gap: $spacing-03;
+  }
+
+  &__device-card {
+    padding: $spacing-04;
+    min-height: auto;
+    background: var(--cds-layer-02);
+    border: 1px solid transparent;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+    position: relative;
+
+    &:hover {
+      border-color: var(--cds-border-interactive);
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+    }
+
+    &--offline {
+      opacity: 0.65;
+    }
+
+    &-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: $spacing-03;
+    }
+
+    &-icon {
+      display: flex;
+      align-items: center;
+    }
+
+    &-body {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-01;
+    }
+
+    &-name {
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: var(--cds-text-primary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    &-meta {
+      font-size: 0.6875rem;
+      color: var(--cds-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.02em;
+    }
+
+    &-ip {
+      font-size: 0.6875rem;
+      font-family: 'IBM Plex Mono', monospace;
+      color: var(--cds-text-helper);
+    }
+  }
+
+  &__device-popover {
+    min-width: 260px;
+
+    &-inner {
+      padding: $spacing-04;
+    }
+
+    &-header {
+      display: flex;
+      align-items: center;
+      gap: $spacing-03;
+      margin-bottom: $spacing-04;
+      padding-bottom: $spacing-03;
+      border-bottom: 1px solid var(--cds-border-subtle);
+
+      strong {
+        flex: 1;
+        font-size: 0.875rem;
+        color: var(--cds-text-primary);
+      }
+    }
+
+    &-close {
+      flex-shrink: 0;
+    }
+
+    &-details {
+      display: flex;
+      flex-direction: column;
+      gap: $spacing-03;
+      margin: 0;
+
+      > div {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: $spacing-05;
+      }
+
+      dt {
+        font-size: 0.75rem;
+        color: var(--cds-text-secondary);
+        white-space: nowrap;
+      }
+
+      dd {
+        font-size: 0.8125rem;
+        color: var(--cds-text-primary);
+        text-align: right;
+        margin: 0;
+      }
+
+      code {
+        font-family: 'IBM Plex Mono', monospace;
+        font-size: 0.75rem;
+      }
+    }
+  }
+
+  &__empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-09;
+    text-align: center;
+    color: var(--cds-text-secondary);
+    gap: $spacing-05;
+
+    p {
+      max-width: 400px;
+      font-size: 0.875rem;
+    }
+  }
+
+  &__connections {
+    margin-top: $spacing-03;
+  }
+
+  &__conn-endpoint {
+    display: flex;
+    align-items: center;
+    font-size: 0.8125rem;
+    color: var(--cds-text-primary);
+  }
+
+  &__utilization-cell {
+    display: flex;
+    align-items: center;
+    gap: $spacing-04;
+    min-width: 160px;
+
+    .cds--progress-bar {
+      flex: 1;
+      min-width: 80px;
+    }
+  }
+}
+
+// ==========================================
 // Device Card Status Color Modifiers
 // ==========================================
 .topology-page__device-card-icon {

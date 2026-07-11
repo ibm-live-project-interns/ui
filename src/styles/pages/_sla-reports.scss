@@ -2,6 +2,7 @@
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as react;
+@use '../tokens' as tok;
 
 .sla-reports-page {
   width: 100%;
@@ -9,7 +10,7 @@
   .kpi-row {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: $spacing-05;
+    gap: tok.$tok-kpi-row-gap;
     margin-top: $spacing-05;
   }
 

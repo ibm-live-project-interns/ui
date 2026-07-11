@@ -116,24 +116,6 @@ export const TopInterfaces = React.memo(function TopInterfaces() {
                     })
                 )}
             </div>
-
-            <style>{`
-                .custom-progress-bar .cds--progress-bar__bar {
-                    background-color: #0f62fe;
-                }
-                .custom-progress-bar.purple .cds--progress-bar__bar {
-                    background-color: #8a3ffc;
-                }
-                .custom-progress-bar.teal .cds--progress-bar__bar {
-                    background-color: #009d9a;
-                }
-                .custom-progress-bar.blue .cds--progress-bar__bar {
-                    background-color: #4589ff;
-                }
-                .custom-progress-bar.magenta .cds--progress-bar__bar {
-                    background-color: #ee5396;
-                }
-            `}</style>
         </div>
     );
 });

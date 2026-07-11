@@ -104,6 +104,41 @@ export function useSettings(): UseSettingsReturn {
         }
     }, []);
 
+    // Load UI preferences (theme, language, timezone, auto-refresh) from backend
+    const loadUIPreferences = useCallback(async () => {
+        try {
+            const token = localStorage.getItem('noc_token');
+            if (!token) return;
+            const resp = await fetch(`${env.apiBaseUrl}/api/${env.apiVersion}${API_ENDPOINTS.SETTINGS_UI}`, {
+                headers: { Authorization: `Bearer ${token}` },
+            });
+            if (resp.ok) {
+                const prefs = await resp.json();
+                setSettings(prev => ({
+                    ...prev,
+                    theme: (prefs.theme as typeof prev.theme) ?? prev.theme,
+                    general: {
+                        ...prev.general,
+                        language: prefs.language ?? prev.general.language,
+                        timezone: prefs.timezone ?? prev.general.timezone,
+                        autoRefresh: prefs.autoRefresh ?? prev.general.autoRefresh,
+                        refreshInterval: prefs.refreshInterval ?? prev.general.refreshInterval,
+                    },
+                }));
+                // Sync theme to DOM
+                if (prefs.theme && prefs.theme !== 'system') {
+                    document.documentElement.setAttribute('data-theme-setting', prefs.theme);
+                } else {
+                    document.documentElement.removeAttribute('data-theme-setting');
+                }
+            } else {
+                logger.warn(`Failed to load UI preferences: server returned ${resp.status}`);
+            }
+        } catch (err) {
+            logger.warn('Failed to load UI preferences from server, using localStorage fallback', err);
+        }
+    }, []);
+
     // Initial Load & Theme Effect
     useEffect(() => {
         function loadJson<T>(key: string, defaultVal: T): T {
@@ -143,7 +178,8 @@ export function useSettings(): UseSettingsReturn {
             };
         });
         loadNotificationPreferences();
-    }, [loadNotificationPreferences]);
+        loadUIPreferences();
+    }, [loadNotificationPreferences, loadUIPreferences]);
 
     useEffect(() => {
         if (settings.theme === 'system') document.documentElement.removeAttribute('data-theme-setting');
@@ -172,27 +208,37 @@ export function useSettings(): UseSettingsReturn {
         localStorage.setItem(AUTO_REFRESH_KEY, String(settings.general.autoRefresh));
         localStorage.setItem(REFRESH_INTERVAL_KEY, settings.general.refreshInterval);
 
-        // Persist notification preferences to backend
+        // Persist notification preferences and UI preferences to backend
         backendSaveFailedRef.current = false;
         try {
             const token = localStorage.getItem('noc_token');
             if (token) {
-                const resp = await fetch(`${env.apiBaseUrl}/api/${env.apiVersion}${API_ENDPOINTS.SETTINGS_NOTIFICATIONS}`, {
-                    method: 'PUT',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        Authorization: `Bearer ${token}`,
-                    },
-                    body: JSON.stringify(settings.notifications),
-                });
-                if (!resp.ok) {
-                    logger.error(`Failed to save notification preferences: server returned ${resp.status}`);
+                const [notifResp, uiResp] = await Promise.all([
+                    fetch(`${env.apiBaseUrl}/api/${env.apiVersion}${API_ENDPOINTS.SETTINGS_NOTIFICATIONS}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                        body: JSON.stringify(settings.notifications),
+                    }),
+                    fetch(`${env.apiBaseUrl}/api/${env.apiVersion}${API_ENDPOINTS.SETTINGS_UI}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+                        body: JSON.stringify({
+                            theme: settings.theme,
+                            language: settings.general.language,
+                            timezone: settings.general.timezone,
+                            autoRefresh: settings.general.autoRefresh,
+                            refreshInterval: settings.general.refreshInterval,
+                        }),
+                    }),
+                ]);
+                if (!notifResp.ok || !uiResp.ok) {
+                    logger.error(`Failed to save preferences — notifications: ${notifResp.status}, ui: ${uiResp.status}`);
                     backendSaveFailedRef.current = true;
                     addToast('warning', 'Partial Save', 'Settings saved locally but the server returned an error. Changes may not persist across devices.');
                 }
             }
         } catch (err) {
-            logger.error('Failed to save notification preferences to server', err);
+            logger.error('Failed to save preferences to server', err);
             backendSaveFailedRef.current = true;
             addToast('warning', 'Partial Save', 'Settings saved locally but could not sync to server. Changes may not persist across devices.');
         }

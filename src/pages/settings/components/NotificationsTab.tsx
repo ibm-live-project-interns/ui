@@ -53,6 +53,7 @@ export const NotificationsTab = React.memo(function NotificationsTab({
                             size="sm"
                             toggled={notifications[item.key]}
                             onToggle={() => handleToggle(item)}
+                            disabled={'comingSoon' in item && !!item.comingSoon}
                         />
                     </div>
                 ))}

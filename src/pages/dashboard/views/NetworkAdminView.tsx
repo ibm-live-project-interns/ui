@@ -24,6 +24,7 @@ import { CheckmarkFilled, Misuse, Warning, Router } from '@carbon/icons-react';
 import { deviceService } from '@/features/devices/services/deviceService';
 import type { Device, DeviceStats } from '@/features/devices/services/deviceService';
 import { createDonutChartOptions } from '@/shared/constants/charts';
+import { uiLogger } from '@/shared/utils/logger';
 import '@/styles/pages/_dashboard.scss';
 import '@/styles/components/_kpi-card.scss';
 import '@carbon/charts-react/styles.css';
@@ -92,7 +93,7 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
                     setError(null);
                 }
             } catch (err) {
-                console.error('[NetworkAdminView] Failed to fetch device data:', err);
+                uiLogger.error('[NetworkAdminView] Failed to fetch device data', err);
                 if (!cancelled) {
                     setError('Failed to load device data');
                 }
@@ -160,28 +161,28 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
             label: 'Total Devices',
             value: deviceStats.total.toLocaleString(),
             icon: Router,
-            iconColor: '#0f62fe',
+            iconColor: 'var(--cds-interactive)',
             severity: 'info' as const,
         },
         {
             label: 'Online',
             value: deviceStats.online.toLocaleString(),
             icon: CheckmarkFilled,
-            iconColor: '#24a148',
+            iconColor: 'var(--cds-support-success)',
             severity: 'success' as const,
         },
         {
             label: 'Warnings',
             value: deviceStats.warning + deviceStats.critical,
             icon: Warning,
-            iconColor: '#ff832b',
+            iconColor: 'var(--cds-support-warning)',
             severity: 'major' as const,
         },
         {
             label: 'Offline',
             value: deviceStats.offline,
             icon: Misuse,
-            iconColor: '#da1e28',
+            iconColor: 'var(--cds-support-error)',
             severity: 'critical' as const,
         },
     ], [deviceStats]);
@@ -211,10 +212,10 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
         theme: currentTheme as any,
         color: {
             scale: {
-                'Online': '#24a148',
-                'Warning': '#ff832b',
-                'Critical': '#da1e28',
-                'Offline': '#6f6f6f',
+                'Online': 'var(--cds-support-success)',
+                'Warning': 'var(--cds-support-warning)',
+                'Critical': 'var(--cds-support-error)',
+                'Offline': 'var(--cds-text-secondary)',
             }
         }
     }), [currentTheme]);
@@ -227,7 +228,7 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
                     <PageHeader
                         title="Network Administration"
                         subtitle="Loading device data..."
-                        badges={[{ text: 'System Operational', color: '#24a148' }]}
+                        badges={[{ text: 'System Operational', color: 'var(--cds-support-success)' }]}
                     />
                     <div className="kpi-row">
                         {[1, 2, 3, 4].map((i) => (
@@ -239,10 +240,10 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
                     </div>
                     <div className="charts-row">
                         <Tile className="chart-tile">
-                            <SkeletonPlaceholder style={{ width: '100%', height: '300px' }} />
+                            <SkeletonPlaceholder className="dashboard-skeleton--chart" />
                         </Tile>
                         <Tile className="chart-tile">
-                            <SkeletonPlaceholder style={{ width: '100%', height: '300px' }} />
+                            <SkeletonPlaceholder className="dashboard-skeleton--chart" />
                         </Tile>
                     </div>
                 </div>
@@ -258,8 +259,8 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
                     title="Network Administration"
                     subtitle="Device inventory, health monitoring, and configuration management"
                     badges={[error
-                        ? { text: 'System Degraded', color: '#ee5396' }
-                        : { text: 'System Operational', color: '#24a148' }
+                        ? { text: 'System Degraded', color: 'var(--cds-support-error)' }
+                        : { text: 'System Operational', color: 'var(--cds-support-success)' }
                     ]}
                 />
 
@@ -269,7 +270,7 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
                         kind="error"
                         title="Error"
                         subtitle={error}
-                        style={{ marginBottom: '1rem' }}
+                        className="u-notification-gap"
                     />
                 )}
 
@@ -346,7 +347,7 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
                                     <TableBody>
                                         {rows.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={6} style={{ textAlign: 'center', padding: '2rem', color: 'var(--cds-text-secondary)' }}>
+                                                <TableCell colSpan={6} className="network-admin-view__empty-state">
                                                     {searchQuery ? `No devices matching "${searchQuery}"` : 'No devices found'}
                                                 </TableCell>
                                             </TableRow>
@@ -358,9 +359,9 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
                                                 return (
                                                     <TableRow {...getRowProps({ row })} key={row.id}>
                                                         <TableCell>
-                                                            <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                                            <div className="network-admin-view__name-cell">
                                                                 <span
-                                                                    style={{ fontWeight: 600, cursor: 'pointer', color: 'var(--cds-link-primary)' }}
+                                                                    className="network-admin-view__name-link"
                                                                     role="link"
                                                                     tabIndex={0}
                                                                     onClick={() => navigate(`/devices/${device.id}`)}
@@ -368,13 +369,13 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
                                                                 >
                                                                     {device.name}
                                                                 </span>
-                                                                <span style={{ fontSize: '12px', color: 'var(--cds-text-secondary)' }}>{device.ip}</span>
+                                                                <span className="network-admin-view__ip">{device.ip}</span>
                                                             </div>
                                                         </TableCell>
-                                                        <TableCell style={{ textTransform: 'capitalize' }}>{device.type}</TableCell>
+                                                        <TableCell className="network-admin-view__type-cell">{device.type}</TableCell>
                                                         <TableCell>{getStatusTag(device.status)}</TableCell>
                                                         <TableCell>
-                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <div className="network-admin-view__health-cell">
                                                                 <ProgressBar
                                                                     value={device.healthScore}
                                                                     max={100}
@@ -383,7 +384,7 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
                                                                     hideLabel
                                                                     label="Health"
                                                                 />
-                                                                <span style={{ minWidth: '40px' }}>{device.healthScore}%</span>
+                                                                <span className="network-admin-view__health-value">{device.healthScore}%</span>
                                                             </div>
                                                         </TableCell>
                                                         <TableCell>
@@ -391,16 +392,16 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
                                                                 <Tag
                                                                     type="red"
                                                                     size="sm"
-                                                                    style={{ cursor: 'pointer' }}
+                                                                    className="network-admin-view__alert-tag"
                                                                     onClick={() => navigate(`/alerts?device=${encodeURIComponent(device.name)}`)}
                                                                 >
                                                                     {device.recentAlerts}
                                                                 </Tag>
                                                             ) : (
-                                                                <span style={{ color: 'var(--cds-text-secondary)' }}>0</span>
+                                                                <span className="network-admin-view__alert-zero">0</span>
                                                             )}
                                                         </TableCell>
-                                                        <TableCell style={{ color: 'var(--cds-text-secondary)' }}>
+                                                        <TableCell className="network-admin-view__muted-cell">
                                                             {device.lastSeen || 'N/A'}
                                                         </TableCell>
                                                     </TableRow>

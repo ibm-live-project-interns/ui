@@ -4,6 +4,7 @@
 @use '@carbon/react/scss/type' as *;
 @use '@carbon/react/scss/type' as react;
 @use '@carbon/colors' as *;
+@use '../tokens' as tok;
 
 .incident-history-page {
   width: 100%;
@@ -19,8 +20,8 @@
   .kpi-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: $spacing-05;
-    margin-bottom: $spacing-06;
+    gap: tok.$tok-kpi-row-gap;
+    margin-bottom: tok.$tok-kpi-row-margin-bottom;
 
     @media (max-width: 1056px) {
       grid-template-columns: repeat(2, 1fr);
@@ -35,7 +36,7 @@
   &__content {
     display: flex;
     flex-direction: column;
-    gap: $spacing-05;
+    gap: $spacing-07;
   }
 
   // Split Layout (2/3 + 1/3)
@@ -130,8 +131,13 @@
     }
   }
 
-  // Table Tile
+  // Table Tile - flush padding so table fills the tile
   &__table-tile {
+    padding: 0;
+
+    .cds--data-table-container {
+      border: none;
+    }
 
     .table-header {
       display: flex;
@@ -351,4 +357,96 @@
       border: 1px solid $border-subtle-01;
     }
   }
+}
+
+// Resolution Log section (wired to real alert_history table)
+.incident-history-page__resolution-log {
+  margin-top: $spacing-07;
+  padding: $spacing-05;
+  background: $layer-01;
+  border: 1px solid $border-subtle-01;
+
+  .resolution-log__title {
+    @include type-style('heading-02');
+    color: $text-primary;
+    margin: 0 0 $spacing-02;
+  }
+
+  .resolution-log__subtitle {
+    @include type-style('body-short-01');
+    color: $text-secondary;
+    margin: 0 0 $spacing-05;
+  }
+
+  .resolution-log__table {
+    width: 100%;
+    border-collapse: collapse;
+
+    th, td {
+      padding: $spacing-03 $spacing-04;
+      text-align: left;
+      border-bottom: 1px solid $border-subtle-01;
+      @include type-style('body-short-01');
+    }
+
+    th {
+      background: $layer-02;
+      color: $text-secondary;
+      @include type-style('label-01');
+    }
+
+    td code {
+      font-size: 0.75rem;
+      color: $text-secondary;
+    }
+  }
+
+  // Severity badge colours – use Carbon theme tokens (via CSS custom properties)
+  // so the badges automatically track light/dark theme.
+  .resolution-log__severity {
+    display: inline-block;
+    padding: $spacing-01 $spacing-03;
+    border-radius: 2px;
+    @include type-style('label-01');
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+
+    &--critical {
+      background: var(--cds-support-error);
+      color: var(--cds-text-on-color);
+    }
+    &--high,
+    &--major {
+      background: var(--cds-support-warning);
+      color: var(--cds-text-on-color-inverse, #000);
+    }
+    &--medium {
+      background: var(--cds-support-caution-major, #f1c21b);
+      color: var(--cds-text-on-color-inverse, #000);
+    }
+    &--low,
+    &--info {
+      background: $layer-02;
+      color: $text-secondary;
+      border: 1px solid $border-subtle-01;
+    }
+  }
+
+  // Shared message line (loading / empty) — replaces inline style={{padding,color}}.
+  .resolution-log__message {
+    padding: $spacing-05;
+    color: $text-secondary;
+    margin: 0;
+  }
+}
+
+.incident-history-page__error {
+  margin: $spacing-05 $spacing-06;
+}
+
+.incident-history-page__pm-form {
+  display: flex;
+  flex-direction: column;
+  gap: $spacing-05;
+  padding: $spacing-03 0;
 }

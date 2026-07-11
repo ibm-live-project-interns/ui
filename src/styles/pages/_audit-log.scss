@@ -3,6 +3,7 @@
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as *;
 @use '@carbon/react/scss/type' as react;
+@use '../tokens' as tok;
 
 .audit-log-page {
     width: 100%;
@@ -103,7 +104,7 @@
     .kpi-row {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: $spacing-05;
+        gap: tok.$tok-kpi-row-gap;
 
         @media (max-width: 1056px) {
             grid-template-columns: repeat(2, 1fr);

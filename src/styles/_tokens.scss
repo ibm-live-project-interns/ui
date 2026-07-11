@@ -1,0 +1,48 @@
+// =============================================================================
+// Sentrix Design Tokens — edit this file to restyle the entire application
+// =============================================================================
+// All values map to IBM Carbon spacing tokens ($spacing-01 = 4px ... $spacing-12 = 96px)
+// Reference: https://carbondesignsystem.com/guidelines/spacing/overview/
+// =============================================================================
+
+@use '@carbon/react/scss/spacing' as *;
+@use '@carbon/react/scss/theme' as *;
+
+// ─── Page Layout ─────────────────────────────────────────────────────────────
+// Controls the outer shell of every page
+
+$tok-page-content-padding:   $spacing-07 !default;   // 32px  - main content area padding (sides + top)
+$tok-page-section-gap:       $spacing-07 !default;   // 32px  - vertical gap between major page sections
+$tok-page-content-gap:       $spacing-06 !default;   // 24px  - gap between minor content blocks (within a section)
+
+// ─── KPI Card Row ────────────────────────────────────────────────────────────
+$tok-kpi-row-gap:            $spacing-05 !default;   // 16px  - gap between KPI cards
+$tok-kpi-row-margin-bottom:  $spacing-07 !default;   // 32px  - space below the KPI row before next section
+$tok-kpi-card-padding:       $spacing-05 !default;   // 16px  - internal padding inside a KPI card
+$tok-kpi-card-min-height:    96px        !default;   //         minimum card height
+
+// ─── Content Cards / Tiles ───────────────────────────────────────────────────
+$tok-tile-padding:           $spacing-05 !default;   // 16px  - padding inside a Carbon Tile
+$tok-tile-margin-bottom:     $spacing-07 !default;   // 32px  - space below a tile/chart before next section
+$tok-tile-header-gap:        $spacing-03 !default;   // 8px   - gap between tile title and content
+
+// ─── Two-Column / Grid Rows ──────────────────────────────────────────────────
+$tok-grid-gap:               $spacing-05 !default;   // 16px  - gap between grid columns
+$tok-grid-margin-bottom:     $spacing-07 !default;   // 32px  - space below a two-column section
+
+// ─── Tables ──────────────────────────────────────────────────────────────────
+$tok-table-row-height:       48px        !default;   //         data table body row height
+$tok-table-header-height:    40px        !default;   //         data table header row height
+$tok-table-cell-padding-v:   $spacing-03 !default;   // 8px   - vertical cell padding
+$tok-table-cell-padding-h:   $spacing-04 !default;   // 12px  - horizontal cell padding
+
+// ─── Filter / Search Bars ────────────────────────────────────────────────────
+$tok-filter-bar-margin-bottom: $spacing-05 !default; // 16px  - space below filter/search bar
+$tok-filter-bar-gap:         $spacing-03 !default;   // 8px   - gap between filter controls
+
+// ─── Page Header ─────────────────────────────────────────────────────────────
+$tok-page-header-margin-bottom: $spacing-06 !default; // 24px - space between PageHeader and first section
+
+// ─── Misc ────────────────────────────────────────────────────────────────────
+$tok-section-title-margin-bottom: $spacing-04 !default; // 12px - space after a section heading
+$tok-badge-padding:          2px $spacing-03 !default;  //        badge/tag internal padding

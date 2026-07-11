@@ -17,6 +17,21 @@ const MAX_RETRIES = 1;
 /** Delay in ms before retrying a failed request */
 const RETRY_DELAY_MS = 1000;
 
+/**
+ * Sanitize backend error messages before surfacing to UI.
+ * Replaces database/ORM leakage with a generic message to avoid
+ * exposing internal implementation details to end users.
+ */
+function sanitizeBackendError(message: string): string {
+  if (!message) return 'An unexpected error occurred. Please try again.';
+  const dbPatterns = ['pq:', 'sql:', 'gorm:', 'SQLSTATE', 'violates constraint', 'duplicate key', 'ERROR:'];
+  const lower = message.toLowerCase();
+  if (dbPatterns.some(p => lower.includes(p.toLowerCase()))) {
+    return 'An unexpected server error occurred. Please try again.';
+  }
+  return message;
+}
+
 export class HttpService {
   protected baseUrl: string;
   protected serviceName: string;
@@ -141,24 +156,37 @@ export class HttpService {
       const duration = Math.round(performance.now() - startTime);
 
       // Handle 401 Unauthorized - token expired or invalid
-      // Also clear cached user data from localStorage
+      // Also clear cached user data from localStorage, unless the
+      // 401 came from an auth endpoint (login/register/oauth) where
+      // the user simply entered wrong credentials.
       if (response.status === 401) {
-        apiLogger.warn(`${method} ${endpoint} returned 401 - session expired`, {
+        const isAuthEndpoint = endpoint.includes('/login') || endpoint.includes('/register') || endpoint.includes('/auth/');
+        apiLogger.warn(`${method} ${endpoint} returned 401`, {
           duration,
           status: 401,
+          isAuthEndpoint,
         });
-        HttpService.clearToken();
-        localStorage.removeItem(USER_KEY);
-        if (typeof window !== 'undefined' && !window.location.pathname.includes('/login')) {
-          window.location.href = '/login';
+        if (!isAuthEndpoint) {
+          // Auto-logout: clear auth state and redirect to login
+          HttpService.clearToken();
+          localStorage.removeItem(USER_KEY);
+          if (typeof window !== 'undefined') {
+            sessionStorage.setItem('sessionExpired', 'true');
+            if (!window.location.pathname.includes('/login')) {
+              window.location.href = '/login';
+            }
+          }
+          throw new Error('Session expired. Please login again.');
         }
-        throw new Error('Session expired. Please login again.');
+        // Fall through for auth endpoints so the login page can
+        // surface the real error message (e.g. "invalid credentials").
       }
 
       // Handle other error responses
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        const errorMessage = errorData.error || `HTTP Error: ${response.status} ${response.statusText}`;
+        const rawMessage = errorData.error || `HTTP Error: ${response.status} ${response.statusText}`;
+        const errorMessage = sanitizeBackendError(rawMessage);
 
         // 404 is a normal "not found" response, not a server error -- log at debug level
         // to avoid noisy console.error spam for expected missing resources (e.g., post-mortems)

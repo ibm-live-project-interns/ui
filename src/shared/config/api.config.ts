@@ -116,13 +116,6 @@ export const API_ENDPOINTS = {
   TICKET_COMMENTS: (id: string) => `/tickets/${id}/comments`,
 
   // ==========================================
-  // Dashboard / Metrics Endpoints
-  // ==========================================
-  DASHBOARD_SUMMARY: '/dashboard/summary',
-  DASHBOARD_METRICS: '/dashboard/metrics',
-  DASHBOARD_CHARTS: '/dashboard/charts',
-
-  // ==========================================
   // Trends Endpoints
   // ==========================================
   TRENDS_KPI: '/trends/kpi',
@@ -163,6 +156,7 @@ export const API_ENDPOINTS = {
   // User Settings Endpoints
   // ==========================================
   SETTINGS_NOTIFICATIONS: '/settings/notifications',
+  SETTINGS_UI: '/settings/ui',
 
   // ==========================================
   // Health Check (internal)
@@ -212,6 +206,34 @@ export const API_ENDPOINTS = {
   // ==========================================
   POST_MORTEMS: '/post-mortems',
   POST_MORTEM_BY_ID: (id: number) => `/post-mortems/${id}`,
+
+  // ==========================================
+  // Alert History (resolved alert log)
+  // ==========================================
+  ALERT_HISTORY: '/alert-history',
+
+  // ==========================================
+  // SLA Reports
+  // ==========================================
+  SLA_OVERVIEW: '/reports/sla',
+  SLA_VIOLATIONS: '/reports/sla/violations',
+  SLA_TREND: '/reports/sla/trend',
+
+  // ==========================================
+  // Runbooks
+  // ==========================================
+  RUNBOOKS: '/runbooks',
+  RUNBOOK_BY_ID: (id: number) => `/runbooks/${id}`,
+
+  // ==========================================
+  // Topology
+  // ==========================================
+  TOPOLOGY: '/topology',
+
+  // ==========================================
+  // On-Call (read views)
+  // ==========================================
+  ON_CALL_SCHEDULE_VIEW: '/on-call/schedule',
 } as const;
 
 // HTTP request timeout (ms)

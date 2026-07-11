@@ -9,6 +9,7 @@
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as *;
 @use '@carbon/react/scss/colors' as *;
+@use '../tokens' as tok;
 
 .oncall-page {
   width: 100%;
@@ -17,8 +18,8 @@
   .kpi-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: $spacing-05;
-    margin-bottom: $spacing-05;
+    gap: tok.$tok-kpi-row-gap;
+    margin-bottom: tok.$tok-kpi-row-margin-bottom;
 
     @media (max-width: 1056px) {
       grid-template-columns: repeat(2, 1fr);
@@ -38,7 +39,7 @@
   &__content {
     display: flex;
     flex-direction: column;
-    gap: $spacing-05;
+    gap: $spacing-07;
   }
 
   // Tabs
@@ -113,7 +114,7 @@
   &__day-person {
     display: flex;
     flex-direction: column;
-    gap: 2px;
+    gap: $spacing-02;
     padding-top: $spacing-03;
     border-top: 1px solid $border-subtle-01;
   }
@@ -136,16 +137,22 @@
     color: $text-secondary;
   }
 
-  // Table Tile
+  // Table Tile - flush padding so table fills the tile
   &__table-tile {
+    padding: 0;
 
     .cds--data-table-container {
+      border: none;
+    }
+
+    .cds--pagination {
+      border-top: 1px solid $border-subtle-01;
     }
   }
 
-  // Today row highlight
+  // Today row highlight - uses Carbon highlight token
   &__today-row {
-    background-color: rgba(15, 98, 254, 0.06) !important;
+    background-color: var(--cds-highlight, rgba(15, 98, 254, 0.06));
     border-left: 3px solid $interactive;
   }
 

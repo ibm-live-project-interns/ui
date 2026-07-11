@@ -21,6 +21,7 @@ import { getDeviceIcon } from '@/shared/constants/devices';
 import { createAreaChartOptions, createDonutChartOptions } from '@/shared/constants/charts';
 import { alertDataService } from '@/shared/services';
 import { normalizeAlert } from '@/shared/utils/normalizeAlert';
+import { uiLogger } from '@/shared/utils/logger';
 import type { SummaryAlert, NoisyDevice, AIMetric } from '@/features/alerts/types/alert.types';
 import { NoisyDevicesCard, AlertTicker, KPICard, DataTableWrapper } from '@/components';
 import type { CriticalAlert, KPISeverity, NoisyDeviceItem } from '@/components';
@@ -52,7 +53,7 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
       const updatedAlerts = await alertDataService.getNocAlerts();
       setRecentAlerts(updatedAlerts);
     } catch (error) {
-      console.error('Failed to acknowledge alert:', error);
+      uiLogger.error('Failed to acknowledge alert', error);
     }
   }, []);
 
@@ -123,8 +124,8 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
 
         // Build enhanced KPI data with icon colors matching Dashboard.png
         // Extract AI accuracy from metrics if available
-        const aiAccuracyMetric = metrics.find(m => m.label?.toLowerCase().includes('accuracy'));
-        const aiAccuracyValue = aiAccuracyMetric ? parseFloat(String(aiAccuracyMetric.value)) : null;
+        const aiEnrichmentMetric = metrics.find(m => m.id === 'ai-accuracy' || m.label?.toLowerCase().includes('enrichment'));
+        const aiEnrichmentValue = aiEnrichmentMetric ? parseFloat(String(aiEnrichmentMetric.value)) : null;
 
         const enhancedKpis = [
           {
@@ -132,7 +133,7 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
             label: 'Active Alerts',
             value: summary?.activeCount || 0,
             icon: Notification,
-            iconColor: '#0f62fe', // Blue
+            iconColor: 'var(--cds-interactive)',
             severity: 'info' as KPISeverity,
             trend: { direction: 'stable' as const, value: 'vs last hour', isPositive: true },
             subtitle: 'Total alerts in system'
@@ -142,7 +143,7 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
             label: 'Critical',
             value: summary?.criticalCount || 0,
             icon: WarningAltFilled,
-            iconColor: '#da1e28', // Red
+            iconColor: 'var(--cds-support-error)',
             severity: 'critical' as KPISeverity,
             subtitle: 'Requires immediate attention'
           },
@@ -151,18 +152,18 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
             label: 'Major',
             value: summary?.majorCount || 0,
             icon: WarningAlt,
-            iconColor: '#ff832b', // Orange
+            iconColor: 'var(--cds-support-warning)',
             severity: 'major' as KPISeverity,
             subtitle: 'Service impacting'
           },
           {
             id: 'ai-accuracy',
-            label: 'AI Accuracy',
-            value: aiAccuracyValue !== null ? `${aiAccuracyValue}%` : 'N/A',
+            label: 'AI Enrichment',
+            value: aiEnrichmentValue !== null ? `${aiEnrichmentValue}%` : 'N/A',
             icon: Analytics,
-            iconColor: aiAccuracyValue !== null && aiAccuracyValue >= 90 ? '#8a3ffc' : '#ff832b', // Purple if good, orange if not
-            severity: (aiAccuracyValue !== null && aiAccuracyValue >= 90 ? 'success' : 'major') as KPISeverity,
-            subtitle: aiAccuracyValue !== null ? 'Based on recent correlations' : 'Data unavailable'
+            iconColor: aiEnrichmentValue !== null && aiEnrichmentValue >= 90 ? 'var(--cds-support-info)' : 'var(--cds-support-warning)',
+            severity: (aiEnrichmentValue !== null && aiEnrichmentValue >= 90 ? 'success' : 'major') as KPISeverity,
+            subtitle: aiEnrichmentValue !== null ? `${aiEnrichmentValue}% of alerts analyzed by AI` : 'Data unavailable'
           }
         ];
 
@@ -173,7 +174,7 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
         setNoisyDevices(devices || []);
         setAiMetrics(metrics || []);
       } catch (error) {
-        console.error("Failed to fetch dashboard data:", error);
+        uiLogger.error('Failed to fetch dashboard data', error);
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -317,7 +318,7 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
             <SkeletonText width="400px" />
           </div>
           <div className="header-right">
-            <SkeletonPlaceholder style={{ width: '150px', height: '32px' }} />
+            <SkeletonPlaceholder className="dashboard-skeleton--header-chip" />
           </div>
         </div>
         <div className="kpi-row">
@@ -332,11 +333,11 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
         <div className="charts-row">
           <Tile className="chart-tile">
             <SkeletonText heading width="200px" />
-            <SkeletonPlaceholder style={{ width: '100%', height: '300px', marginTop: '1rem' }} />
+            <SkeletonPlaceholder className="dashboard-skeleton--chart-top" />
           </Tile>
           <Tile className="chart-tile">
             <SkeletonText heading width="200px" />
-            <SkeletonPlaceholder style={{ width: '100%', height: '300px', marginTop: '1rem' }} />
+            <SkeletonPlaceholder className="dashboard-skeleton--chart-top" />
           </Tile>
         </div>
         <DataTableSkeleton columnCount={headers.length} rowCount={5} showHeader showToolbar />
@@ -414,7 +415,7 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
           <div className="chart-header">
             <h3>Severity Distribution</h3>
           </div>
-          <div className="chart-container chart-container--centered" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+          <div className="chart-container chart-container--centered noc-ops-view__donut-container">
             <ChartWrapper
               ChartComponent={DonutChart}
               data={severityDist}
@@ -473,7 +474,7 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
                         }
                         return 'N/A';
                       } catch (e) {
-                        console.error('Error rendering timestamp:', e, alert.timestamp);
+                        uiLogger.error('Error rendering timestamp', e, { timestamp: alert.timestamp });
                         return 'N/A';
                       }
                     };
@@ -482,7 +483,7 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
                       <TableRow {...getRowProps({ row })} key={row.id}>
                         <TableCell>{renderTimestamp()}</TableCell>
                         <TableCell>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div className="noc-ops-view__device-cell">
                             {getDeviceIcon(alert.device?.icon || 'server')}
                             <span>
                               {typeof alert.device?.name === 'string'
@@ -493,13 +494,13 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
                         </TableCell>
                         <TableCell>{getSeverityTag(alert.severity)}</TableCell>
                         <TableCell>
-                          <div style={{ maxWidth: '250px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={alert.aiSummary || ''}>
+                          <div className="noc-ops-view__summary-cell" title={alert.aiSummary || ''}>
                             {alert.aiSummary || 'No summary'}
                           </div>
                         </TableCell>
                         <TableCell>{getStatusTag(alert.status)}</TableCell>
                         <TableCell>
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '4px' }}>
+                          <div className="noc-ops-view__action-cell">
                             <Button
                               kind="ghost" size="sm" renderIcon={View}
                               hasIconOnly iconDescription="View"

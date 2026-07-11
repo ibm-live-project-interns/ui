@@ -39,57 +39,7 @@ import { TopologyVisualization, ConnectionsTable } from './components';
 
 import '@/styles/components/_kpi-card.scss';
 import '@/styles/pages/_topology.scss';
-
-// ==========================================
-// Inline Styles
-// ==========================================
-const topologyStyles = `
-.topology-page { display: flex; flex-direction: column; min-height: 100%; }
-.topology-page__content { padding: 1.5rem; display: flex; flex-direction: column; gap: 1.5rem; }
-.topology-page__filters { display: flex; gap: 1rem; align-items: flex-end; flex-wrap: wrap; }
-.topology-page__filters .cds--dropdown__wrapper { min-width: 180px; }
-.topology-page__clear-filters { white-space: nowrap; }
-.topology-page__section-title { font-size: 1rem; font-weight: 600; color: var(--cds-text-primary, #f4f4f4); margin-bottom: 1rem; }
-.topology-page__location-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(400px, 1fr)); gap: 1rem; }
-@media (max-width: 672px) { .topology-page__location-grid { grid-template-columns: 1fr; } }
-.topology-page__location-tile { padding: 1rem !important; background: var(--cds-layer-01, #262626) !important; border-left: 3px solid var(--cds-border-interactive, #4589ff); }
-.topology-page__location-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--cds-border-subtle, #393939); }
-.topology-page__location-title { display: flex; align-items: center; gap: 0.5rem; }
-.topology-page__location-title h4 { font-size: 0.875rem; font-weight: 600; color: var(--cds-text-primary, #f4f4f4); margin: 0; }
-.topology-page__location-stats { display: flex; gap: 0.75rem; font-size: 0.75rem; }
-.topology-page__location-stat { display: flex; align-items: center; gap: 0.25rem; }
-.topology-page__location-stat--online { color: var(--cds-support-success, #24a148); }
-.topology-page__location-stat--warning { color: var(--cds-support-warning, #f1c21b); }
-.topology-page__location-stat--offline { color: var(--cds-support-error, #da1e28); }
-.topology-page__device-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(145px, 1fr)); gap: 0.5rem; }
-.topology-page__device-card { padding: 0.75rem !important; min-height: auto !important; background: var(--cds-layer-02, #393939) !important; border: 1px solid transparent; transition: border-color 0.15s ease, box-shadow 0.15s ease; cursor: pointer; position: relative; }
-.topology-page__device-card:hover { border-color: var(--cds-border-interactive, #4589ff); box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2); }
-.topology-page__device-card--offline { opacity: 0.65; }
-.topology-page__device-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
-.topology-page__device-card-icon { display: flex; align-items: center; }
-.topology-page__device-status-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
-.topology-page__device-card-body { display: flex; flex-direction: column; gap: 0.125rem; }
-.topology-page__device-card-name { font-size: 0.8125rem; font-weight: 600; color: var(--cds-text-primary, #f4f4f4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.topology-page__device-card-meta { font-size: 0.6875rem; color: var(--cds-text-secondary, #c6c6c6); text-transform: uppercase; letter-spacing: 0.02em; }
-.topology-page__device-card-ip { font-size: 0.6875rem; font-family: 'IBM Plex Mono', monospace; color: var(--cds-text-helper, #8d8d8d); }
-.topology-page__device-popover { min-width: 260px; }
-.topology-page__device-popover-inner { padding: 0.75rem; }
-.topology-page__device-popover-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid var(--cds-border-subtle, #393939); }
-.topology-page__device-popover-header strong { flex: 1; font-size: 0.875rem; color: var(--cds-text-primary, #f4f4f4); }
-.topology-page__device-popover-close { flex-shrink: 0; }
-.topology-page__device-popover-details { display: flex; flex-direction: column; gap: 0.5rem; margin: 0; }
-.topology-page__device-popover-details > div { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
-.topology-page__device-popover-details dt { font-size: 0.75rem; color: var(--cds-text-secondary, #c6c6c6); white-space: nowrap; }
-.topology-page__device-popover-details dd { font-size: 0.8125rem; color: var(--cds-text-primary, #f4f4f4); text-align: right; margin: 0; }
-.topology-page__device-popover-details code { font-family: 'IBM Plex Mono', monospace; font-size: 0.75rem; }
-.topology-page__empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 3rem !important; text-align: center; color: var(--cds-text-secondary, #c6c6c6); gap: 1rem; }
-.topology-page__empty-state p { max-width: 400px; font-size: 0.875rem; }
-.topology-page__connections { margin-top: 0.5rem; }
-.topology-page__conn-endpoint { display: flex; align-items: center; font-size: 0.8125rem; color: var(--cds-text-primary, #f4f4f4); }
-.topology-page__utilization-cell { display: flex; align-items: center; gap: 0.75rem; min-width: 160px; }
-.topology-page__utilization-cell .cds--progress-bar { flex: 1; min-width: 80px; }
-.topology-page__utilization-value { font-size: 0.75rem; font-weight: 600; font-family: 'IBM Plex Mono', monospace; white-space: nowrap; min-width: 45px; text-align: right; }
-`;
+import { InlineNotification } from '@carbon/react';
 
 // ==========================================
 // Main Component
@@ -97,7 +47,7 @@ const topologyStyles = `
 
 export function TopologyPage() {
     // Data fetching
-    const { data: topoData, isLoading, refetch: fetchTopology } = useFetchData(
+    const { data: topoData, isLoading, error: topoError, refetch: fetchTopology } = useFetchData(
         async (_signal) => {
             const response = await topologyService.getTopology();
             return {
@@ -237,8 +187,7 @@ export function TopologyPage() {
                         <DataTableSkeleton columnCount={5} rowCount={8} showHeader={false} showToolbar={false} />
                     </DataTableWrapper>
                 </div>
-                <style>{topologyStyles}</style>
-            </PageLayout>
+                </PageLayout>
         );
     }
 
@@ -256,6 +205,16 @@ export function TopologyPage() {
             />
 
             <div className="topology-page__content">
+                {topoError && (
+                    <InlineNotification
+                        kind="error"
+                        title="Failed to load topology"
+                        subtitle={topoError}
+                        lowContrast
+                        hideCloseButton
+                    />
+                )}
+
                 {/* KPI Row */}
                 <div className="kpi-row">
                     {kpiData.map((kpi) => (
@@ -287,7 +246,6 @@ export function TopologyPage() {
                 />
             </div>
 
-            <style>{topologyStyles}</style>
         </PageLayout>
     );
 }

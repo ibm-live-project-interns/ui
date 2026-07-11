@@ -3,6 +3,7 @@
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as react;
+@use '../tokens' as tok;
 
 .priority-alerts-page {
 
@@ -64,9 +65,9 @@
         @include react.type-style('body-compact-01');
         color: $text-secondary;
         margin-bottom: $spacing-04;
+        padding: $spacing-03 $spacing-04;
         background: $layer-01;
-        border-radius: 4px;
-        border-left: 3px solid $blue-60;
+        border-left: 3px solid $interactive;
     }
 
     // Alerts Table - Polished Dark Theme
@@ -99,12 +100,11 @@
                 background: $layer-02;
 
                 th {
+                    @include react.type-style('label-01');
                     background: $layer-02;
                     color: $text-secondary;
-                    font-size: 11px;
                     font-weight: 600;
                     text-transform: uppercase;
-                    letter-spacing: 0.5px;
                     border-bottom: none;
 
                     .cds--table-header-label {
@@ -125,8 +125,8 @@
                 }
 
                 td {
+                    @include react.type-style('body-compact-01');
                     border-bottom: 1px solid $border-subtle-01;
-                    font-size: 12px;
                 }
             }
         }

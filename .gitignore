@@ -29,3 +29,5 @@ bun.lock
 *.sln
 *.sw?
 ai-context
+.vercel
+.env*

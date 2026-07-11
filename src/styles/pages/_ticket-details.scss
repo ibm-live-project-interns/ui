@@ -2,6 +2,7 @@
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as react;
 @use '@carbon/colors' as *;
+@use '../tokens' as tok;
 
 // ==========================================
 // Page Layout - FULL WIDTH (matches AlertDetailsPage)
@@ -108,10 +109,10 @@
 .ticket-kpi-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: $spacing-06;
+    gap: tok.$tok-kpi-row-gap;
     padding: 0 $spacing-06;
     margin-top: $spacing-06;
-    margin-bottom: $spacing-06;
+    margin-bottom: tok.$tok-kpi-row-margin-bottom;
 
     @media (max-width: 1056px) {
         grid-template-columns: repeat(2, 1fr);
@@ -120,6 +121,14 @@
     @media (max-width: 672px) {
         grid-template-columns: 1fr;
     }
+}
+
+// ==========================================
+// SLA Wrap (Full View)
+// ==========================================
+.ticket-details-page__sla-wrap {
+    padding: 0 $spacing-06;
+    margin-bottom: $spacing-06;
 }
 
 // ==========================================

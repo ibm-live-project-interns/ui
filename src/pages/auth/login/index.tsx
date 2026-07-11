@@ -35,6 +35,10 @@ const KNOWN_OAUTH_ERRORS: Record<string, string> = {
     'oauth_failed': 'OAuth authentication failed. Please try again.',
     'token_exchange_failed': 'Failed to complete authentication. Please try again.',
     'user_info_failed': 'Failed to retrieve user information. Please try again.',
+    'oauth_state_failed': 'OAuth session expired or invalid. Please try signing in again.',
+    'account_creation_failed': 'Failed to create your account. Please try again or contact support.',
+    'account_deactivated': 'Your account has been deactivated. Please contact your administrator.',
+    'token_generation_failed': 'Failed to generate your session. Please try again.',
 };
 
 /** Sanitize OAuth error — only show known error strings to prevent URL parameter injection */
@@ -57,12 +61,37 @@ function sanitizeOAuthError(rawError: string): string {
 /** sessionStorage key for preserving redirect path through OAuth flow */
 const OAUTH_REDIRECT_KEY = 'noc_oauth_from';
 
+/**
+ * Allowlist of post-login redirect paths. Prevents open-redirect abuse
+ * where an attacker crafts a link that points `from` to an external URL.
+ */
+const ALLOWED_REDIRECT_PATHS = [
+    '/dashboard', '/priority-alerts', '/tickets', '/devices', '/trends',
+    '/incident-history', '/reports', '/reports/sla', '/on-call', '/topology',
+    '/device-groups', '/runbooks', '/service-status', '/incidents/post-mortems',
+    '/configuration', '/settings', '/profile', '/admin/audit-log',
+];
+
+function safeRedirectPath(candidate: string | undefined | null): string {
+    if (!candidate) return '/dashboard';
+    // Allow exact match OR known prefix (e.g. /tickets/123 under /tickets)
+    if (ALLOWED_REDIRECT_PATHS.includes(candidate)) return candidate;
+    if (ALLOWED_REDIRECT_PATHS.some(p => candidate.startsWith(p + '/'))) return candidate;
+    return '/dashboard';
+}
+
 export function LoginPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [isGoogleLoading, setIsGoogleLoading] = useState(false);
     const [error, setError] = useState('');
+    const [isSessionExpired, setIsSessionExpired] = useState(() => {
+        if (typeof window === 'undefined') return false;
+        const flag = sessionStorage.getItem('sessionExpired') === 'true';
+        if (flag) sessionStorage.removeItem('sessionExpired');
+        return flag;
+    });
 
     const navigate = useNavigate();
     const location = useLocation();
@@ -73,30 +102,39 @@ export function LoginPage() {
 
     // Get the page user was trying to access. First check sessionStorage (OAuth return),
     // then location state (normal redirect), then default to dashboard.
+    // All candidates are run through safeRedirectPath to prevent open-redirect abuse.
     const from = (() => {
         const storedFrom = sessionStorage.getItem(OAUTH_REDIRECT_KEY);
         if (storedFrom) {
             sessionStorage.removeItem(OAUTH_REDIRECT_KEY);
-            return storedFrom;
+            return safeRedirectPath(storedFrom);
         }
-        return (location.state as { from?: { pathname: string } })?.from?.pathname || '/dashboard';
+        const stateFrom = (location.state as { from?: { pathname: string } })?.from?.pathname;
+        return safeRedirectPath(stateFrom);
     })();
 
-    // Handle OAuth callback - token or error from URL params
+    // Handle OAuth callback - exchange code, direct token, or error from URL params
     useEffect(() => {
+        const code = searchParams.get('code');
         const token = searchParams.get('token');
         const oauthError = searchParams.get('error');
 
         if (oauthError) {
-            // Sanitize error parameter — only show known error strings
             setError(sanitizeOAuthError(oauthError));
-            // Clean up URL
             searchParams.delete('error');
             setSearchParams(searchParams, { replace: true });
+        } else if (code) {
+            // Exchange the short-lived one-time code for a real JWT
+            searchParams.delete('code');
+            setSearchParams(searchParams, { replace: true });
+            authService.exchangeOAuthCode(code).then(() => {
+                navigate(from, { replace: true });
+            }).catch(() => {
+                setError('Failed to complete sign in. Please try again.');
+            });
         } else if (token) {
-            // Set the token from OAuth callback (now async, loads user profile)
+            // Legacy: direct token in URL (older backend versions)
             authService.setOAuthToken(token).then(() => {
-                // Clean up URL and redirect to destination
                 navigate(from, { replace: true });
             }).catch(() => {
                 setError('Failed to complete sign in. Please try again.');
@@ -188,6 +226,17 @@ export function LoginPage() {
 
                 <h1 className="auth-title">Sign In</h1>
                 <p className="auth-subtitle">Enter your credentials to continue</p>
+
+                {isSessionExpired && !error && (
+                    <InlineNotification
+                        kind="warning"
+                        title="Session expired"
+                        subtitle="Please sign in again to continue."
+                        lowContrast
+                        hideCloseButton
+                        className="auth-notification"
+                    />
+                )}
 
                 {error && (
                     <InlineNotification

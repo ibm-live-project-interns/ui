@@ -24,10 +24,10 @@ export default defineConfig({
     exclude: [],
   },
   build: {
-    // Enable source maps for debugging
-    sourcemap: true,
-    // Disable minification to see actual code
-    minify: false,
+    // Disable source maps in production builds
+    sourcemap: false,
+    // Use esbuild for fast, safe minification
+    minify: 'esbuild',
     // Split chunks for better caching
     rollupOptions: {
       output: {

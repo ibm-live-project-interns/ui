@@ -3,12 +3,15 @@
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as react;
+@use '../tokens' as tok;
 
 .profile-page {
     width: 100%;
 
     &__content {
         max-width: 960px;
+        margin: 0 auto;
+        width: 100%;
     }
 
     &__skeleton {

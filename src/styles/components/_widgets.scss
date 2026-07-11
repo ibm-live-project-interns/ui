@@ -402,9 +402,44 @@
   &__bar-header {
     display: flex;
     justify-content: space-between;
+    align-items: baseline;
+    gap: $spacing-05;
     margin-bottom: $spacing-03;
     @include react.type-style('body-compact-01');
+
+    // Left label (device name + IP) may get long; allow it to truncate so
+    // the right-hand alert count stays visible at the edge.
+    > span:first-child {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    > span:last-child {
+      flex-shrink: 0;
+      color: $text-secondary;
+    }
   }
+}
+
+// TopInterfaces progress bar color variants. Carbon's ProgressBar does not
+// ship alternate colors, so we override the filled bar using Carbon color
+// tokens (no hardcoded hex values).
+.custom-progress-bar .cds--progress-bar__bar {
+  background-color: var(--cds-interactive);
+}
+.custom-progress-bar.purple .cds--progress-bar__bar {
+  background-color: var(--cds-tag-background-purple, #8a3ffc);
+}
+.custom-progress-bar.teal .cds--progress-bar__bar {
+  background-color: var(--cds-tag-background-teal, #009d9a);
+}
+.custom-progress-bar.blue .cds--progress-bar__bar {
+  background-color: var(--cds-tag-background-blue, #4589ff);
+}
+.custom-progress-bar.magenta .cds--progress-bar__bar {
+  background-color: var(--cds-tag-background-magenta, #ee5396);
 }
 
 // ==========================================
@@ -587,6 +622,18 @@
 
   &--260 {
     height: 260px;
+  }
+
+  &--100 {
+    height: 100px;
+  }
+
+  &--80 {
+    height: 80px;
+  }
+
+  &--300 {
+    height: 300px;
   }
 }
 

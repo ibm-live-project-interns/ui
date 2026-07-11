@@ -21,10 +21,17 @@ export const AIImpactSection = React.memo(function AIImpactSection({
     aiMetrics,
     currentTheme,
 }: AIImpactSectionProps) {
+    // Filter out percentage-based series (MTTR Improvement %) so it doesn't
+    // dominate the y-axis scale and flatten the count-based series.
+    const chartData = useMemo(
+        () => aiImpactOverTime.filter((d) => d.group !== 'MTTR Improvement %'),
+        [aiImpactOverTime]
+    );
+
     const lineChartOptions = useMemo(
         () => ({
             axes: {
-                left: { title: 'Value', mapsTo: 'value', includeZero: false },
+                left: { title: 'Count', mapsTo: 'value', includeZero: true },
                 bottom: { title: 'Time', mapsTo: 'date', scaleType: ScaleTypes.TIME },
             },
             height: '100%',
@@ -48,7 +55,7 @@ export const AIImpactSection = React.memo(function AIImpactSection({
             <div className="chart-container">
                 <ChartWrapper
                     ChartComponent={LineChart}
-                    data={aiImpactOverTime}
+                    data={chartData}
                     options={lineChartOptions}
                     height="350px"
                 />

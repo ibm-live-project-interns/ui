@@ -5,25 +5,64 @@
 @use '@carbon/react/scss/type' as *;
 @use '@carbon/react/scss/type' as react;
 @use '@carbon/colors' as *;
+@use '../tokens' as tok;
 
 .dashboard-page {
     // Global padding is applied in index.scss - no padding here
     width: 100%;
 
-    // Content wrapper - matches alert-details pattern
+    // Content wrapper — flex column; gap is the SOLE source of inter-section
+    // spacing. All direct children must have margin-top/bottom = 0 so they
+    // don't double-stack with the gap.
     &__content {
         display: flex;
         flex-direction: column;
-        gap: $spacing-05;
+        gap: $spacing-06; // 24px between every section
+
+        // Kill any margin that would add to the gap
+        > * {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+        }
     }
 
-    // Tab panel spacing
+    // Tab panel — sections inside the panel use gap via > * + * selector
     .dashboard-tab-panel {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-06; // 24px between widgets inside a tab
+
+        > * {
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+        }
+    }
+
+    // Skeleton helpers
+    .dashboard-skeleton--chart {
+        width: 100%;
+        height: 300px;
+    }
+
+    .dashboard-skeleton--chart-top {
+        width: 100%;
+        height: 300px;
+        margin-top: $spacing-05;
+    }
+
+    .dashboard-skeleton--header-chip {
+        width: 150px;
+        height: 32px;
+    }
+
+    .dashboard-skeleton--block-sm {
+        height: 80px;
     }
 
     // Section spacing for groups of content
     .dashboard-section {
         margin-top: $spacing-06;
+        margin-bottom: $spacing-07;
 
         &__title {
             @include react.type-style('heading-compact-02');
@@ -99,8 +138,8 @@
     .kpi-row {
         display: grid;
         grid-template-columns: repeat(4, 1fr);
-        gap: $spacing-06;
-        margin-bottom: $spacing-06;
+        gap: tok.$tok-kpi-row-gap;
+        margin-bottom: tok.$tok-kpi-row-margin-bottom;
 
         @media (max-width: 1056px) {
             grid-template-columns: repeat(2, 1fr);
@@ -115,8 +154,8 @@
     .charts-row {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: $spacing-06;
-        margin-bottom: $spacing-06;
+        gap: tok.$tok-grid-gap;
+        margin-bottom: tok.$tok-tile-margin-bottom;
         align-items: stretch;
 
         // CRITICAL: prevent chart SVGs from forcing columns wider than 1fr
@@ -458,6 +497,7 @@
         height: 100%;
         min-width: 0; // prevent overflow in grid
         overflow: hidden; // clip chart overflow
+        padding: $spacing-05;
 
         .chart-header {
             display: flex;
@@ -491,7 +531,8 @@
     // Refined Table Container (Polished UI)
     .refined-table-container {
         background-color: $layer-01; // Darker base
-        margin-bottom: $spacing-05;
+        margin-top: $spacing-06;
+        margin-bottom: $spacing-07;
         // box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); // Optional: add subtle shadow like reference
 
         .refined-table-header {
@@ -652,7 +693,7 @@
     .bottom-row {
         display: grid;
         grid-template-columns: repeat(2, 1fr);
-        gap: $spacing-06;
+        gap: tok.$tok-grid-gap;
 
         > * {
             min-width: 0;
@@ -936,5 +977,697 @@
                 }
             }
         }
+    }
+}
+
+// Sysadmin Role Preview Switcher
+.sysadmin-role-preview-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-bottom: $spacing-06;
+
+    &__select {
+        min-width: 240px;
+    }
+}
+
+.sysadmin-role-preview-panel {
+    border: 2px solid var(--cds-interactive);
+    border-radius: 4px;
+    padding: $spacing-05;
+    margin-bottom: $spacing-05;
+
+    &__header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: $spacing-05;
+    }
+
+    &__label {
+        color: var(--cds-interactive);
+        font-weight: 600;
+    }
+}
+
+// Senior engineer 3-col grid
+.sre-view__health-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: $spacing-05;
+}
+
+.network-admin-view__empty {
+    text-align: center;
+    padding: $spacing-07;
+    color: var(--cds-text-secondary);
+}
+
+.noc-ops-view__actions-row {
+    display: flex;
+    gap: $spacing-03;
+    align-items: center;
+}
+
+// ==========================================
+// NetworkOpsView - dashboard row / cell helpers
+// ==========================================
+.noc-ops-view {
+    &__device-cell {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+    }
+
+    &__summary-cell {
+        max-width: 250px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__action-cell {
+        display: flex;
+        justify-content: flex-end;
+        gap: $spacing-02;
+    }
+
+    &__donut-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+}
+
+// ==========================================
+// NetworkAdminView
+// ==========================================
+.network-admin-view {
+    &__empty-state {
+        text-align: center;
+        padding: $spacing-07;
+        color: var(--cds-text-secondary);
+    }
+
+    &__name-cell {
+        display: flex;
+        flex-direction: column;
+    }
+
+    &__name-link {
+        font-weight: 600;
+        cursor: pointer;
+        color: var(--cds-link-primary);
+
+        &:hover {
+            text-decoration: underline;
+        }
+    }
+
+    &__ip {
+        @include react.type-style('label-01');
+        color: var(--cds-text-secondary);
+    }
+
+    &__health-cell {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+    }
+
+    &__health-value {
+        min-width: 40px;
+    }
+
+    &__alert-tag {
+        cursor: pointer;
+    }
+
+    &__alert-zero,
+    &__muted-cell {
+        color: var(--cds-text-secondary);
+    }
+
+    &__type-cell {
+        text-transform: capitalize;
+    }
+}
+
+// ==========================================
+// SREView - service health grid items
+// ==========================================
+.sre-view {
+    &__health-grid-skeleton {
+        margin-top: $spacing-05;
+    }
+
+    &__service-item {
+        padding: $spacing-05;
+        background: var(--cds-layer-02);
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-03;
+        border-left: 3px solid var(--cds-border-subtle-01);
+
+        &--healthy {
+            border-left-color: var(--cds-support-success);
+        }
+
+        &--degraded {
+            border-left-color: var(--cds-support-warning);
+        }
+
+        &--down {
+            border-left-color: var(--cds-support-error);
+        }
+    }
+
+    &__service-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    &__service-name {
+        font-weight: 600;
+        color: var(--cds-text-primary);
+    }
+
+    &__service-status {
+        display: flex;
+        align-items: center;
+        gap: $spacing-02;
+    }
+
+    &__service-status-label {
+        @include react.type-style('label-01');
+        font-weight: 600;
+        text-transform: uppercase;
+
+        &--healthy {
+            color: var(--cds-support-success);
+        }
+
+        &--degraded {
+            color: var(--cds-support-warning);
+        }
+
+        &--down {
+            color: var(--cds-support-error);
+        }
+    }
+
+    &__service-meter {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+    }
+
+    &__service-meter-label {
+        @include react.type-style('label-01');
+        color: var(--cds-text-secondary);
+        min-width: 60px;
+    }
+
+    &__chart-empty,
+    &__empty-block {
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--cds-text-secondary);
+    }
+
+    &__empty-block--padded {
+        height: auto;
+        padding: $spacing-06;
+        text-align: center;
+    }
+}
+
+// Icon color modifiers shared across dashboard views
+.u-icon--success {
+    color: var(--cds-support-success);
+}
+
+.u-icon--warning {
+    color: var(--cds-support-warning);
+}
+
+.u-icon--error {
+    color: var(--cds-support-error);
+}
+
+.u-icon--info {
+    color: var(--cds-interactive);
+}
+
+.u-icon--purple {
+    color: var(--cds-tag-background-purple, #8a3ffc);
+}
+
+.u-icon--teal {
+    color: var(--cds-support-info-inverse);
+}
+
+// ==========================================
+// SeniorEngineerView
+// ==========================================
+.senior-eng-view {
+    &__heading-row {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+    }
+
+    &__infra-card {
+        padding: $spacing-05;
+        background: var(--cds-layer-02);
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-03;
+        border-left: 3px solid var(--cds-border-subtle-01);
+        cursor: pointer;
+
+        &--healthy {
+            border-left-color: var(--cds-support-success);
+        }
+
+        &--warning {
+            border-left-color: var(--cds-support-warning);
+        }
+
+        &--degraded {
+            border-left-color: var(--cds-support-error);
+        }
+    }
+
+    &__infra-card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    &__infra-card-title {
+        @include react.type-style('body-compact-01');
+        font-weight: 600;
+        color: var(--cds-text-primary);
+    }
+
+    &__infra-status {
+        display: flex;
+        align-items: center;
+        gap: $spacing-02;
+    }
+
+    &__infra-status-label {
+        @include react.type-style('label-01');
+        font-weight: 600;
+        text-transform: uppercase;
+
+        &--healthy {
+            color: var(--cds-support-success);
+        }
+
+        &--warning {
+            color: var(--cds-support-warning);
+        }
+
+        &--degraded {
+            color: var(--cds-support-error);
+        }
+    }
+
+    &__infra-meter {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+    }
+
+    &__infra-meter-label {
+        @include react.type-style('label-01');
+        color: var(--cds-text-secondary);
+        min-width: 65px;
+    }
+
+    &__infra-meta {
+        display: flex;
+        gap: $spacing-03;
+        @include react.type-style('label-01');
+        color: var(--cds-text-secondary);
+        flex-wrap: wrap;
+        align-items: center;
+    }
+
+    &__chart-empty {
+        height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--cds-text-secondary);
+    }
+
+    &__empty-block {
+        padding: $spacing-06;
+        text-align: center;
+        color: var(--cds-text-secondary);
+    }
+
+    &__capacity-body {
+        padding: $spacing-05;
+    }
+
+    &__capacity-row {
+        margin-bottom: $spacing-05;
+    }
+
+    &__capacity-row-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: $spacing-02;
+    }
+
+    &__capacity-label {
+        @include react.type-style('body-compact-01');
+        font-weight: 500;
+    }
+
+    &__capacity-value {
+        @include react.type-style('body-compact-01');
+        font-weight: 600;
+
+        &--good {
+            color: var(--cds-support-success);
+        }
+
+        &--warning {
+            color: var(--cds-support-warning);
+        }
+
+        &--error {
+            color: var(--cds-support-error);
+        }
+    }
+
+    &__capacity-footer {
+        margin-top: $spacing-05;
+        padding: $spacing-03;
+        @include react.type-style('label-01');
+        color: var(--cds-text-secondary);
+        border-top: 1px solid var(--cds-border-subtle-01);
+    }
+
+    &__insight-card {
+        padding: $spacing-05;
+        background: var(--cds-layer-02);
+        border-left: 3px solid var(--cds-support-info);
+
+        &--success { border-left-color: var(--cds-support-success); }
+        &--error   { border-left-color: var(--cds-support-error); }
+        &--info    { border-left-color: var(--cds-support-info); }
+    }
+
+    &__insight-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: $spacing-03;
+    }
+
+    &__insight-type {
+        display: flex;
+        align-items: center;
+        gap: $spacing-02;
+        color: var(--cds-icon-primary);
+    }
+
+    &__insight-type-label {
+        @include react.type-style('label-01');
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--cds-text-secondary);
+    }
+
+    &__insight-description {
+        margin: 0 0 $spacing-03 0;
+        @include react.type-style('body-compact-01');
+        color: var(--cds-text-secondary);
+        line-height: 1.5;
+    }
+
+    &__insight-action {
+        @include react.type-style('label-01');
+        color: var(--cds-link-primary);
+        cursor: pointer;
+    }
+
+    &__trend-body {
+        padding: $spacing-05;
+    }
+
+    &__trend-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: $spacing-04 0;
+        border-bottom: 1px solid var(--cds-border-subtle-01);
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+
+    &__trend-label {
+        @include react.type-style('body-compact-01');
+        font-weight: 500;
+    }
+
+    &__trend-subtitle {
+        @include react.type-style('label-01');
+        color: var(--cds-text-secondary);
+    }
+
+    &__trend-value-row {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+    }
+
+    &__trend-value {
+        @include react.type-style('heading-compact-02');
+        font-weight: 600;
+    }
+}
+
+// ==========================================
+// SysAdminView - expanded user row styles
+// ==========================================
+.sysadmin-view {
+    &__expanded-row {
+        padding: $spacing-05 $spacing-03;
+    }
+
+    &__stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: $spacing-03;
+        margin-bottom: $spacing-05;
+    }
+
+    &__stat-card {
+        background: var(--cds-layer-02);
+        border-radius: 4px;
+        padding: $spacing-04;
+        border-left: 3px solid var(--cds-interactive);
+
+        &--error   { border-left-color: var(--cds-support-error); }
+        &--info    { border-left-color: var(--cds-interactive); }
+        &--success { border-left-color: var(--cds-support-success); }
+        &--purple  { border-left-color: var(--cds-tag-background-purple, #8a3ffc); }
+        &--teal    { border-left-color: var(--cds-support-info-inverse); }
+    }
+
+    &__stat-header {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+        margin-bottom: $spacing-02;
+    }
+
+    &__stat-label {
+        @include react.type-style('label-01');
+        color: var(--cds-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.32px;
+    }
+
+    &__stat-value {
+        @include react.type-style('heading-03');
+        font-weight: 600;
+    }
+
+    &__stat-value--sm {
+        @include react.type-style('body-compact-01');
+        font-weight: 500;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    &__perm-section {
+        margin-bottom: $spacing-04;
+    }
+
+    &__perm-heading {
+        @include react.type-style('label-01');
+        font-weight: 600;
+        color: var(--cds-text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.32px;
+        display: block;
+        margin-bottom: $spacing-03;
+    }
+
+    &__perm-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: $spacing-02;
+    }
+
+    &__perm-empty {
+        @include react.type-style('label-01');
+        color: var(--cds-text-secondary);
+    }
+
+    &__user-cell {
+        display: flex;
+        flex-direction: column;
+    }
+
+    &__user-subname {
+        @include react.type-style('label-01');
+        color: var(--cds-text-secondary);
+    }
+
+    &__link-cell {
+        cursor: pointer;
+        color: var(--cds-link-primary);
+    }
+
+    &__muted-cell {
+        color: var(--cds-text-secondary);
+    }
+
+    &__user-subname-row {
+        font-weight: 600;
+    }
+
+    &__modal-body {
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-05;
+        padding: $spacing-05 0;
+    }
+
+    &__modal-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: $spacing-05;
+    }
+
+    &__modal-paragraph {
+        padding: $spacing-05 0;
+    }
+
+    &__modal-helper {
+        @include react.type-style('label-01');
+        color: var(--cds-text-secondary);
+    }
+
+    &__modal-list-section {
+        @include react.type-style('body-compact-01');
+        color: var(--cds-text-secondary);
+
+        p {
+            margin-bottom: $spacing-03;
+        }
+
+        ul {
+            padding-left: $spacing-06;
+            margin: 0;
+        }
+    }
+
+    &__perf-table-wrap {
+        overflow-x: auto;
+    }
+
+    &__perf-table {
+        width: 100%;
+        border-collapse: collapse;
+        @include react.type-style('body-compact-01');
+
+        thead tr {
+            border-bottom: 2px solid var(--cds-border-subtle-01);
+        }
+
+        th {
+            padding: $spacing-03 $spacing-04;
+            font-weight: 600;
+        }
+
+        th.num, td.num {
+            text-align: center;
+        }
+
+        tbody tr {
+            border-bottom: 1px solid var(--cds-border-subtle-01);
+        }
+
+        td {
+            padding: $spacing-03 $spacing-04;
+        }
+
+        td.muted {
+            color: var(--cds-text-secondary);
+        }
+
+        td.bold {
+            font-weight: 600;
+        }
+    }
+
+    &__rank-cell {
+        display: flex;
+        align-items: center;
+        gap: $spacing-03;
+    }
+
+    &__rank-dot {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--cds-layer-accent-01);
+        color: var(--cds-text-primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        @include react.type-style('label-01');
+        font-weight: 700;
+        flex-shrink: 0;
+
+        &--gold {
+            background: var(--cds-interactive);
+            color: var(--cds-text-on-color);
+        }
+
+        &--silver {
+            background: var(--cds-tag-background-purple, #8a3ffc);
+            color: var(--cds-text-on-color);
+        }
+    }
+
+    &__rank-name {
+        font-weight: 500;
     }
 }

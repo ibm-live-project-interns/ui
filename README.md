@@ -1,5 +1,10 @@
 # Sentrix UI
 
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-ui--bionics--projects.vercel.app-black?style=flat-square&logo=vercel)](https://ui-bionics-projects.vercel.app)
+[![API](https://img.shields.io/badge/API-Railway-blueviolet?style=flat-square&logo=railway)](https://sentrix-api-production-1aec.up.railway.app/api/v1/health)
+
+> **Live:** https://ui-bionics-projects.vercel.app
+
 A React frontend for Sentrix for viewing and managing network alerts with AI-generated insights. Built with [Carbon Design System](https://carbondesignsystem.com/).
 
 ## What This Does

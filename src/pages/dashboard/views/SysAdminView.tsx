@@ -40,8 +40,13 @@ import '@/styles/pages/_dashboard.scss';
 import '@/styles/components/_kpi-card.scss';
 import type { RoleConfig } from '@/features/roles/types/role.types';
 import { TopInterfaces, ConfigAuditLog } from '@/components/widgets';
+import NetworkOpsView from './NetworkOpsView';
+import SREView from './SREView';
+import NetworkAdminView from './NetworkAdminView';
+import SeniorEngineerView from './SeniorEngineerView';
 import { alertDataService, deviceService, ticketDataService, userService } from '@/shared/services';
 import type { ManagedUser } from '@/shared/services';
+import { uiLogger } from '@/shared/utils/logger';
 import { createAreaChartOptions, createDonutChartOptions } from '@/shared/constants/charts';
 import '@carbon/charts-react/styles.css';
 
@@ -125,12 +130,20 @@ const getPermissionLabel = (perm: Permission): string => {
     return labels[perm] || perm;
 };
 
-export function SysAdminView({ config: _config }: SysAdminViewProps) {
+const roleLabels: Record<string, string> = {
+    'network-ops': 'Network Operations',
+    'sre': 'SRE',
+    'network-admin': 'Network Admin',
+    'senior-eng': 'Senior Engineer',
+};
+
+export function SysAdminView({ config }: SysAdminViewProps) {
     const navigate = useNavigate();
     const { addToast } = useToast();
     const [isLoading, setIsLoading] = useState(true);
     const [currentTheme, setCurrentTheme] = useState('g100');
     const [selectedTab, setSelectedTab] = useState(0);
+    const [previewRole, setPreviewRole] = useState<string | null>(null);
 
     // Real data states
     const [metrics, setMetrics] = useState({
@@ -277,7 +290,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                 setRecentActivity(activity);
 
             } catch (error) {
-                console.error('Failed to fetch admin dashboard data:', error);
+                uiLogger.error('Failed to fetch admin dashboard data', error);
             } finally {
                 if (!cancelled) setIsLoading(false);
             }
@@ -298,7 +311,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
             const fetchedUsers = await userService.getUsers();
             setUsers(fetchedUsers);
         } catch (error) {
-            console.error('Failed to fetch users:', error);
+            uiLogger.error('Failed to fetch users', error);
             addToast('error', 'Error', 'Failed to load users. The user management API may not be available yet.');
         } finally {
             setUsersLoading(false);
@@ -326,7 +339,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
             }));
             setSystemLogs(logs);
         } catch (error) {
-            console.error('Failed to fetch system logs:', error);
+            uiLogger.error('Failed to fetch system logs', error);
         } finally {
             setLogsLoading(false);
         }
@@ -458,7 +471,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                 await userService.updateUser(id, { is_active: true });
                 successCount++;
             } catch (err) {
-                console.error(`Failed to activate user ${id}:`, err);
+                uiLogger.error('Failed to activate user', err, { userId: id });
             }
         }
         setBulkActionLoading(false);
@@ -481,7 +494,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                 await userService.updateUser(id, { is_active: false });
                 successCount++;
             } catch (err) {
-                console.error(`Failed to deactivate user ${id}:`, err);
+                uiLogger.error('Failed to deactivate user', err, { userId: id });
             }
         }
         setBulkActionLoading(false);
@@ -510,7 +523,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                 await userService.deleteUser(id);
                 successCount++;
             } catch (err) {
-                console.error(`Failed to delete user ${id}:`, err);
+                uiLogger.error('Failed to delete user', err, { userId: id });
             }
         }
         setBulkActionLoading(false);
@@ -542,7 +555,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                 await userService.updateUser(id, { role: bulkRoleValue });
                 successCount++;
             } catch (err) {
-                console.error(`Failed to change role for user ${id}:`, err);
+                uiLogger.error('Failed to change role for user', err, { userId: id });
             }
         }
         setBulkActionLoading(false);
@@ -717,28 +730,28 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
             label: 'Total Devices',
             value: metrics.totalDevices.toLocaleString(),
             icon: Router,
-            iconColor: '#0f62fe',
+            iconColor: 'var(--cds-interactive)',
             severity: 'info',
         },
         {
             label: 'Active Alerts',
             value: metrics.activeAlerts,
             icon: Warning,
-            iconColor: metrics.activeAlerts > 10 ? '#da1e28' : '#ff832b',
+            iconColor: metrics.activeAlerts > 10 ? 'var(--cds-support-error)' : 'var(--cds-support-warning)',
             severity: metrics.activeAlerts > 10 ? 'critical' : 'major',
         },
         {
             label: 'System Health',
             value: `${metrics.systemHealth}%`,
             icon: CheckmarkFilled,
-            iconColor: metrics.systemHealth > 80 ? '#24a148' : '#ff832b',
+            iconColor: metrics.systemHealth > 80 ? 'var(--cds-support-success)' : 'var(--cds-support-warning)',
             severity: metrics.systemHealth > 80 ? 'success' : 'major',
         },
         {
             label: 'Open Tickets',
             value: metrics.totalTickets,
             icon: ChartLine,
-            iconColor: '#8a3ffc',
+            iconColor: 'var(--cds-support-info)',
             severity: 'info',
         },
     ];
@@ -797,7 +810,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                     <PageHeader
                         title="System Administration"
                         subtitle="Full system overview, configuration, and security auditing"
-                        badges={[{ text: 'System Operational', color: '#24a148' }]}
+                        badges={[{ text: 'System Operational', color: 'var(--cds-support-success)' }]}
                     />
                     <div className="kpi-row">
                         {[1, 2, 3, 4].map((i) => (
@@ -820,10 +833,43 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                     title="System Administration"
                     subtitle="Full system overview, configuration, and security auditing"
                     badges={[metrics.systemHealth > 80
-                        ? { text: 'System Operational', color: '#24a148' }
-                        : { text: 'System Degraded', color: '#ee5396' }
+                        ? { text: 'System Operational', color: 'var(--cds-support-success)' }
+                        : { text: 'System Degraded', color: 'var(--cds-support-error)' }
                     ]}
                 />
+
+                {/* Role Preview Selector */}
+                <div className="sysadmin-role-preview-bar">
+                    <Select
+                        id="role-preview-select"
+                        labelText=""
+                        value={previewRole || ''}
+                        onChange={(e) => setPreviewRole(e.target.value || null)}
+                        size="sm"
+                        className="sysadmin-role-preview-bar__select"
+                    >
+                        <SelectItem value="" text="Preview role dashboard..." />
+                        <SelectItem value="network-ops" text="Network Operations" />
+                        <SelectItem value="sre" text="Site Reliability Engineer" />
+                        <SelectItem value="network-admin" text="Network Administrator" />
+                        <SelectItem value="senior-eng" text="Senior Engineer" />
+                    </Select>
+                </div>
+
+                {previewRole && (
+                    <div className="sysadmin-role-preview-panel">
+                        <div className="sysadmin-role-preview-panel__header">
+                            <span className="sysadmin-role-preview-panel__label">
+                                Previewing: {roleLabels[previewRole]} dashboard
+                            </span>
+                            <Button kind="ghost" size="sm" onClick={() => setPreviewRole(null)}>Exit Preview</Button>
+                        </div>
+                        {previewRole === 'network-ops' && <NetworkOpsView config={config} />}
+                        {previewRole === 'sre' && <SREView config={config} />}
+                        {previewRole === 'network-admin' && <NetworkAdminView config={config} />}
+                        {previewRole === 'senior-eng' && <SeniorEngineerView config={config} />}
+                    </div>
+                )}
 
                 {/* KPI Section */}
                 <div className="kpi-row">
@@ -928,10 +974,10 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                                                             if (!activity) return null;
                                                             return (
                                                                 <TableRow {...getRowProps({ row })} key={row.id}>
-                                                                    <TableCell style={{ fontWeight: 600 }}>{activity.user}</TableCell>
+                                                                    <TableCell className="sysadmin-view__user-subname-row">{activity.user}</TableCell>
                                                                     <TableCell>
                                                                         <span
-                                                                            style={{ cursor: 'pointer', color: 'var(--cds-link-primary)' }}
+                                                                            className="sysadmin-view__link-cell"
                                                                             role="link"
                                                                             tabIndex={0}
                                                                             onClick={() => navigate(`/alerts/${activity.id}`)}
@@ -942,7 +988,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                                                                     </TableCell>
                                                                     <TableCell>
                                                                         <span
-                                                                            style={{ cursor: 'pointer', color: 'var(--cds-link-primary)' }}
+                                                                            className="sysadmin-view__link-cell"
                                                                             role="link"
                                                                             tabIndex={0}
                                                                             onClick={() => navigate(`/devices?search=${encodeURIComponent(activity.resource)}`)}
@@ -956,7 +1002,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                                                                             {activity.status}
                                                                         </Tag>
                                                                     </TableCell>
-                                                                    <TableCell style={{ color: 'var(--cds-text-secondary)' }}>
+                                                                    <TableCell className="sysadmin-view__muted-cell">
                                                                         {typeof activity.timestamp === 'string' ? activity.timestamp : 'N/A'}
                                                                     </TableCell>
                                                                 </TableRow>
@@ -989,44 +1035,38 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                                                 size="sm"
                                             />
                                         ) : (
-                                            <div style={{ overflowX: 'auto' }}>
-                                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
+                                            <div className="sysadmin-view__perf-table-wrap">
+                                                <table className="sysadmin-view__perf-table">
                                                     <thead>
-                                                        <tr style={{ borderBottom: '2px solid var(--cds-border-subtle-01)' }}>
-                                                            <th style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontWeight: 600 }}>User</th>
-                                                            <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center', fontWeight: 600 }}>Tickets Resolved</th>
-                                                            <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center', fontWeight: 600 }}>Alerts</th>
-                                                            <th style={{ padding: '0.5rem 0.75rem', textAlign: 'center', fontWeight: 600 }}>Avg Resolution</th>
-                                                            <th style={{ padding: '0.5rem 0.75rem', textAlign: 'left', fontWeight: 600 }}>Role</th>
+                                                        <tr>
+                                                            <th>User</th>
+                                                            <th className="num">Tickets Resolved</th>
+                                                            <th className="num">Alerts</th>
+                                                            <th className="num">Avg Resolution</th>
+                                                            <th>Role</th>
                                                         </tr>
                                                     </thead>
                                                     <tbody>
                                                         {topPerformers.map((performer, idx) => (
-                                                            <tr key={performer.id} style={{ borderBottom: '1px solid var(--cds-border-subtle-01)' }}>
-                                                                <td style={{ padding: '0.5rem 0.75rem' }}>
-                                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                                                        <div style={{
-                                                                            width: '24px', height: '24px', borderRadius: '50%',
-                                                                            background: idx === 0 ? '#0f62fe' : idx === 1 ? '#8a3ffc' : 'var(--cds-layer-accent-01)',
-                                                                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                                                                            fontSize: '0.6875rem', fontWeight: 700, color: idx < 2 ? '#fff' : 'var(--cds-text-primary)',
-                                                                            flexShrink: 0,
-                                                                        }}>
+                                                            <tr key={performer.id}>
+                                                                <td>
+                                                                    <div className="sysadmin-view__rank-cell">
+                                                                        <div className={`sysadmin-view__rank-dot${idx === 0 ? ' sysadmin-view__rank-dot--gold' : idx === 1 ? ' sysadmin-view__rank-dot--silver' : ''}`}>
                                                                             {idx + 1}
                                                                         </div>
-                                                                        <span style={{ fontWeight: 500 }}>{performer.fullName}</span>
+                                                                        <span className="sysadmin-view__rank-name">{performer.fullName}</span>
                                                                     </div>
                                                                 </td>
-                                                                <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center', fontWeight: 600 }}>
+                                                                <td className="num bold">
                                                                     {performer.ticketsResolved}
                                                                 </td>
-                                                                <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center' }}>
+                                                                <td className="num">
                                                                     {performer.alertsAssigned}
                                                                 </td>
-                                                                <td style={{ padding: '0.5rem 0.75rem', textAlign: 'center', color: 'var(--cds-text-secondary)' }}>
+                                                                <td className="num muted">
                                                                     {performer.avgResolutionHours != null ? `${performer.avgResolutionHours}h` : '--'}
                                                                 </td>
-                                                                <td style={{ padding: '0.5rem 0.75rem' }}>
+                                                                <td>
                                                                     <Tag type={getRoleTagType(performer.role)} size="sm">
                                                                         {getRoleLabel(performer.role)}
                                                                     </Tag>
@@ -1065,21 +1105,21 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                                     label="Total Users"
                                     value={users.length}
                                     icon={UserMultiple}
-                                    iconColor="#0f62fe"
+                                    iconColor="var(--cds-interactive)"
                                     severity="info"
                                 />
                                 <KPICard
                                     label="Active"
                                     value={users.filter(u => u.is_active).length}
                                     icon={CheckmarkFilled}
-                                    iconColor="#24a148"
+                                    iconColor="var(--cds-support-success)"
                                     severity="success"
                                 />
                                 <KPICard
                                     label="Admins"
                                     value={users.filter(u => u.role === 'sysadmin').length}
                                     icon={Security}
-                                    iconColor="#8a3ffc"
+                                    iconColor="var(--cds-support-info)"
                                     severity="info"
                                 />
                             </div>
@@ -1191,13 +1231,13 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                                                                     <React.Fragment key={row.id}>
                                                                         <TableExpandRow {...getRowProps({ row })}>
                                                                             <TableSelectRow {...getSelectionProps({ row })} />
-                                                                            <TableCell style={{ fontWeight: 600 }}>
-                                                                                <div>
+                                                                            <TableCell className="sysadmin-view__user-subname-row">
+                                                                                <div className="sysadmin-view__user-cell">
                                                                                     <span>{user.username}</span>
                                                                                     {user.first_name && (
-                                                                                        <div style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary)' }}>
+                                                                                        <span className="sysadmin-view__user-subname">
                                                                                             {user.first_name} {user.last_name}
-                                                                                        </div>
+                                                                                        </span>
                                                                                     )}
                                                                                 </div>
                                                                             </TableCell>
@@ -1212,7 +1252,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                                                                                     {user.is_active ? 'Active' : 'Inactive'}
                                                                                 </Tag>
                                                                             </TableCell>
-                                                                            <TableCell style={{ color: 'var(--cds-text-secondary)' }}>
+                                                                            <TableCell className="sysadmin-view__muted-cell">
                                                                                 {user.last_login || 'Never'}
                                                                             </TableCell>
                                                                             <TableCell>
@@ -1230,109 +1270,64 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
 
                                                                         {/* Expanded row: Per-user performance dashboard */}
                                                                         <TableExpandedRow colSpan={headers.length + 2}>
-                                                                            <div style={{ padding: '1rem 0.5rem' }}>
-                                                                                {/* Stats cards row */}
-                                                                                <div style={{
-                                                                                    display: 'grid',
-                                                                                    gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))',
-                                                                                    gap: '0.75rem',
-                                                                                    marginBottom: '1rem',
-                                                                                }}>
-                                                                                    {/* Alerts Assigned */}
-                                                                                    <div style={{
-                                                                                        background: 'var(--cds-layer-02)',
-                                                                                        borderRadius: '4px',
-                                                                                        padding: '0.75rem',
-                                                                                        borderLeft: '3px solid #da1e28',
-                                                                                    }}>
-                                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                                                                                            <Warning size={16} style={{ color: '#da1e28' }} />
-                                                                                            <span style={{ fontSize: '0.6875rem', color: 'var(--cds-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.32px' }}>Alerts Assigned</span>
+                                                                            <div className="sysadmin-view__expanded-row">
+                                                                                <div className="sysadmin-view__stats-grid">
+                                                                                    <div className="sysadmin-view__stat-card sysadmin-view__stat-card--error">
+                                                                                        <div className="sysadmin-view__stat-header">
+                                                                                            <Warning size={16} className="u-icon--error" />
+                                                                                            <span className="sysadmin-view__stat-label">Alerts Assigned</span>
                                                                                         </div>
-                                                                                        <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                                                                                        <div className="sysadmin-view__stat-value">
                                                                                             {stats?.alertsAssigned ?? 0}
                                                                                         </div>
                                                                                     </div>
 
-                                                                                    {/* Tickets Open */}
-                                                                                    <div style={{
-                                                                                        background: 'var(--cds-layer-02)',
-                                                                                        borderRadius: '4px',
-                                                                                        padding: '0.75rem',
-                                                                                        borderLeft: '3px solid #0f62fe',
-                                                                                    }}>
-                                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                                                                                            <Ticket size={16} style={{ color: '#0f62fe' }} />
-                                                                                            <span style={{ fontSize: '0.6875rem', color: 'var(--cds-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.32px' }}>Tickets Open</span>
+                                                                                    <div className="sysadmin-view__stat-card sysadmin-view__stat-card--info">
+                                                                                        <div className="sysadmin-view__stat-header">
+                                                                                            <Ticket size={16} className="u-icon--info" />
+                                                                                            <span className="sysadmin-view__stat-label">Tickets Open</span>
                                                                                         </div>
-                                                                                        <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                                                                                        <div className="sysadmin-view__stat-value">
                                                                                             {stats?.ticketsOpen ?? 0}
                                                                                         </div>
                                                                                     </div>
 
-                                                                                    {/* Tickets Resolved */}
-                                                                                    <div style={{
-                                                                                        background: 'var(--cds-layer-02)',
-                                                                                        borderRadius: '4px',
-                                                                                        padding: '0.75rem',
-                                                                                        borderLeft: '3px solid #24a148',
-                                                                                    }}>
-                                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                                                                                            <CheckmarkFilled size={16} style={{ color: '#24a148' }} />
-                                                                                            <span style={{ fontSize: '0.6875rem', color: 'var(--cds-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.32px' }}>Tickets Resolved</span>
+                                                                                    <div className="sysadmin-view__stat-card sysadmin-view__stat-card--success">
+                                                                                        <div className="sysadmin-view__stat-header">
+                                                                                            <CheckmarkFilled size={16} className="u-icon--success" />
+                                                                                            <span className="sysadmin-view__stat-label">Tickets Resolved</span>
                                                                                         </div>
-                                                                                        <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                                                                                        <div className="sysadmin-view__stat-value">
                                                                                             {stats?.ticketsResolved ?? 0}
                                                                                         </div>
                                                                                     </div>
 
-                                                                                    {/* Avg Resolution Time */}
-                                                                                    <div style={{
-                                                                                        background: 'var(--cds-layer-02)',
-                                                                                        borderRadius: '4px',
-                                                                                        padding: '0.75rem',
-                                                                                        borderLeft: '3px solid #8a3ffc',
-                                                                                    }}>
-                                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                                                                                            <Time size={16} style={{ color: '#8a3ffc' }} />
-                                                                                            <span style={{ fontSize: '0.6875rem', color: 'var(--cds-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.32px' }}>Avg Resolution</span>
+                                                                                    <div className="sysadmin-view__stat-card sysadmin-view__stat-card--purple">
+                                                                                        <div className="sysadmin-view__stat-header">
+                                                                                            <Time size={16} className="u-icon--purple" />
+                                                                                            <span className="sysadmin-view__stat-label">Avg Resolution</span>
                                                                                         </div>
-                                                                                        <div style={{ fontSize: '1.25rem', fontWeight: 600 }}>
+                                                                                        <div className="sysadmin-view__stat-value">
                                                                                             {stats?.avgResolutionHours != null ? `${stats.avgResolutionHours}h` : '--'}
                                                                                         </div>
                                                                                     </div>
 
-                                                                                    {/* Last Activity */}
-                                                                                    <div style={{
-                                                                                        background: 'var(--cds-layer-02)',
-                                                                                        borderRadius: '4px',
-                                                                                        padding: '0.75rem',
-                                                                                        borderLeft: '3px solid #009d9a',
-                                                                                    }}>
-                                                                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-                                                                                            <Activity size={16} style={{ color: '#009d9a' }} />
-                                                                                            <span style={{ fontSize: '0.6875rem', color: 'var(--cds-text-secondary)', textTransform: 'uppercase', letterSpacing: '0.32px' }}>Last Login</span>
+                                                                                    <div className="sysadmin-view__stat-card sysadmin-view__stat-card--teal">
+                                                                                        <div className="sysadmin-view__stat-header">
+                                                                                            <Activity size={16} className="u-icon--teal" />
+                                                                                            <span className="sysadmin-view__stat-label">Last Login</span>
                                                                                         </div>
-                                                                                        <div style={{ fontSize: '0.875rem', fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                                                                                        <div className="sysadmin-view__stat-value sysadmin-view__stat-value--sm">
                                                                                             {user.last_login || 'Never'}
                                                                                         </div>
                                                                                     </div>
                                                                                 </div>
 
-                                                                                {/* Role Permissions tags */}
-                                                                                <div style={{ marginBottom: '0.75rem' }}>
-                                                                                    <span style={{
-                                                                                        fontSize: '0.6875rem',
-                                                                                        fontWeight: 600,
-                                                                                        color: 'var(--cds-text-secondary)',
-                                                                                        textTransform: 'uppercase',
-                                                                                        letterSpacing: '0.32px',
-                                                                                        display: 'block',
-                                                                                        marginBottom: '0.375rem',
-                                                                                    }}>
+                                                                                <div className="sysadmin-view__perm-section">
+                                                                                    <span className="sysadmin-view__perm-heading">
                                                                                         Role Permissions
                                                                                     </span>
-                                                                                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
+                                                                                    <div className="sysadmin-view__perm-list">
                                                                                         {rolePerms.length > 0 ? (
                                                                                             rolePerms.map(perm => (
                                                                                                 <Tag key={perm} type="blue" size="sm">
@@ -1340,7 +1335,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                                                                                                 </Tag>
                                                                                             ))
                                                                                         ) : (
-                                                                                            <span style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary)' }}>
+                                                                                            <span className="sysadmin-view__perm-empty">
                                                                                                 No permissions defined for this role
                                                                                             </span>
                                                                                         )}
@@ -1543,8 +1538,8 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                     primaryButtonDisabled={!isFormValid || userSaving}
                     size="md"
                 >
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', padding: '1rem 0' }}>
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div className="sysadmin-view__modal-body">
+                        <div className="sysadmin-view__modal-grid">
                             <TextInput
                                 id="user-first-name"
                                 labelText="First Name"
@@ -1592,7 +1587,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                             ))}
                         </Select>
                         {!selectedUser && (
-                            <p style={{ fontSize: '0.75rem', color: 'var(--cds-text-secondary)' }}>
+                            <p className="sysadmin-view__modal-helper">
                                 A temporary password will be generated and sent to the user's email address.
                             </p>
                         )}
@@ -1612,7 +1607,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                     danger
                     size="sm"
                 >
-                    <p style={{ padding: '1rem 0' }}>
+                    <p className="sysadmin-view__modal-paragraph">
                         Are you sure you want to delete the user <strong>"{selectedUser?.username}"</strong>?
                         This action cannot be undone.
                     </p>
@@ -1630,7 +1625,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                     primaryButtonDisabled={userSaving}
                     size="sm"
                 >
-                    <p style={{ padding: '1rem 0' }}>
+                    <p className="sysadmin-view__modal-paragraph">
                         This will send a password reset email to <strong>{selectedUser?.email}</strong>.
                         The user will need to set a new password using the link in the email.
                     </p>
@@ -1652,14 +1647,14 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                     danger
                     size="sm"
                 >
-                    <div style={{ padding: '1rem 0' }}>
-                        <p style={{ marginBottom: '0.75rem' }}>
+                    <div className="sysadmin-view__modal-paragraph">
+                        <p>
                             Are you sure you want to delete <strong>{pendingBulkDeleteIds.length}</strong> selected user{pendingBulkDeleteIds.length !== 1 ? 's' : ''}? This action cannot be undone.
                         </p>
                         {pendingBulkDeleteIds.length > 0 && (
-                            <div style={{ fontSize: '0.875rem', color: 'var(--cds-text-secondary)' }}>
-                                <p style={{ marginBottom: '0.5rem' }}>The following users will be deleted:</p>
-                                <ul style={{ paddingLeft: '1.25rem', margin: 0 }}>
+                            <div className="sysadmin-view__modal-list-section">
+                                <p>The following users will be deleted:</p>
+                                <ul>
                                     {pendingBulkDeleteIds.map(id => {
                                         const user = users.find(u => u.id === id);
                                         return (
@@ -1689,7 +1684,7 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                     primaryButtonDisabled={bulkActionLoading || !bulkRoleValue}
                     size="sm"
                 >
-                    <div style={{ padding: '1rem 0', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div className="sysadmin-view__modal-body">
                         <p>
                             Select the new role for <strong>{pendingBulkRoleIds.length}</strong> selected user{pendingBulkRoleIds.length !== 1 ? 's' : ''}.
                         </p>
@@ -1704,9 +1699,9 @@ export function SysAdminView({ config: _config }: SysAdminViewProps) {
                             ))}
                         </Select>
                         {pendingBulkRoleIds.length > 0 && (
-                            <div style={{ fontSize: '0.875rem', color: 'var(--cds-text-secondary)' }}>
-                                <p style={{ marginBottom: '0.5rem' }}>Affected users:</p>
-                                <ul style={{ paddingLeft: '1.25rem', margin: 0 }}>
+                            <div className="sysadmin-view__modal-list-section">
+                                <p>Affected users:</p>
+                                <ul>
                                     {pendingBulkRoleIds.map(id => {
                                         const user = users.find(u => u.id === id);
                                         return (

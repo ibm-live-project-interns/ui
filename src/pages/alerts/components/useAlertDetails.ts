@@ -164,13 +164,20 @@ export function useAlertDetails(): UseAlertDetailsReturn {
         if (!alert) return;
         setIsReanalyzing(true);
         try {
-            await alertDataService.reanalyzeAlert(alert.id);
+            const result = await alertDataService.reanalyzeAlert(alert.id);
             // Reload alert data to get fresh AI analysis
             const freshData = await alertDataService.getAlertById(alert.id);
             if (freshData) {
                 setAlert(freshData);
             }
-            addToast('success', 'AI Re-analysis Complete', 'Watson AI has re-analyzed this alert with fresh insights');
+            const isOffline = result?.message?.toLowerCase().includes('offline') ||
+                result?.message?.toLowerCase().includes('unavailable') ||
+                result?.message?.toLowerCase().includes('demo mode');
+            if (isOffline) {
+                addToast('warning', 'AI Service Offline', result.message || 'Watson AI is currently unavailable. Showing existing analysis.');
+            } else {
+                addToast('success', 'AI Re-analysis Complete', 'Watson AI has re-analyzed this alert with fresh insights');
+            }
         } catch (err) {
             logger.error('Failed to re-analyze alert', err);
             addToast('error', 'Re-analysis Failed', 'Could not contact AI service. Please try again.');

@@ -3,7 +3,6 @@
  */
 
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Tile, Button, Popover, PopoverContent } from '@carbon/react';
 import { Filter } from '@carbon/icons-react';
 import { SEVERITY_CONFIG, getSeverityIcon, SEVERITY_FILTER_OPTIONS } from '@/shared/constants/severity';
@@ -15,7 +14,6 @@ interface RecurringAlertsProps {
 }
 
 export const RecurringAlerts = React.memo(function RecurringAlerts({ recurringAlerts }: RecurringAlertsProps) {
-    const navigate = useNavigate();
     const [severityFilter, setSeverityFilter] = useState(SEVERITY_FILTER_OPTIONS[0]);
     const [isFilterOpen, setIsFilterOpen] = useState(false);
 
@@ -24,6 +22,23 @@ export const RecurringAlerts = React.memo(function RecurringAlerts({ recurringAl
         if (severityFilter.id === 'all') return recurringAlerts;
         return recurringAlerts.filter(alert => alert.severity === severityFilter.id);
     }, [recurringAlerts, severityFilter]);
+
+    const maxCount = useMemo(() => {
+        if (!filteredAlerts || filteredAlerts.length === 0) return 0;
+        return filteredAlerts.reduce((max, a) => {
+            const c = Number((a as unknown as { occurrenceCount?: number }).occurrenceCount ?? a.count ?? 0);
+            return c > max ? c : max;
+        }, 0);
+    }, [filteredAlerts]);
+
+    const isMeaningfulResolution = (val: unknown): boolean => {
+        if (val === null || val === undefined) return false;
+        if (typeof val === 'number') return val > 0;
+        const s = String(val).trim().toLowerCase();
+        if (!s) return false;
+        if (s === 'n/a' || s === 'na' || s === '-' || s === '0' || s === '0m' || s === '0s' || s === '0h') return false;
+        return true;
+    };
 
     return (
         <Tile className="recurring-alerts-tile">
@@ -93,6 +108,11 @@ export const RecurringAlerts = React.memo(function RecurringAlerts({ recurringAl
                 ) : (
                     filteredAlerts.map((alert) => {
                         const severity = (alert.severity || 'info') as Severity;
+                        const occurrenceCount = Number(
+                            (alert as unknown as { occurrenceCount?: number }).occurrenceCount ?? alert.count ?? 0
+                        );
+                        const barWidth = maxCount > 0 ? (occurrenceCount / maxCount) * 100 : 0;
+                        const showResolution = isMeaningfulResolution(alert.avgResolution);
                         return (
                             <div key={alert.id} className="recurring-alert-row">
                                 <div className={`alert-severity-icon ${severity}`}>
@@ -100,25 +120,21 @@ export const RecurringAlerts = React.memo(function RecurringAlerts({ recurringAl
                                 </div>
                                 <div className="alert-info">
                                     <div className="alert-name-row">
-                                        <span
-                                            className="alert-name alert-name--link"
-                                            role="link"
-                                            tabIndex={0}
-                                            onClick={() => navigate(`/alerts?search=${encodeURIComponent(alert.name)}`)}
-                                            onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/alerts?search=${encodeURIComponent(alert.name)}`); }}
-                                        >
+                                        <span className="alert-name">
                                             {alert.name}
                                         </span>
                                         <span className="alert-count">{alert.count} occurrences</span>
                                     </div>
-                                    <div className="alert-resolution">
-                                        Avg resolution: <span className="resolution-time">{alert.avgResolution}</span>
-                                    </div>
+                                    {showResolution && (
+                                        <div className="alert-resolution">
+                                            Avg resolution: <span className="resolution-time">{alert.avgResolution}</span>
+                                        </div>
+                                    )}
                                 </div>
                                 <div className="alert-progress-bar">
                                     <div
                                         className={`progress-fill progress-fill--${severity}`}
-                                        style={{ '--bar-width': `${alert.percentage}%` } as React.CSSProperties}
+                                        style={{ '--bar-width': `${barWidth}%` } as React.CSSProperties}
                                     ></div>
                                 </div>
                             </div>

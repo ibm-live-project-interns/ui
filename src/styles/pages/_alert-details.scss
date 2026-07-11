@@ -2,6 +2,7 @@
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as react;
 @use '@carbon/colors' as *;
+@use '../tokens' as tok;
 
 // ==========================================
 // Page Layout - FULL WIDTH
@@ -122,7 +123,7 @@
 .alert-kpi-row {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: $spacing-05;
+    gap: tok.$tok-kpi-row-gap;
 
     @media (max-width: 1056px) {
         grid-template-columns: repeat(2, 1fr);

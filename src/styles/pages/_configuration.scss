@@ -5,6 +5,7 @@
 @use '@carbon/react/scss/type' as react;
 @use '@carbon/colors' as *;
 @use '@carbon/react/scss/components/tabs';
+@use '../tokens' as tok;
 
 .configuration-page {
     width: 100%;
@@ -70,16 +71,19 @@
             transition: color 70ms ease, border-bottom-color 70ms ease, background 70ms ease;
 
             // Standard Carbon colors
+            // !important required: our .app-tab class collides with Carbon's internal
+            // .cds--tabs__nav-link selector which applies color with equal specificity.
+            // Dropping !important causes tab text to render as link-primary blue.
             color: $text-secondary !important;
 
             &:hover {
-                color: $text-primary !important;
+                color: $text-primary !important; // see note above
                 background: $layer-hover-01;
             }
 
             // Selected state
             &.app-tab--selected {
-                color: $text-primary !important;
+                color: $text-primary !important; // see note above
                 border-bottom-color: $link-primary;
                 font-weight: 600;
             }
@@ -105,6 +109,34 @@
     // Tab content area - global padding is applied in index.scss
     .configuration-content {
         width: 100%;
+        padding-top: $spacing-06;
+        display: flex;
+        flex-direction: column;
+        gap: $spacing-06;
+
+        // Consistent spacing between major sections within tabs
+        > * + * {
+            margin-top: 0;
+        }
+
+        // KPI / stats row spacing
+        .kpi-row,
+        .configuration-kpi-row,
+        .kpi-grid {
+            display: grid;
+            gap: tok.$tok-kpi-row-gap;
+            margin-bottom: tok.$tok-kpi-row-margin-bottom;
+        }
+
+        // Direct child tiles/cards get breathing room
+        > .cds--tile,
+        > .configuration-tab__content {
+            margin-bottom: $spacing-06;
+
+            &:last-child {
+                margin-bottom: 0;
+            }
+        }
 
         // Only the Threshold Rules tab uses a two-column layout (table + side panel).
         // All other tabs render a single full-width DataTable.

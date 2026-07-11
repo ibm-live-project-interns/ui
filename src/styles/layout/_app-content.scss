@@ -9,6 +9,7 @@
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
 @use '@carbon/react/scss/type' as react;
+@use '../tokens' as tok;
 
 // ==========================================
 // App Content - Main content area below header
@@ -19,9 +20,11 @@
   // Margin-left to offset from expanded SideNav (256px)
   margin-left: 256px;
   // Global padding for consistent spacing across all pages
-  padding: $spacing-07;
+  padding: tok.$tok-page-content-padding;
   min-height: calc(100vh - 48px);
   background-color: $background;
+  // No gap here — page containers (.page-layout, .dashboard-page__content)
+  // control their own internal gap. Adding gap here causes triple-stacking.
 
   // Responsive: On smaller screens, no SideNav offset
   @media (max-width: 1055px) {
@@ -38,8 +41,16 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--page-gap);
+  gap: $spacing-06; // 24px — sole source of inter-section spacing
   min-height: 100%;
+
+  // Prevent child margin-bottom from doubling up with the flex gap.
+  // Individual sections (kpi-row, filter-bar, chart tiles) should NOT also
+  // carry bottom margins — the gap handles all vertical rhythm.
+  > * {
+    margin-bottom: 0 !important;
+    margin-top: 0 !important;
+  }
 }
 
 // ==========================================
@@ -85,14 +96,12 @@
 }
 
 // ==========================================
-// Dashboard and Page Layouts
+// Carbon Grid reset — remove default padding inside page grids
 // ==========================================
 .dashboard-page,
 .alerts-page,
 .alert-detail-page,
 .noc-dashboard {
-  gap: $spacing-05;
-
   .cds--grid {
     padding: 0;
   }

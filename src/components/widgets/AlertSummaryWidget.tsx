@@ -44,8 +44,8 @@ export const AlertSummaryWidget = memo(function AlertSummaryWidget({ className }
     if (!summary) return [];
 
     const { summary: s, metrics } = summary;
-    const aiAccuracyMetric = metrics.find(m => m.label?.toLowerCase().includes('accuracy'));
-    const aiAccuracyValue = aiAccuracyMetric ? parseFloat(String(aiAccuracyMetric.value)) : null;
+    const aiEnrichmentMetric = metrics.find(m => m.id === 'ai-accuracy' || m.label?.toLowerCase().includes('enrichment'));
+    const aiEnrichmentValue = aiEnrichmentMetric ? parseFloat(String(aiEnrichmentMetric.value)) : null;
 
     return [
       {
@@ -81,12 +81,12 @@ export const AlertSummaryWidget = memo(function AlertSummaryWidget({ className }
       },
       {
         id: 'ai-accuracy',
-        label: 'AI Accuracy',
-        value: aiAccuracyValue !== null ? `${aiAccuracyValue}%` : 'N/A',
+        label: 'AI Enrichment',
+        value: aiEnrichmentValue !== null ? `${aiEnrichmentValue}%` : 'N/A',
         icon: Analytics,
-        iconColor: aiAccuracyValue !== null && aiAccuracyValue >= 90 ? 'var(--cds-support-info, #8a3ffc)' : 'var(--cds-support-warning, #ff832b)',
-        severity: (aiAccuracyValue !== null && aiAccuracyValue >= 90 ? 'success' : 'major') as KPISeverity,
-        subtitle: aiAccuracyValue !== null ? 'Based on recent correlations' : 'Data unavailable',
+        iconColor: aiEnrichmentValue !== null && aiEnrichmentValue >= 90 ? 'var(--cds-support-info, #8a3ffc)' : 'var(--cds-support-warning, #ff832b)',
+        severity: (aiEnrichmentValue !== null && aiEnrichmentValue >= 90 ? 'success' : 'major') as KPISeverity,
+        subtitle: aiEnrichmentValue !== null ? `${aiEnrichmentValue}% of alerts analyzed by AI` : 'Data unavailable',
       },
     ];
   }, [summary, navigate]);

@@ -171,6 +171,7 @@ export class ApiAlertDataService extends HttpService implements IAlertDataServic
                 businessImpact: deriveBusinessImpact(backendAlert.aiAnalysis?.businessImpact || backendAlert.ai_impact || backendAlert.business_impact),
                 recommendedActions: parseRecommendedActions(backendAlert.aiAnalysis?.recommendedActions || backendAlert.ai_recommendation || backendAlert.recommended_actions),
             },
+            resolved_at: backendAlert.resolved_at || null,
             rawData: backendAlert.raw_payload || backendAlert.raw_data || JSON.stringify(backendAlert, null, 2),
             extendedDevice: {
                 id: backendAlert.device_id || deviceName,
@@ -345,9 +346,9 @@ export class ApiAlertDataService extends HttpService implements IAlertDataServic
         return [
             {
                 id: 'ai-accuracy',
-                label: 'AI Accuracy',
+                label: 'AI Enrichment',
                 value: accuracyValue,
-                description: 'Based on recent correlations',
+                description: 'Alerts with AI analysis',
             },
             {
                 id: 'total-processed',
@@ -493,8 +494,8 @@ export class ApiAlertDataService extends HttpService implements IAlertDataServic
     // Enrichment Methods
     // ==========================================
 
-    async reanalyzeAlert(id: string): Promise<void> {
-        return this.post<void>(API_ENDPOINTS.REANALYZE_ALERT(id), {});
+    async reanalyzeAlert(id: string): Promise<{ message: string; alert?: unknown }> {
+        return this.post<{ message: string; alert?: unknown }>(API_ENDPOINTS.REANALYZE_ALERT(id), {});
     }
 
     async getAlertTickets(id: string): Promise<LinkedTicket[]> {
