@@ -19,6 +19,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
+import { useThemeDetection } from '@/shared/hooks';
 import { useNavigate } from 'react-router-dom';
 import {
     Tile, Tag, ProgressBar, SkeletonText, SkeletonPlaceholder, InlineNotification,
@@ -49,7 +50,7 @@ export function SeniorEngineerView({ config: _config }: SeniorEngineerViewProps)
     const navigate = useNavigate();
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [currentTheme, setCurrentTheme] = useState('g100');
+    const currentTheme = useThemeDetection();
 
     // Data states
     const [devices, setDevices] = useState<Device[]>([]);
@@ -58,25 +59,6 @@ export function SeniorEngineerView({ config: _config }: SeniorEngineerViewProps)
     const [severityDist, setSeverityDist] = useState<any[]>([]);
     const [noisyDevices, setNoisyDevices] = useState<NoisyDeviceItem[]>([]);
     const [trendsKPI, setTrendsKPI] = useState<any[]>([]);
-
-    // Detect theme
-    useEffect(() => {
-        const detectTheme = () => {
-            try {
-                const themeSetting = document.documentElement.getAttribute('data-theme-setting');
-                if (themeSetting === 'light') setCurrentTheme('white');
-                else if (themeSetting === 'dark') setCurrentTheme('g100');
-                else {
-                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    setCurrentTheme(prefersDark ? 'g100' : 'white');
-                }
-            } catch { /* ignore */ }
-        };
-        detectTheme();
-        const observer = new MutationObserver(detectTheme);
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme-setting'] });
-        return () => observer.disconnect();
-    }, []);
 
     // Fetch data from services
     useEffect(() => {

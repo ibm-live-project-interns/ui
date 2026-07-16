@@ -12,6 +12,7 @@
  */
 
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { useThemeDetection } from '@/shared/hooks';
 import { useNavigate } from 'react-router-dom';
 import {
     Tile, Tag, Tabs, TabList, Tab, TabPanels, TabPanel,
@@ -141,7 +142,7 @@ export function SysAdminView({ config }: SysAdminViewProps) {
     const navigate = useNavigate();
     const { addToast } = useToast();
     const [isLoading, setIsLoading] = useState(true);
-    const [currentTheme, setCurrentTheme] = useState('g100');
+    const currentTheme = useThemeDetection();
     const [selectedTab, setSelectedTab] = useState(0);
     const [previewRole, setPreviewRole] = useState<string | null>(null);
 
@@ -214,25 +215,6 @@ export function SysAdminView({ config }: SysAdminViewProps) {
         });
         addToast('info', 'Permission Updated', `Updated permissions for ${PERM_ROLES.find(r => r.roleId === roleId)?.label}`);
     };
-
-    // Detect theme
-    useEffect(() => {
-        const detectTheme = () => {
-            try {
-                const themeSetting = document.documentElement.getAttribute('data-theme-setting');
-                if (themeSetting === 'light') setCurrentTheme('white');
-                else if (themeSetting === 'dark') setCurrentTheme('g100');
-                else {
-                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    setCurrentTheme(prefersDark ? 'g100' : 'white');
-                }
-            } catch { /* ignore */ }
-        };
-        detectTheme();
-        const observer = new MutationObserver(detectTheme);
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme-setting'] });
-        return () => observer.disconnect();
-    }, []);
 
     // Fetch dashboard overview data
     useEffect(() => {

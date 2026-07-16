@@ -181,13 +181,11 @@ const { currentRole, hasPermission } = useRole();
 if (hasPermission('manage-devices')) { /* ... */ }
 ```
 
-**Theme detection** (MutationObserver on `data-theme-setting`):
+**Theme detection** (shared hook):
 ```typescript
-const observer = new MutationObserver(() => {
-    const theme = document.documentElement.getAttribute('data-theme-setting');
-    setCurrentTheme(theme === 'dark' ? 'g100' : 'white');
-});
-observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme-setting'] });
+import { useThemeDetection } from '@/shared/hooks';
+
+const currentTheme = useThemeDetection(); // 'g100' | 'white'
 ```
 
 **Chart options** (Carbon Charts):

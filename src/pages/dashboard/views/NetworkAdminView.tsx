@@ -11,6 +11,7 @@
  */
 
 import { useState, useEffect, useMemo } from 'react';
+import { useThemeDetection } from '@/shared/hooks';
 import { useNavigate } from 'react-router-dom';
 import {
     Tile, Tag, ProgressBar, SkeletonText, SkeletonPlaceholder, InlineNotification,
@@ -49,31 +50,12 @@ export function NetworkAdminView({ config: _config }: NetworkAdminViewProps) {
     const [devices, setDevices] = useState<Device[]>([]);
     const [deviceStats, setDeviceStats] = useState<DeviceStats>({ online: 0, critical: 0, warning: 0, offline: 0, total: 0 });
     const [error, setError] = useState<string | null>(null);
-    const [currentTheme, setCurrentTheme] = useState('g100');
+    const currentTheme = useThemeDetection();
 
     // Search & Pagination State
     const [searchQuery, setSearchQuery] = useState('');
     const [firstRowIndex, setFirstRowIndex] = useState(0);
     const [currentPageSize, setCurrentPageSize] = useState(10);
-
-    // Detect theme
-    useEffect(() => {
-        const detectTheme = () => {
-            try {
-                const themeSetting = document.documentElement.getAttribute('data-theme-setting');
-                if (themeSetting === 'light') setCurrentTheme('white');
-                else if (themeSetting === 'dark') setCurrentTheme('g100');
-                else {
-                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    setCurrentTheme(prefersDark ? 'g100' : 'white');
-                }
-            } catch { /* ignore */ }
-        };
-        detectTheme();
-        const observer = new MutationObserver(detectTheme);
-        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme-setting'] });
-        return () => observer.disconnect();
-    }, []);
 
     // Fetch real device data from API/service
     useEffect(() => {

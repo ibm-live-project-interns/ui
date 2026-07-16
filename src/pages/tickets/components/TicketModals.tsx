@@ -91,18 +91,26 @@ export const CreateTicketModal = React.memo(function CreateTicketModal({
           labelText="Title"
           placeholder="Enter ticket title"
           value={formData.title}
-          onChange={(e) => onFormChange({ title: e.target.value })}
+          onChange={(e) => {
+            if (e.target.value.length <= 256) onFormChange({ title: e.target.value });
+          }}
           required
           invalid={isCreating && !formData.title.trim()}
           invalidText="Ticket title is required"
+          maxCount={256}
+          enableCounter
         />
         <TextArea
           id="create-ticket-description"
           labelText="Description"
           placeholder="Describe the issue"
           value={formData.description}
-          onChange={(e) => onFormChange({ description: e.target.value })}
+          onChange={(e) => {
+            if (e.target.value.length <= 5000) onFormChange({ description: e.target.value });
+          }}
           rows={4}
+          enableCounter
+          maxCount={5000}
         />
         <Select
           id="create-ticket-priority"
@@ -177,8 +185,12 @@ export const ResolveTicketModal = React.memo(function ResolveTicketModal({
         labelText="Resolution Notes (optional)"
         placeholder="Describe how the issue was resolved..."
         value={resolveNotes}
-        onChange={(e) => onNotesChange(e.target.value)}
+        onChange={(e) => {
+          if (e.target.value.length <= 2000) onNotesChange(e.target.value);
+        }}
         rows={4}
+        enableCounter
+        maxCount={2000}
       />
     </Modal>
   );

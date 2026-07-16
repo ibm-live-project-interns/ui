@@ -4,6 +4,7 @@ import {
     Tag,
     SkeletonText,
     InlineNotification,
+    InlineLoading,
 } from '@carbon/react';
 import {
     Time,
@@ -175,54 +176,90 @@ export function AlertDetailsPage() {
                                         <IbmWatsonxCodeAssistant size={24} />
                                     </div>
                                     <h3 className="alert-card__title">AI-Generated Explanation</h3>
-                                    <Button
-                                        kind="ghost"
-                                        size="sm"
-                                        renderIcon={Renew}
-                                        onClick={handleReanalyze}
-                                        disabled={isReanalyzing}
-                                        className="alert-card__reanalyze-btn"
-                                    >
-                                        {isReanalyzing ? 'Analyzing...' : 'Re-analyze'}
-                                    </Button>
+                                    {isReanalyzing ? (
+                                        <InlineLoading
+                                            description="Watson is analyzing…"
+                                            status="active"
+                                            className="alert-card__inline-loading"
+                                        />
+                                    ) : (
+                                        <Button
+                                            kind="ghost"
+                                            size="sm"
+                                            renderIcon={Renew}
+                                            onClick={handleReanalyze}
+                                            className="alert-card__reanalyze-btn"
+                                        >
+                                            Re-analyze
+                                        </Button>
+                                    )}
                                 </div>
 
-                                <div className="alert-card__section">
-                                    <h4 className="alert-card__section-title">Summary</h4>
-                                    <p className="alert-card__text">{alert.aiAnalysis?.summary || 'Analysis pending'}</p>
-                                </div>
-
-                                <div className="alert-card__section">
-                                    <h4 className="alert-card__section-title">Root Cause Analysis</h4>
-                                    <ul className="alert-card__list">
-                                        {(alert.aiAnalysis?.rootCauses || []).map((cause: string, index: number) => (
-                                            <li key={index} className="alert-card__list-item">
-                                                <Checkmark size={16} className="alert-card__list-icon" />
-                                                <span>{cause}</span>
-                                            </li>
-                                        ))}
-                                    </ul>
-                                </div>
-
-                                <div className="alert-card__section">
-                                    <h4 className="alert-card__section-title alert-card__section-title--impact">Business Impact</h4>
-                                    <div className="alert-card__impact-box">
-                                        <WarningAlt size={20} />
-                                        <span className="alert-card__impact-text">{alert.aiAnalysis?.businessImpact || 'Impact assessment pending'}</span>
+                                {isReanalyzing ? (
+                                    <div className="alert-card__analyzing">
+                                        <div className="alert-card__section">
+                                            <h4 className="alert-card__section-title">Summary</h4>
+                                            <SkeletonText paragraph lineCount={2} />
+                                        </div>
+                                        <div className="alert-card__section">
+                                            <h4 className="alert-card__section-title">Root Cause Analysis</h4>
+                                            <SkeletonText paragraph lineCount={3} />
+                                        </div>
+                                        <div className="alert-card__section">
+                                            <h4 className="alert-card__section-title alert-card__section-title--impact">Business Impact</h4>
+                                            <SkeletonText lineCount={1} />
+                                        </div>
+                                        <div className="alert-card__section">
+                                            <h4 className="alert-card__section-title alert-card__section-title--actions">Recommended Actions</h4>
+                                            <SkeletonText paragraph lineCount={4} />
+                                        </div>
                                     </div>
-                                </div>
+                                ) : !alert.aiAnalysis?.summary || alert.aiAnalysis.summary === 'Analysis pending' ? (
+                                    <div className="alert-card__ai-pending">
+                                        <IbmWatsonxCodeAssistant size={32} className="alert-card__ai-pending-icon" />
+                                        <p className="alert-card__ai-pending-title">No AI analysis yet</p>
+                                        <p className="alert-card__ai-pending-hint">Click Re-analyze to run Watson AI on this alert</p>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <div className="alert-card__section">
+                                            <h4 className="alert-card__section-title">Summary</h4>
+                                            <p className="alert-card__text">{alert.aiAnalysis.summary}</p>
+                                        </div>
 
-                                <div className="alert-card__section">
-                                    <h4 className="alert-card__section-title alert-card__section-title--actions">Recommended Actions</h4>
-                                    <div className="alert-card__actions-list">
-                                        {(alert.aiAnalysis?.recommendedActions || []).map((action: string, index: number) => (
-                                            <div key={index} className="alert-card__action-item">
-                                                <span className="alert-card__action-number">{index + 1}</span>
-                                                <span>{action}</span>
+                                        <div className="alert-card__section">
+                                            <h4 className="alert-card__section-title">Root Cause Analysis</h4>
+                                            <ul className="alert-card__list">
+                                                {(alert.aiAnalysis?.rootCauses || []).map((cause: string, index: number) => (
+                                                    <li key={index} className="alert-card__list-item">
+                                                        <Checkmark size={16} className="alert-card__list-icon" />
+                                                        <span>{cause}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+
+                                        <div className="alert-card__section">
+                                            <h4 className="alert-card__section-title alert-card__section-title--impact">Business Impact</h4>
+                                            <div className="alert-card__impact-box">
+                                                <WarningAlt size={20} />
+                                                <span className="alert-card__impact-text">{alert.aiAnalysis?.businessImpact || 'Impact assessment pending'}</span>
                                             </div>
-                                        ))}
-                                    </div>
-                                </div>
+                                        </div>
+
+                                        <div className="alert-card__section">
+                                            <h4 className="alert-card__section-title alert-card__section-title--actions">Recommended Actions</h4>
+                                            <div className="alert-card__actions-list">
+                                                {(alert.aiAnalysis?.recommendedActions || []).map((action: string, index: number) => (
+                                                    <div key={index} className="alert-card__action-item">
+                                                        <span className="alert-card__action-number">{index + 1}</span>
+                                                        <span>{action}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
                             </Tile>
                         </div>
 

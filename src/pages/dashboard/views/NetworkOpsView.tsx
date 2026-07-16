@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useThemeDetection } from '@/shared/hooks';
 import { useNavigate } from 'react-router-dom';
 import {
   Tile, DataTable, TableContainer, Table, TableHead, TableRow, TableHeader,
@@ -34,7 +35,7 @@ interface NetworkOpsViewProps {
 export function NetworkOpsView({ }: NetworkOpsViewProps) {
   const navigate = useNavigate();
   const [selectedTimePeriod, setSelectedTimePeriod] = useState<'24h' | '7d' | '30d'>('24h');
-  const [currentTheme, setCurrentTheme] = useState('g100');
+  const currentTheme = useThemeDetection();
   const [isLoading, setIsLoading] = useState(true);
 
   // Search & Pagination State
@@ -63,24 +64,6 @@ export function NetworkOpsView({ }: NetworkOpsViewProps) {
   const [recentAlerts, setRecentAlerts] = useState<SummaryAlert[]>([]);
   const [noisyDevices, setNoisyDevices] = useState<NoisyDevice[]>([]);
   const [aiMetrics, setAiMetrics] = useState<AIMetric[]>([]);
-
-  useEffect(() => {
-    const detectTheme = () => {
-      try {
-        const themeSetting = document.documentElement.getAttribute('data-theme-setting');
-        if (themeSetting === 'light') setCurrentTheme('white');
-        else if (themeSetting === 'dark') setCurrentTheme('g100');
-        else {
-          const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-          setCurrentTheme(prefersDark ? 'g100' : 'white');
-        }
-      } catch { }
-    };
-    detectTheme();
-    const observer = new MutationObserver(detectTheme);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme-setting'] });
-    return () => observer.disconnect();
-  }, []);
 
   // Data fetching with proper cleanup - ONLY REAL DATA FROM DB
   useEffect(() => {

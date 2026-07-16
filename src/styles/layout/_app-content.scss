@@ -41,7 +41,7 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: $spacing-06; // 24px — sole source of inter-section spacing
+  gap: tok.$tok-page-content-gap; // sole source of inter-section spacing
   min-height: 100%;
 
   // Prevent child margin-bottom from doubling up with the flex gap.

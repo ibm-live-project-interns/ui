@@ -1,6 +1,7 @@
 // Topology Page Styles
 @use '@carbon/react/scss/spacing' as *;
 @use '@carbon/react/scss/theme' as *;
+@use '../tokens' as tok;
 
 // ==========================================
 // Page Layout
@@ -11,10 +12,9 @@
   min-height: 100%;
 
   &__content {
-    padding: $spacing-06;
     display: flex;
     flex-direction: column;
-    gap: $spacing-06;
+    gap: tok.$tok-page-content-gap;
   }
 
   &__filters {
