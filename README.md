@@ -1,7 +1,7 @@
 # Sentrix UI
 
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-ui--bionics--projects.vercel.app-black?style=flat-square&logo=vercel)](https://ui-bionics-projects.vercel.app)
-[![API](https://img.shields.io/badge/API-Railway-blueviolet?style=flat-square&logo=railway)](https://sentrix-api-production-1aec.up.railway.app/api/v1/health)
+[![API](https://img.shields.io/badge/API-HuggingFace%20Spaces-orange?style=flat-square&logo=huggingface)](https://bionicop-sentrix-api.hf.space/api/v1/health)
 
 > **Live:** https://ui-bionics-projects.vercel.app
 
@@ -153,10 +153,12 @@ ui/src/
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `VITE_USE_MOCK` | `true` (dev) / `false` (prod) | Use mock data instead of real API |
-| `VITE_API_BASE_URL` | `http://localhost:8080` | API Gateway base URL |
+| `VITE_API_BASE_URL` | `http://localhost:8080` | API Gateway base URL (prod: `https://bionicop-sentrix-api.hf.space`) |
 | `VITE_API_VERSION` | `v1` | API version prefix |
 | `VITE_API_TIMEOUT` | `30000` | Request timeout (ms) |
 | `VITE_ENABLE_WEBSOCKET` | `false` | Enable WebSocket connection |
+| `VITE_ENABLE_GOOGLE_AUTH` | `false` | Enable Google OAuth button |
+| `VITE_GOOGLE_CLIENT_ID` | `` | Google OAuth client ID (required if auth enabled) |
 | `VITE_ALERT_POLLING_INTERVAL` | `30000` | Alert refresh interval (ms) |
 | `VITE_DASHBOARD_REFRESH_INTERVAL` | `30000` | Dashboard refresh interval (ms) |
 | `VITE_DEFAULT_THEME` | `system` | Default theme: `light`, `dark`, `system` |
