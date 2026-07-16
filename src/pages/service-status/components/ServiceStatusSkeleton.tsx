@@ -27,9 +27,9 @@ export const ServiceStatusSkeleton = React.memo(function ServiceStatusSkeleton()
         />
 
         <div className="u-section-padding">
-          <SkeletonPlaceholder className="service-status-page__skeleton-banner" />
+          <SkeletonPlaceholder style={{ height: '72px', width: '100%', borderRadius: '4px' }} />
 
-          <div className="kpi-row">
+          <div className="kpi-row" style={{ marginTop: '1rem' }}>
             {[1, 2, 3, 4].map((i) => (
               <KPICard key={i} label="" value="" loading />
             ))}
@@ -37,7 +37,7 @@ export const ServiceStatusSkeleton = React.memo(function ServiceStatusSkeleton()
 
           <div className="service-status-page__skeleton-grid">
             {[1, 2, 3, 4, 5, 6, 7].map((i) => (
-              <SkeletonPlaceholder key={i} className="skeleton-card" />
+              <SkeletonPlaceholder key={i} style={{ height: '180px', width: '100%' }} />
             ))}
           </div>
         </div>
