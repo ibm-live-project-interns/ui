@@ -125,7 +125,7 @@ export function useTrends(): UseTrendsReturn {
     const navigate = useNavigate();
     const { addToast } = useToast();
 
-    const [selectedTimePeriod, setSelectedTimePeriod] = useState(TIME_PERIOD_OPTIONS[2]);
+    const [selectedTimePeriod, setSelectedTimePeriod] = useState(TIME_PERIOD_OPTIONS[3]); // Default to 90d — covers older demo data
     const currentTheme = useThemeDetection();
     const [lastFetchTime, setLastFetchTime] = useState<Date | null>(null);
 
