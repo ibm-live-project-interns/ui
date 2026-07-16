@@ -194,6 +194,20 @@ import { createAreaChartOptions, createDonutChartOptions } from '@/shared/consta
 const options = createAreaChartOptions({ title: 'Alerts Over Time', theme: currentTheme });
 ```
 
+## Security Headers (Vercel)
+
+`vercel.json` sets the following HTTP security headers on every response:
+
+| Header | Value |
+|--------|-------|
+| `Content-Security-Policy` | `default-src 'self'`; scripts/styles from self only (`style-src` allows `'unsafe-inline'` for Carbon); `connect-src` limited to API + Google accounts |
+| `X-Frame-Options` | `DENY` |
+| `X-Content-Type-Options` | `nosniff` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | camera, microphone, geolocation all blocked |
+
+If you add a new external API domain to `connect-src`, update the CSP value in `vercel.json`.
+
 ## Docker
 
 ```bash
