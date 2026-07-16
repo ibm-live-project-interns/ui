@@ -122,6 +122,7 @@ export const TIME_PERIOD_OPTIONS: FilterOption[] = [
     { id: '7d', text: 'Last 7 Days' },
     { id: '30d', text: 'Last 30 Days' },
     { id: '90d', text: 'Last 90 Days' },
+    { id: 'all', text: 'All Time' },
 ];
 
 // ==========================================

@@ -88,7 +88,7 @@ export function usePriorityAlerts(): UsePriorityAlertsReturn {
     const [searchQuery, setSearchQuery] = useState(deviceFilter || '');
     const [selectedSeverity, setSelectedSeverity] = useState(SEVERITY_FILTER_OPTIONS[0]);
     const [selectedStatus, setSelectedStatus] = useState(STATUS_FILTER_OPTIONS[0]);
-    const [selectedTime, setSelectedTime] = useState(TIME_PERIOD_OPTIONS[2]); // Default to 30d
+    const [selectedTime, setSelectedTime] = useState(TIME_PERIOD_OPTIONS[4]); // Default to All Time
     const [activeQuickFilters, setActiveQuickFilters] = useState<string[]>([]);
     const [currentPage, setCurrentPage] = useState(1);
     const [pageSize, setPageSize] = useState(10);
@@ -310,7 +310,7 @@ export function usePriorityAlerts(): UsePriorityAlertsReturn {
         setSearchQuery('');
         setSelectedSeverity(SEVERITY_FILTER_OPTIONS[0]);
         setSelectedStatus(STATUS_FILTER_OPTIONS[0]);
-        setSelectedTime(TIME_PERIOD_OPTIONS[2]);
+        setSelectedTime(TIME_PERIOD_OPTIONS[4]);
         setActiveQuickFilters([]);
         setCurrentPage(1);
     }, []);
