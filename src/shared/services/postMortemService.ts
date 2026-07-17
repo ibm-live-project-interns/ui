@@ -34,6 +34,7 @@ export interface ActionItem {
 export interface PostMortem {
   id: number;
   alert_id: number;
+  alert_id_str?: string;
   title: string;
   root_cause: string;
   root_cause_category: string;

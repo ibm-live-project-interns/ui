@@ -67,7 +67,7 @@ export const PostMortemTable = React.memo(function PostMortemTable({
       paginated.map((pm) => ({
         id: String(pm.id),
         title: pm.title || 'Untitled',
-        alert_id: pm.alert_id > 0 ? String(pm.alert_id) : '--',
+        alert_id: pm.alert_id_str || (pm.alert_id > 0 ? String(pm.alert_id) : '--'),
         root_cause_category: pm.root_cause_category || 'unknown',
         status: pm.status || 'draft',
         created_by: pm.created_by || '--',
