@@ -4,18 +4,13 @@ import { createBrowserRouter, RouterProvider, Navigate } from 'react-router-dom'
 import { Loading, Button } from '@carbon/react';
 
 // Providers
-import { RoleProvider } from '@/features/roles/hooks';
+import { RoleProvider, useRole } from '@/features/roles/hooks';
 import { ToastProvider } from '@/contexts';
 import { logger } from '@/shared/utils/logger';
 
 // Layouts - keep these eager as they're needed immediately
 import { AppLayout, AuthLayout, PublicLayout } from './components/layout';
 import { ProtectedRoute } from './components/auth';
-
-// Auth service for RBAC checks
-import { authService } from '@/features/auth/services/authService';
-import { ROLE_CONFIGS } from '@/features/roles/config/roleConfig';
-import type { RoleID } from '@/shared/types';
 
 // Lazy load all pages - they'll be loaded on-demand
 const WelcomePage = lazy(() => import('./pages/welcome').then(m => ({ default: m.WelcomePage })));
@@ -111,10 +106,9 @@ interface RequireRoleProps {
 }
 
 function RequireRole({ allowedRoles, children }: RequireRoleProps) {
-  const user = authService.getCurrentUser();
-  const userRole = user?.role || '';
+  const { currentRole } = useRole();
 
-  if (!allowedRoles.includes(userRole)) {
+  if (!allowedRoles.includes(currentRole.id)) {
     return <Navigate to="/dashboard" replace />;
   }
 
@@ -131,17 +125,9 @@ interface RequirePermissionProps {
 }
 
 function RequirePermission({ permission, children }: RequirePermissionProps) {
-  const user = authService.getCurrentUser();
-  const userRole = (user?.role || 'network-ops') as RoleID;
-  const roleConfig = ROLE_CONFIGS[userRole];
-  const permissions = (roleConfig?.permissions as readonly string[] | undefined) ?? [];
+  const { hasPermission } = useRole();
 
-  // Sysadmin (view-all) bypasses all permission checks.
-  // Otherwise, require the specific permission.
-  const hasPermission =
-    permissions.includes('view-all') || permissions.includes(permission);
-
-  if (!hasPermission) {
+  if (!hasPermission(permission) && !hasPermission('view-all')) {
     return <Navigate to="/dashboard" replace />;
   }
 
