@@ -65,10 +65,10 @@ export const PostMortemDetail = React.memo(function PostMortemDetail({ postMorte
             {actionItems.map((item, idx) => (
               <div key={idx} className="post-mortems-page__action-item">
                 <span className="post-mortems-page__action-item-text">
-                  {item.item}
+                  {item.description}
                 </span>
                 <span className="post-mortems-page__action-item-assignee">
-                  {item.assignee}
+                  {item.owner}{item.due_date ? ` · Due ${item.due_date}` : ''}
                 </span>
                 <Tag
                   type={
