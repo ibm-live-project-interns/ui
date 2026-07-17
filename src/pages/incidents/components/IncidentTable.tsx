@@ -149,11 +149,15 @@ export const IncidentTable = React.memo(function IncidentTable({
                 {rows.map((row) => {
                   const incident = paginatedIncidents.find((inc) => inc.id === row.id);
                   if (!incident) return null;
-                  const { key: _rowKey, ...rowProps } = getRowProps({ row });
+                  const { key: _rowKey, onExpand, ...rowProps } = getRowProps({ row }) as {
+                    key: string;
+                    onExpand?: () => void;
+                    [key: string]: unknown;
+                  };
 
                   return (
                     <React.Fragment key={row.id}>
-                      <TableExpandRow {...rowProps}>
+                      <TableExpandRow {...rowProps} onExpand={onExpand}>
                         <TableCell className="incident-id-cell">
                           <span
                             className="incident-id u-link-text"
@@ -192,10 +196,7 @@ export const IncidentTable = React.memo(function IncidentTable({
                             renderIcon={DocumentView}
                             iconDescription="View Report"
                             onClick={() => {
-                              const expandBtn = document.querySelector(
-                                `tr[data-row-id="${row.id}"] .cds--table-expand__button`
-                              ) as HTMLButtonElement;
-                              if (expandBtn && !row.isExpanded) expandBtn.click();
+                              if (!row.isExpanded) onExpand?.();
                             }}
                           >
                             View

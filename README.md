@@ -181,13 +181,11 @@ const { currentRole, hasPermission } = useRole();
 if (hasPermission('manage-devices')) { /* ... */ }
 ```
 
-**Theme detection** (MutationObserver on `data-theme-setting`):
+**Theme detection** (shared hook):
 ```typescript
-const observer = new MutationObserver(() => {
-    const theme = document.documentElement.getAttribute('data-theme-setting');
-    setCurrentTheme(theme === 'dark' ? 'g100' : 'white');
-});
-observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme-setting'] });
+import { useThemeDetection } from '@/shared/hooks';
+
+const currentTheme = useThemeDetection(); // 'g100' | 'white'
 ```
 
 **Chart options** (Carbon Charts):
@@ -195,6 +193,20 @@ observer.observe(document.documentElement, { attributes: true, attributeFilter: 
 import { createAreaChartOptions, createDonutChartOptions } from '@/shared/constants/charts';
 const options = createAreaChartOptions({ title: 'Alerts Over Time', theme: currentTheme });
 ```
+
+## Security Headers (Vercel)
+
+`vercel.json` sets the following HTTP security headers on every response:
+
+| Header | Value |
+|--------|-------|
+| `Content-Security-Policy` | `default-src 'self'`; scripts/styles from self only (`style-src` allows `'unsafe-inline'` for Carbon); `connect-src` limited to API + Google accounts |
+| `X-Frame-Options` | `DENY` |
+| `X-Content-Type-Options` | `nosniff` |
+| `Referrer-Policy` | `strict-origin-when-cross-origin` |
+| `Permissions-Policy` | camera, microphone, geolocation all blocked |
+
+If you add a new external API domain to `connect-src`, update the CSP value in `vercel.json`.
 
 ## Docker
 

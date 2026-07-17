@@ -36,7 +36,7 @@
   &__content {
     display: flex;
     flex-direction: column;
-    gap: $spacing-07;
+    gap: tok.$tok-page-content-gap;
   }
 
   // Split Layout (2/3 + 1/3)

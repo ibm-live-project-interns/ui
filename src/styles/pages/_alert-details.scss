@@ -68,7 +68,7 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: $spacing-06;
+    gap: tok.$tok-page-content-gap;
 }
 
 // ==========================================
@@ -419,6 +419,59 @@
 
 .alert-card__reanalyze-btn {
     margin-left: auto;
+}
+
+.alert-card__inline-loading {
+    margin-left: auto;
+
+    // Align the Carbon InlineLoading text with the card header baseline
+    .cds--inline-loading__text {
+        @include react.type-style('label-01');
+        color: $text-secondary;
+    }
+}
+
+.alert-card__analyzing {
+    // Subtle pulse to indicate live AI work
+    animation: alert-ai-pulse 2s ease-in-out infinite;
+
+    .cds--skeleton__text {
+        margin-bottom: $spacing-03;
+    }
+}
+
+@keyframes alert-ai-pulse {
+    0%, 100% { opacity: 1; }
+    50%       { opacity: 0.7; }
+}
+
+.alert-card__ai-pending {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-09 $spacing-07;
+    gap: $spacing-04;
+    text-align: center;
+    color: $text-secondary;
+}
+
+.alert-card__ai-pending-icon {
+    color: $text-placeholder;
+    opacity: 0.5;
+}
+
+.alert-card__ai-pending-title {
+    @include react.type-style('productive-heading-01');
+    color: $text-secondary;
+    margin: 0;
+}
+
+.alert-card__ai-pending-hint {
+    @include react.type-style('helper-text-01');
+    color: $text-placeholder;
+    max-width: 280px;
+    margin: 0;
 }
 
 .alert-card__impact-text {

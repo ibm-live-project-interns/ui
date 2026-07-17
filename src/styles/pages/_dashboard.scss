@@ -17,7 +17,7 @@
     &__content {
         display: flex;
         flex-direction: column;
-        gap: $spacing-06; // 24px between every section
+        gap: tok.$tok-page-content-gap;
 
         // Kill any margin that would add to the gap
         > * {
@@ -30,7 +30,7 @@
     .dashboard-tab-panel {
         display: flex;
         flex-direction: column;
-        gap: $spacing-06; // 24px between widgets inside a tab
+        gap: tok.$tok-page-content-gap;
 
         > * {
             margin-top: 0 !important;

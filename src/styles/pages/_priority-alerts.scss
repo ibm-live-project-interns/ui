@@ -11,7 +11,7 @@
     &__content {
         display: flex;
         flex-direction: column;
-        gap: var(--page-gap, $spacing-05);
+        gap: tok.$tok-page-content-gap;
     }
 
     // KPI Row

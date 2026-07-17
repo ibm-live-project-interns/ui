@@ -145,15 +145,10 @@ body {
 
 // ==========================================
 // Global Layout Variables
-// Centralized spacing for consistent layouts
+// Sentrix design tokens exposed as CSS custom properties.
+// All spacing derives from _tokens.scss — edit there to restyle globally.
 // ==========================================
 :root {
-  --page-padding: #{$spacing-05};
-  --page-gap: #{$spacing-05};
-  --section-gap: #{$spacing-06};
-  --card-padding: #{$spacing-05};
-
-  // Sentrix design tokens exposed as CSS custom properties
   --sentrix-page-padding:       #{tok.$tok-page-content-padding};
   --sentrix-section-gap:        #{tok.$tok-page-section-gap};
   --sentrix-content-gap:        #{tok.$tok-page-content-gap};
@@ -163,13 +158,6 @@ body {
   --sentrix-tile-margin-bottom: #{tok.$tok-tile-margin-bottom};
   --sentrix-grid-gap:           #{tok.$tok-grid-gap};
   --sentrix-grid-margin-bottom: #{tok.$tok-grid-margin-bottom};
-
-  @media (max-width: 672px) {
-    --page-padding: #{$spacing-04};
-    --page-gap: #{$spacing-04};
-    --section-gap: #{$spacing-05};
-    --card-padding: #{$spacing-04};
-  }
 }
 
 // ==========================================

@@ -110,9 +110,15 @@ export const TicketActivitySection: React.FC<TicketActivitySectionProps> = React
                         labelText="Add a comment"
                         placeholder="Write a comment..."
                         value={newComment}
-                        onChange={(e) => onNewCommentChange(e.target.value)}
+                        onChange={(e) => {
+                            if (e.target.value.length <= 2000) {
+                                onNewCommentChange(e.target.value);
+                            }
+                        }}
                         rows={2}
                         className="ticket-comment-form__input"
+                        enableCounter
+                        maxCount={2000}
                         onKeyDown={(e) => {
                             if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) {
                                 onAddComment();

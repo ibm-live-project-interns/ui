@@ -25,9 +25,10 @@ export interface TimelineEntry {
 }
 
 export interface ActionItem {
-  item: string;
-  assignee: string;
+  description: string;
+  owner: string;
   status: string;
+  due_date?: string;
 }
 
 export interface PostMortem {
